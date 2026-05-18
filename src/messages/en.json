@@ -1,0 +1,130 @@
+{
+  "nav": {
+    "directory": "Business Directory",
+    "classifieds": "Classifieds",
+    "events": "Events",
+    "jobs": "Jobs",
+    "shop": "Shop",
+    "community": "Community",
+    "login": "Login",
+    "register": "Register",
+    "listBusiness": "List Your Business"
+  },
+  "hero": {
+    "badge": "UAE's #1 Malayali Business Network",
+    "title": "Find Every Malayali Business in the UAE",
+    "subtitle": "Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and beyond",
+    "searchPlaceholder": "Search businesses, services, products...",
+    "allCategories": "All Categories",
+    "searchButton": "Search",
+    "stats": {
+      "businesses": "15,000+ Businesses",
+      "members": "3.5M Members",
+      "emirates": "7 Emirates",
+      "reviews": "50K+ Reviews"
+    }
+  },
+  "locations": {
+    "title": "Browse by Emirate",
+    "dubai": "Dubai",
+    "abudhabi": "Abu Dhabi",
+    "sharjah": "Sharjah",
+    "ajman": "Ajman",
+    "rak": "Ras Al Khaimah",
+    "fujairah": "Fujairah",
+    "uaq": "Umm Al Quwain"
+  },
+  "categories": {
+    "title": "Explore Categories",
+    "subtitle": "Discover businesses and services across all categories",
+    "restaurants": "Restaurants & Food",
+    "realestate": "Real Estate",
+    "healthcare": "Healthcare",
+    "education": "Education",
+    "finance": "Finance & Banking",
+    "retail": "Retail & Shopping",
+    "travel": "Travel & Tourism",
+    "beauty": "Beauty & Wellness",
+    "technology": "Technology",
+    "legal": "Legal Services",
+    "construction": "Construction",
+    "automotive": "Automotive"
+  },
+  "featured": {
+    "title": "Featured Businesses",
+    "subtitle": "Handpicked premium businesses trusted by the Malayali community",
+    "viewAll": "View All Businesses",
+    "sponsored": "Sponsored",
+    "verified": "Verified",
+    "rating": "Rating"
+  },
+  "events": {
+    "title": "Upcoming Events",
+    "subtitle": "Community gatherings, cultural celebrations & networking events",
+    "viewAll": "View All Events",
+    "free": "Free",
+    "paid": "Paid",
+    "register": "Register Now"
+  },
+  "classifieds": {
+    "title": "Latest Classifieds",
+    "subtitle": "Buy, sell, rent within the Malayali community",
+    "viewAll": "View All Classifieds",
+    "post": "Post Ad",
+    "forSale": "For Sale",
+    "forRent": "For Rent",
+    "wanted": "Wanted"
+  },
+  "businessOwners": {
+    "title": "Grow Your Business with Us",
+    "subtitle": "Join thousands of Malayali entrepreneurs who trust MalayaliBusiness UAE",
+    "feature1": "Get discovered by 3.5M+ Malayalis",
+    "feature2": "Manage bookings & inquiries",
+    "feature3": "Run targeted promotions",
+    "feature4": "Build your brand reputation",
+    "cta": "List Your Business Free",
+    "login": "Business Owner Login"
+  },
+  "jobs": {
+    "title": "Job Opportunities",
+    "subtitle": "Find your next career move within the Malayali business network",
+    "viewAll": "View All Jobs",
+    "apply": "Apply Now",
+    "fullTime": "Full Time",
+    "partTime": "Part Time",
+    "remote": "Remote"
+  },
+  "shop": {
+    "title": "Kerala Products Shop",
+    "subtitle": "Authentic Kerala products delivered to your UAE doorstep",
+    "viewAll": "Shop All Products",
+    "addToCart": "Add to Cart",
+    "freeDelivery": "Free Delivery",
+    "authentic": "Authentic Kerala"
+  },
+  "blog": {
+    "title": "Community Stories",
+    "subtitle": "News, insights and stories from the Malayali business community",
+    "viewAll": "Read All Articles",
+    "readMore": "Read More",
+    "minRead": "min read"
+  },
+  "cta": {
+    "title": "Ready to Connect with 3.5 Million Malayalis?",
+    "subtitle": "List your business today and reach the largest Malayali network in the UAE",
+    "primary": "List Your Business Free",
+    "secondary": "Explore Directory"
+  },
+  "footer": {
+    "tagline": "UAE's #1 Malayali Business Network",
+    "description": "Connecting the Malayali community across all seven emirates with trusted businesses, events, and opportunities.",
+    "quickLinks": "Quick Links",
+    "categories": "Categories",
+    "support": "Support",
+    "contact": "Contact Us",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy"
+  }
+}
