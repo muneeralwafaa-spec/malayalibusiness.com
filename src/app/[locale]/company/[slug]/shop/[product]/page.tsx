@@ -62,12 +62,15 @@ export default function ProductDetailPage() {
   const images = listing.images?.length ? listing.images : [listing.image]
 
   // Related listings from same vendor or same category
+  // listing is guaranteed non-null here (early return above handles undefined)
+  const safeListing = listing!
+
   const related = vendorListings
-    .filter(l => l.id !== listing.id && (l.vendorSlug === listing.vendorSlug || l.category === listing.category))
+    .filter(l => l.id !== safeListing.id && (l.vendorSlug === safeListing.vendorSlug || l.category === safeListing.category))
     .slice(0, 4)
 
   function handleAddToCart() {
-    addItem(listing, { slot: selectedSlot || undefined, date: selectedDate || undefined })
+    addItem(safeListing, { slot: selectedSlot || undefined, date: selectedDate || undefined })
     setAdded(true)
     openCart()
     setTimeout(() => setAdded(false), 2000)
@@ -75,7 +78,7 @@ export default function ProductDetailPage() {
 
   function handleBooking() {
     if (!selectedDate || !selectedSlot) return
-    addItem(listing, { slot: selectedSlot, date: selectedDate })
+    addItem(safeListing, { slot: selectedSlot, date: selectedDate })
     setBookingDone(true)
     openCart()
   }
@@ -83,9 +86,9 @@ export default function ProductDetailPage() {
   function handleQuote() {
     if (!quoteName || !quotePhone) return
     const msg = encodeURIComponent(
-      `Hi ${listing.vendorName}! I'd like a quote for "${listing.name}".\n\nName: ${quoteName}\nPhone: ${quotePhone}\n\n${quoteMsg || 'Please send me your best price.'}`
+      `Hi ${safeListing.vendorName}! I'd like a quote for "${safeListing.name}".\n\nName: ${quoteName}\nPhone: ${quotePhone}\n\n${quoteMsg || 'Please send me your best price.'}`
     )
-    window.open(`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${safeListing.vendorWhatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
     setQuoteSent(true)
   }
 
