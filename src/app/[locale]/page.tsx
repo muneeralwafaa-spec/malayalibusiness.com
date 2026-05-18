@@ -12,6 +12,7 @@ import JobsSection from '@/components/home/JobsSection'
 import ShopSection from '@/components/home/ShopSection'
 import BlogSection from '@/components/home/BlogSection'
 import CTABanner from '@/components/home/CTABanner'
+import BusinessmenSection from '@/components/home/BusinessmenSection'
 
 export default function HomePage() {
   return (
@@ -21,6 +22,7 @@ export default function HomePage() {
       <LocationStrip />
       <CategoryGrid />
       <FeaturedListings />
+      <BusinessmenSection />
       <PremiumAdsTicker />
       <EventsSection />
       <ClassifiedsSection />
