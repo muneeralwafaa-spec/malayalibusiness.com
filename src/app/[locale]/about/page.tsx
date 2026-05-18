@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   Users,
-  Heart,
   ShieldCheck,
   Star,
   Mail,

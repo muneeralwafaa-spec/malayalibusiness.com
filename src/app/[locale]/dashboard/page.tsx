@@ -8,10 +8,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   LayoutDashboard, Building2, ShoppingBag, ShoppingCart, MessageSquare,
-  BarChart2, Briefcase, CreditCard, Settings, Plus, ChevronRight, Bell,
+  BarChart2, Briefcase, CreditCard, Settings, Plus, Bell,
   Eye, TrendingUp, Star, ArrowUpRight, ArrowDownRight, Edit3, Trash2,
-  CheckCircle, AlertCircle, MapPin, Menu, X, Users, Package,
-  Zap, Download, Phone, Mail, Globe, Tag, AlertTriangle
+  CheckCircle, MapPin, Menu, X,
+  Zap, Download, Mail, Tag, AlertTriangle
 } from 'lucide-react'
 import { mockBusinesses } from '@/lib/mock-businesses'
 

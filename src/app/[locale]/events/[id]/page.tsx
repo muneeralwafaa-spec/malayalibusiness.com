@@ -8,8 +8,8 @@ import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
-  MapPin, Calendar, Clock, Users, Tag, Share2, Copy,
-  CheckCircle, ChevronRight, Ticket, Building2, Globe,
+  MapPin, Calendar, Clock, Users, Tag, Copy,
+  CheckCircle, Ticket, Building2, Globe,
   MessageCircle, User, ArrowLeft, ExternalLink
 } from 'lucide-react'
 

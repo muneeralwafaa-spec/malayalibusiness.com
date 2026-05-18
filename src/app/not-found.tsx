@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Home, Search, ArrowLeft, MapPin, Phone } from 'lucide-react'
 

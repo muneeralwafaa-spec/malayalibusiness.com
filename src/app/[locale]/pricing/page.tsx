@@ -15,10 +15,8 @@ import {
   Building2,
   Briefcase,
   BarChart2,
-  Shield,
   Globe,
   Award,
-  MessageSquare,
   ShoppingBag,
   BadgeCheck,
   Clock,
@@ -103,7 +101,7 @@ const FAQ_ITEMS = [
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
-function FeatureValue({ value, isMl }: { value: string | boolean; isMl: boolean }) {
+function FeatureValue({ value }: { value: string | boolean; isMl?: boolean }) {
   if (value === true) return <CheckCircle size={18} className="text-kerala-green mx-auto" />
   if (value === false) return <X size={16} className="text-gray-300 mx-auto" />
   return (

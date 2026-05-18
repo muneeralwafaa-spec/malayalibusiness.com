@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, Users, Megaphone, Flag, Settings,
   TrendingUp, CheckCircle, XCircle, Eye, Menu, X, Shield,
   AlertTriangle, ToggleLeft, ToggleRight, ChevronRight,
-  ArrowUpRight, Star, Bell, LogOut
+  ArrowUpRight, Bell, LogOut
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────

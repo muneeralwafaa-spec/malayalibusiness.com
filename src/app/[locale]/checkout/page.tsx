@@ -19,9 +19,7 @@ import {
   CheckCircle,
   CreditCard,
   Lock,
-  Package,
   MessageCircle,
-  Home,
   ClipboardList,
 } from 'lucide-react'
 

@@ -8,7 +8,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   Search, MapPin, BadgeCheck, Briefcase, Filter, ChevronDown,
-  Star, ArrowRight, Award, Users, Building2, TrendingUp, X, Plus
+  Star, ArrowRight, Award, Users, Building2, X, Plus
 } from 'lucide-react'
 
 interface Businessman {

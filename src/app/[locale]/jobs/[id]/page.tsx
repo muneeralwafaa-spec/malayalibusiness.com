@@ -9,7 +9,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   MapPin, Briefcase, Clock, DollarSign, Users, Star,
-  CheckCircle, X, Upload, Share2, Bookmark, ArrowLeft,
+  CheckCircle, X, Upload, Bookmark, ArrowLeft,
   Building2, Calendar, Award, ChevronRight, Copy, Tag,
   Shield, Heart, Zap, Coffee, TrendingUp, Globe, BookOpen
 } from 'lucide-react'

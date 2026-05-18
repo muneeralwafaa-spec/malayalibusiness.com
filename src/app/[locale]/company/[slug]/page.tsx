@@ -10,8 +10,8 @@ import Footer from '@/components/layout/Footer'
 import { mockBusinesses } from '@/lib/mock-businesses'
 import {
   MapPin, Phone, Globe, Clock, BadgeCheck, MessageCircle, Share2, Heart,
-  Mail, Camera, Users, Calendar, CheckCircle, ArrowRight, Building2,
-  Languages, Star, ShoppingCart, X, Send, Award, Package
+  Mail, Camera, Users, Calendar, CheckCircle, Building2,
+  Languages, Star, ShoppingCart, X, Send
 } from 'lucide-react'
 
 type Tab = 'home' | 'about' | 'services' | 'shop' | 'gallery' | 'reviews' | 'contact'

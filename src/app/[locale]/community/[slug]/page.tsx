@@ -9,7 +9,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   Calendar, Clock, Eye, Heart, Bookmark, Share2, MessageCircle,
-  ChevronRight, ArrowLeft, User, Tag, ThumbsUp, Send
+  ChevronRight, ArrowLeft, Tag, ThumbsUp, Send
 } from 'lucide-react'
 
 interface Article {
