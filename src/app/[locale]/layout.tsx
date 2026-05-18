@@ -2,6 +2,7 @@ import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/routing'
+import { CartProvider } from '@/context/CartContext'
 
 export default async function LocaleLayout({
   children,
@@ -17,7 +18,9 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      {children}
+      <CartProvider>
+        {children}
+      </CartProvider>
     </NextIntlClientProvider>
   )
 }
