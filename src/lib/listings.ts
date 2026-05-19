@@ -246,7 +246,8 @@ export async function getEmirateCounts(): Promise<Record<string, number>> {
 
   if (error) { console.error('[getEmirateCounts]', error.message); return {} }
   return (data ?? []).reduce((acc: Record<string, number>, row: { emirate: string | null }) => {
-    const slug = row.emirate?.toLowerCase().replace(/\s+/g, '-')
+    // DB stores emirate as lowercase slug with underscores e.g. 'abu_dhabi'
+    const slug = row.emirate?.toLowerCase()
     if (slug) acc[slug] = (acc[slug] || 0) + 1
     return acc
   }, {})
