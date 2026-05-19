@@ -1,19 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
   LayoutDashboard, Building2, ShoppingBag, ShoppingCart, MessageSquare,
   BarChart2, Briefcase, CreditCard, Settings, Plus, Bell,
   Eye, TrendingUp, Star, ArrowUpRight, ArrowDownRight, Edit3, Trash2,
-  CheckCircle, MapPin, Menu, X,
-  Zap, Download, Mail, Tag, AlertTriangle
+  CheckCircle, MapPin, Menu, X, LogOut, Users,
+  Zap, Download, Mail, Tag, AlertTriangle, Loader2
 } from 'lucide-react'
-import { mockBusinesses } from '@/lib/mock-businesses'
+import { useAuth } from '@/context/AuthContext'
+import { getMyListings } from '@/lib/auth'
+import { getServices, getTeamMembers, getShopListings, getReviews } from '@/lib/listings'
+import { supabase } from '@/lib/supabase'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type NavSection =
@@ -175,20 +179,27 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 // ── Section Components ──────────────────────────────────────────────────────
 
-function OverviewSection({ isMl }: { isMl: boolean }) {
+function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
+  const totalViews   = listings.reduce((s, l) => s + (l.views_count   || 0), 0)
+  const totalReviews = listings.reduce((s, l) => s + (l.review_count  || 0), 0)
+  const avgRating    = listings.length
+    ? (listings.reduce((s, l) => s + Number(l.rating_avg || 0), 0) / listings.length).toFixed(1)
+    : '—'
+  const today = new Date().toLocaleDateString(isMl ? 'ml-IN' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
   return (
     <div className="space-y-6">
       <SectionHeader
         title={isMl ? 'ഓവർവ്യൂ' : 'Overview'}
-        subtitle={isMl ? 'ഇന്ന്, 18 മേയ് 2026' : 'Today, 18 May 2026'}
+        subtitle={today}
       />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Eye} label={isMl ? 'പ്രൊഫൈൽ കാഴ്ചകൾ' : 'Profile Views'} value="12,483" change="+18%" positive />
-        <StatCard icon={MessageSquare} label={isMl ? 'അന്വേഷണങ്ങൾ' : 'Enquiries'} value="234" change="+12%" positive />
-        <StatCard icon={TrendingUp} label={isMl ? 'മാസ വരുമാനം' : 'Monthly Revenue'} value="AED 18,450" change="+8%" positive accent />
-        <StatCard icon={Star} label={isMl ? 'ശരാശരി റേറ്റിംഗ്' : 'Average Rating'} value="4.8/5" change="+0.2" positive />
+        <StatCard icon={Building2} label={isMl ? 'ലിസ്റ്റിംഗ്' : 'My Listings'} value={String(listings.length)} />
+        <StatCard icon={Eye} label={isMl ? 'മൊത്തം കാഴ്ചകൾ' : 'Total Views'} value={totalViews.toLocaleString()} />
+        <StatCard icon={Star} label={isMl ? 'മൊത്തം റിവ്യൂ' : 'Total Reviews'} value={String(totalReviews)} accent />
+        <StatCard icon={TrendingUp} label={isMl ? 'ശരാശരി റേറ്റിംഗ്' : 'Avg Rating'} value={`${avgRating}/5`} />
       </div>
 
       {/* Quick actions */}
@@ -255,7 +266,8 @@ function OverviewSection({ isMl }: { isMl: boolean }) {
   )
 }
 
-function ListingsSection({ isMl }: { isMl: boolean }) {
+function ListingsSection({ isMl, listings, loading }: { isMl: boolean; listings: any[]; loading: boolean }) {
+  const locale = isMl ? 'ml' : 'en'
   const [filter, setFilter] = useState<'all' | 'active' | 'pending'>('all')
   const statuses = ['all', 'active', 'pending'] as const
   const statusLabels: Record<typeof statuses[number], string> = {
@@ -264,15 +276,7 @@ function ListingsSection({ isMl }: { isMl: boolean }) {
     pending: isMl ? 'കാത്തിരിക്കുന്നു' : 'Pending',
   }
 
-  const bizList = mockBusinesses.slice(0, 3).map((b, i) => ({
-    ...b,
-    plan: i === 0 ? 'Premium' : i === 1 ? 'Standard' : 'Basic',
-    status: i === 2 ? 'Pending' : 'Active',
-    viewCount: b.reviewCount * 12,
-    enquiryCount: Math.round(b.reviewCount * 0.3),
-  }))
-
-  const filtered = filter === 'all' ? bizList : bizList.filter(b => b.status.toLowerCase() === filter)
+  const filtered = filter === 'all' ? listings : listings.filter(b => b.status === filter)
 
   return (
     <div className="space-y-5">
@@ -299,58 +303,71 @@ function ListingsSection({ isMl }: { isMl: boolean }) {
         </button>
       </div>
 
-      <div className="space-y-3">
-        {filtered.map(biz => (
-          <div key={biz.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4">
-            <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-              <Image src={biz.image} alt={biz.name} fill className="object-cover" sizes="64px" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h3 className="font-serif font-semibold text-kerala-deep text-sm">{isMl ? biz.nameMl : biz.name}</h3>
-                {biz.verified && <CheckCircle size={13} className="text-kerala-green flex-shrink-0" />}
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                  biz.plan === 'Premium' ? 'bg-kerala-gold/15 text-kerala-gold'
-                  : biz.plan === 'Standard' ? 'bg-blue-100 text-blue-600'
-                  : 'bg-gray-100 text-gray-500'
-                }`}>{biz.plan}</span>
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green"/></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
+          <Building2 size={36} className="mx-auto mb-3 text-gray-300"/>
+          <p className="font-semibold text-kerala-deep">{isMl ? 'ലിസ്റ്റിംഗ് ഒന്നും ഇല്ല' : 'No listings yet'}</p>
+          <p className="text-sm text-gray-400 mt-1 mb-4">{isMl ? 'ആദ്യ ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add your first business listing'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((biz: any) => (
+            <div key={biz.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4">
+              <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                {(biz.logo_url || biz.cover_url) && (
+                  <Image src={biz.logo_url || biz.cover_url} alt={biz.name} fill className="object-cover" sizes="64px"/>
+                )}
               </div>
-              <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-2">
-                <span className="flex items-center gap-1"><MapPin size={11} />{isMl ? biz.locationMl : biz.location}</span>
-                <span className="flex items-center gap-1"><Eye size={11} />{biz.viewCount.toLocaleString()} {isMl ? 'കാഴ്ച' : 'views'}</span>
-                <span className="flex items-center gap-1"><MessageSquare size={11} />{biz.enquiryCount} {isMl ? 'അന്വേഷണം' : 'enquiries'}</span>
-                <span className="flex items-center gap-1"><Star size={11} />{biz.rating}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="font-serif font-semibold text-kerala-deep text-sm">{isMl && biz.name_ml ? biz.name_ml : biz.name}</h3>
+                  {biz.is_verified && <CheckCircle size={13} className="text-kerala-green flex-shrink-0"/>}
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    biz.plan === 'elite' || biz.plan === 'premium' ? 'bg-kerala-gold/15 text-kerala-gold'
+                    : biz.plan === 'basic' ? 'bg-blue-100 text-blue-600'
+                    : 'bg-gray-100 text-gray-500'
+                  }`}>{biz.plan}</span>
+                </div>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-2">
+                  <span className="flex items-center gap-1"><MapPin size={11}/>{[biz.area, biz.emirate].filter(Boolean).join(', ')}</span>
+                  <span className="flex items-center gap-1"><Eye size={11}/>{(biz.views_count || 0).toLocaleString()} {isMl ? 'കാഴ്ച' : 'views'}</span>
+                  <span className="flex items-center gap-1"><Star size={11}/>{Number(biz.rating_avg || 0).toFixed(1)} ({biz.review_count || 0})</span>
+                </div>
+                <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                  biz.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'
+                }`}>
+                  {biz.status === 'active' ? (isMl ? 'ആക്ടീവ്' : 'Active') : (isMl ? 'കാത്തിരിക്കുന്നു' : biz.status)}
+                </span>
               </div>
-              <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                biz.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'
-              }`}>
-                {biz.status === 'Active' ? (isMl ? 'ആക്ടീവ്' : 'Active') : (isMl ? 'കാത്തിരിക്കുന്നു' : 'Pending')}
-              </span>
+              <div className="flex flex-col gap-2 flex-shrink-0">
+                <Link href={`/${locale}/company/${biz.slug}`}
+                  className="text-xs font-semibold text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-center whitespace-nowrap">
+                  {isMl ? 'കാണൂ' : 'View'}
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-col gap-2 flex-shrink-0">
-              <button className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5 whitespace-nowrap">
-                <Edit3 size={12} className="inline mr-1" />{isMl ? 'എഡിറ്റ്' : 'Edit'}
-              </button>
-              <Link
-                href={`/${isMl ? 'ml' : 'en'}/company/${biz.id}`}
-                className="text-xs font-semibold text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-center whitespace-nowrap"
-              >
-                {isMl ? 'കാണൂ' : 'View'}
-              </Link>
-              <button className="text-xs font-semibold text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50 whitespace-nowrap">
-                {isMl ? 'നിർത്തൂ' : 'Pause'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function ShopManagerSection({ isMl }: { isMl: boolean }) {
+function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
   const [showAddModal, setShowAddModal] = useState(false)
-  const lowStock = mockProducts.some(p => p.stock <= 3)
+  const [selectedListingId, setSelectedListingId] = useState(listings[0]?.id || '')
+  const [shopItems, setShopItems] = useState<any[]>([])
+  const [shopLoading, setShopLoading] = useState(false)
+
+  useEffect(() => {
+    if (!selectedListingId) return
+    setShopLoading(true)
+    getShopListings(selectedListingId).then(items => { setShopItems(items); setShopLoading(false) })
+  }, [selectedListingId])
+
+  const lowStock = shopItems.some(p => p.stock_status === 'out_of_stock')
 
   return (
     <div className="space-y-5">
@@ -599,7 +616,9 @@ function EnquiriesSection({ isMl }: { isMl: boolean }) {
   )
 }
 
-function AnalyticsSection({ isMl }: { isMl: boolean }) {
+function AnalyticsSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
+  const totalViews   = listings.reduce((s, l) => s + (l.views_count  || 0), 0)
+  const totalReviews = listings.reduce((s, l) => s + (l.review_count || 0), 0)
   const [range, setRange] = useState<'7d' | '30d' | '3m'>('7d')
   const rangeLabels = {
     '7d': isMl ? 'കഴിഞ്ഞ 7 ദിവസം' : 'Last 7 Days',
@@ -877,10 +896,22 @@ function BillingSection({ isMl }: { isMl: boolean }) {
   )
 }
 
-function SettingsSection({ isMl }: { isMl: boolean }) {
+function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; profile: any }) {
   const [subTab, setSubTab] = useState<'personal' | 'business'>('personal')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [avatarPreview] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&q=80')
+  const [fullName, setFullName] = useState(profile?.full_name || '')
+  const [phone, setPhone] = useState(profile?.phone || '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const saveProfile = async () => {
+    setSaving(true)
+    await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user?.id)
+    setSaving(false); setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const avatarPreview = profile?.avatar_url || null
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -1076,12 +1107,48 @@ const navItems: {
 export default function DashboardPage() {
   const locale = useLocale()
   const isMl = locale === 'ml'
+  const router = useRouter()
+  const { user, profile, loading: authLoading, signOut } = useAuth()
   const [activeSection, setActiveSection] = useState<NavSection>('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [myListings, setMyListings] = useState<Awaited<ReturnType<typeof getMyListings>>>([])
+  const [listingsLoading, setListingsLoading] = useState(true)
+
+  // Auth guard
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push(`/${locale}/auth`)
+    }
+  }, [authLoading, user, locale, router])
+
+  // Fetch owner's listings
+  useEffect(() => {
+    if (!user) return
+    setListingsLoading(true)
+    getMyListings(user.id).then(data => {
+      setMyListings(data)
+      setListingsLoading(false)
+    })
+  }, [user])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 size={36} className="animate-spin text-kerala-green" />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   function handleNavClick(key: NavSection) {
     setActiveSection(key)
     setSidebarOpen(false)
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push(`/${locale}/auth`)
   }
 
   const sidebarContent = (
@@ -1089,21 +1156,18 @@ export default function DashboardPage() {
       {/* Profile */}
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-kerala-gold/30 flex-shrink-0">
-            <Image
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"
-              alt="Owner"
-              fill
-              className="object-cover"
-              sizes="44px"
-            />
+          <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-kerala-gold/30 flex-shrink-0 bg-kerala-green/20 flex items-center justify-center">
+            {profile?.avatar_url ? (
+              <Image src={profile.avatar_url} alt="Owner" fill className="object-cover" sizes="44px"/>
+            ) : (
+              <span className="font-bold text-kerala-gold text-lg">
+                {(profile?.full_name || user.email || 'U').charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-white text-sm truncate">Rajan Nair</p>
+            <p className="font-semibold text-white text-sm truncate">{profile?.full_name || user.email}</p>
             <p className="text-xs text-white/50 truncate">{isMl ? 'ബിസിനസ് ഉടമ' : 'Business Owner'}</p>
-            <span className="mt-0.5 inline-block bg-kerala-gold/20 text-kerala-gold text-xs font-bold px-2 py-0.5 rounded-full">
-              Standard
-            </span>
           </div>
         </div>
       </div>
@@ -1138,6 +1202,11 @@ export default function DashboardPage() {
             {isMl ? 'AED 499/മാസം' : 'AED 499/month'}
           </button>
         </div>
+        {/* Sign out */}
+        <button onClick={handleSignOut}
+          className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-white/5 transition-all w-full mt-1">
+          <LogOut size={14}/>{isMl ? 'സൈൻ ഔട്ട്' : 'Sign Out'}
+        </button>
       </div>
     </div>
   )
@@ -1203,15 +1272,15 @@ export default function DashboardPage() {
 
           {/* Section content */}
           <div className="p-4 sm:p-6 lg:p-8">
-            {activeSection === 'overview' && <OverviewSection isMl={isMl} />}
-            {activeSection === 'listings' && <ListingsSection isMl={isMl} />}
-            {activeSection === 'shop' && <ShopManagerSection isMl={isMl} />}
-            {activeSection === 'orders' && <OrdersSection isMl={isMl} />}
+            {activeSection === 'overview'  && <OverviewSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'listings'  && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} />}
+            {activeSection === 'shop'      && <ShopManagerSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'orders'    && <OrdersSection isMl={isMl} />}
             {activeSection === 'enquiries' && <EnquiriesSection isMl={isMl} />}
-            {activeSection === 'analytics' && <AnalyticsSection isMl={isMl} />}
-            {activeSection === 'jobs' && <JobsSection isMl={isMl} />}
-            {activeSection === 'billing' && <BillingSection isMl={isMl} />}
-            {activeSection === 'settings' && <SettingsSection isMl={isMl} />}
+            {activeSection === 'analytics' && <AnalyticsSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'jobs'      && <JobsSection isMl={isMl} />}
+            {activeSection === 'billing'   && <BillingSection isMl={isMl} />}
+            {activeSection === 'settings'  && <SettingsSection isMl={isMl} user={user} profile={profile} />}
           </div>
         </main>
       </div>

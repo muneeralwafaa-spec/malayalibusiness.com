@@ -1,5 +1,5 @@
 export type Business = {
-  id: number
+  id: string | number
   name: string
   nameMl: string
   slug: string
@@ -17,7 +17,7 @@ export type Business = {
   email?: string
   rating: number
   reviewCount: number
-  priceRange: 1 | 2 | 3 | 4
+  priceRange: number
   image: string
   logo?: string
   photos: string[]

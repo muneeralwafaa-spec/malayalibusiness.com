@@ -1,74 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { mockBusinesses } from '@/lib/mock-businesses'
-import { vendorListings, LISTING_TYPE_META } from '@/lib/mock-vendor-products'
+import {
+  getListing, adaptListing, incrementViews,
+  getServices, getReviews, submitReview, voteHelpful,
+  getTeamMembers, getShopListings,
+} from '@/lib/listings'
+import type { ServiceRow, ReviewRow, TeamMemberRow, ShopListingRow } from '@/lib/supabase'
 import {
   MapPin, Phone, Globe, Clock, BadgeCheck, MessageCircle, Share2, Heart,
   Mail, Camera, Users, Calendar, CheckCircle, Building2,
-  Languages, Star, ShoppingCart, X, Send, Plus, Zap, FileText
+  Languages, Star, ShoppingCart, X, Send, Plus, Zap, FileText, Loader2
 } from 'lucide-react'
 
 type Tab = 'home' | 'about' | 'services' | 'shop' | 'gallery' | 'reviews' | 'contact'
 
-const teamMembers = [
-  { name:'Mohammed Al Rashid', nameMl:'മൊഹമ്മദ് അൽ റാഷിദ്', role:'General Manager', roleMl:'ജനറൽ മാനേജർ', photo:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80&auto=format&fit=crop&crop=faces', years:8 },
-  { name:'Anjali Thomas', nameMl:'അഞ്ജലി തോമസ്', role:'Operations Head', roleMl:'ഓപ്പറേഷൻസ് ഹെഡ്', photo:'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80&auto=format&fit=crop&crop=faces', years:5 },
-  { name:'Rajesh Kumar', nameMl:'രാജേഷ് കുമാർ', role:'Customer Relations', roleMl:'കസ്റ്റമർ റിലേഷൻസ്', photo:'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80&auto=format&fit=crop&crop=faces', years:6 },
-]
-
-const mockServices = [
-  { id:1, name:'Premium Package', nameMl:'പ്രീമിയം പാക്കേജ്', desc:'Our flagship service with full features and priority support.', descMl:'പ്രയർ സപ്പോർട്ടോടുകൂടിയ ഫ്ലാഗ്ഷിപ്പ് സർവ്വീസ്.', price:299, image:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80&auto=format&fit=crop' },
-  { id:2, name:'Standard Service', nameMl:'സ്റ്റാൻഡേർഡ് സർവ്വീസ്', desc:'Quality service with all essential features included.', descMl:'അവശ്യ ഫീച്ചറുകൾ ഉൾക്കൊള്ളുന്ന ഗുണനിലവാര സർവ്വീസ്.', price:149, image:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop' },
-  { id:3, name:'Express Service', nameMl:'എക്സ്പ്രസ് സർവ്വീസ്', desc:'Fast-turnaround service for urgent requirements.', descMl:'അടിയന്തിര ആവശ്യങ്ങൾക്കുള്ള വേഗതയേറിയ സർവ്വീസ്.', price:199, image:'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80&auto=format&fit=crop' },
-  { id:4, name:'Corporate Package', nameMl:'കോർപ്പറേറ്റ് പാക്കേജ്', desc:'Tailored solutions for businesses and organisations.', descMl:'ബിസിനസ്, ഓർഗനൈസേഷനുകൾക്കുള്ള ഇഷ്ടാനുസൃത സൊലൂഷൻ.', price:499, image:'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80&auto=format&fit=crop' },
-  { id:5, name:'Home Delivery', nameMl:'ഹോം ഡെലിവറി', desc:'Convenient delivery or service at your doorstep.', descMl:'നിങ്ങളുടെ വീട്ടിൽ സൗകര്യപ്രദമായ ഡെലിവറി.', price:79, image:'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop' },
-  { id:6, name:'Consultation', nameMl:'കൺസൾട്ടേഷൻ', desc:'One-on-one expert consultation and advice session.', descMl:'വ്യക്തിഗത വിദഗ്ദ്ധ കൺസൾട്ടേഷൻ.', price:99, image:'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=400&q=80&auto=format&fit=crop' },
-]
-
-const mockProducts = [
-  { id:1, name:'Kerala Special Mix', nameMl:'കേരള സ്പെഷ്യൽ മിക്സ്', price:45, original:60, image:'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:2, name:'Signature Gift Pack', nameMl:'സിഗ്നേച്ചർ ഗിഫ്റ്റ് പാക്ക്', price:120, original:150, image:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:3, name:'Traditional Halwa', nameMl:'പരമ്പരാഗത ഹൽവ', price:35, original:40, image:'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:4, name:'Premium Biryani Kit', nameMl:'പ്രീമിയം ബിരിയാണി കിറ്റ്', price:89, original:110, image:'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80&auto=format&fit=crop', inStock:false },
-  { id:5, name:'Coconut Cookies Box', nameMl:'കൊക്കോനട്ട് കുക്കീസ് ബോക്സ്', price:28, original:35, image:'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:6, name:'Spice Collection', nameMl:'സ്പൈസ് കലക്ഷൻ', price:65, original:80, image:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:7, name:'Kerala Saree', nameMl:'കേരള സാരി', price:250, original:320, image:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80&auto=format&fit=crop', inStock:true },
-  { id:8, name:'Handmade Pickle Set', nameMl:'ഹാൻഡ്‌മേഡ് അച്ചാർ സെറ്റ്', price:42, original:55, image:'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80&auto=format&fit=crop', inStock:true },
-]
-
-const galleryPhotos = [
+const FALLBACK_GALLERY = [
   'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=400&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80&auto=format&fit=crop',
-]
-
-const mockReviews = [
-  { id:1, name:'Arun Kumar', nameMl:'അരുൺ കുമാർ', avatar:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=80', rating:5, date:'Aug 2025', text:'Absolutely outstanding! The quality is unmatched and the staff were incredibly helpful throughout.', textMl:'അദ്ഭുതകരം! ഗുണനിലവാരം അതുല്യം, ജീവനക്കാർ ഏറ്റവും സഹകരണ മനോഭാവം.', helpful:23 },
-  { id:2, name:'Priya Nair', nameMl:'പ്രിയ നായർ', avatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=80', rating:5, date:'Jul 2025', text:'Best experience I have had in Dubai. Very authentic, clean, and friendly atmosphere.', textMl:'ദുബായിൽ ഞാൻ അനുഭവിച്ചതിൽ ഏറ്റവും നല്ലത്. വളരെ ആധികാരികം, ശുദ്ധം.', helpful:18 },
-  { id:3, name:'Rajan Pillai', nameMl:'രാജൻ പിള്ള', avatar:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=80', rating:4, date:'Jul 2025', text:'Very good overall. Slightly busy on weekends but totally worth it. Will come again.', textMl:'ആകെ വളരെ നല്ലത്. വാരാന്ത്യങ്ങളിൽ തിരക്കുണ്ട്. വീണ്ടും വരും.', helpful:12 },
-  { id:4, name:'Meera Menon', nameMl:'മീര മേനോൻ', avatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&q=80', rating:5, date:'Jun 2025', text:'Our family favourite place in the UAE! We celebrate every special occasion here.', textMl:'UAE-ൽ ഞങ്ങളുടെ കുടുംബത്തിന്റെ പ്രിയ ഇടം! ഓരോ ആഘോഷവും ഇവിടെ.', helpful:31 },
-  { id:5, name:'Ahmed Hassan', nameMl:'അഹ്മദ് ഹസ്സൻ', avatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&q=80', rating:4, date:'May 2025', text:'Impressive quality and value for money. The team goes above and beyond every time.', textMl:'ഗുണനിലവാരവും മൂല്യവും ഇംപ്രസ്സീവ്. ടീം എല്ലാ തവണയും ഒരു പടി കൂടുതൽ.', helpful:8 },
-  { id:6, name:'Fatima Al Ali', nameMl:'ഫാത്തിമ അൽ അലി', avatar:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&q=80', rating:5, date:'Apr 2025', text:'Exceptional service and amazing products. Highly recommend to everyone!', textMl:'അദ്ഭുതകരമായ സർവ്വീസ്. എല്ലാവർക്കും ശക്തമായ ശുപാർശ!', helpful:15 },
-]
-
-const ratingBreakdown = [
-  { stars:5, pct:72 }, { stars:4, pct:18 }, { stars:3, pct:6 }, { stars:2, pct:2 }, { stars:1, pct:2 },
 ]
 
 function StarRow({ rating, size=14 }: { rating:number; size?:number }) {
@@ -89,23 +48,52 @@ export default function CompanyPage() {
   const isMl = locale === 'ml'
   const { slug } = useParams<{slug:string}>()
   const [activeTab, setActiveTab] = useState<Tab>('home')
-  const [cartItems, setCartItems] = useState<{id:number; qty:number}[]>([])
+  const [cartItems, setCartItems] = useState<{id:string; qty:number}[]>([])
   const [lightbox, setLightbox] = useState<string|null>(null)
   const [saved, setSaved] = useState(false)
   const [reviewForm, setReviewForm] = useState({ name:'', rating:5, text:'' })
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
   const [enquiryForm, setEnquiryForm] = useState({ name:'', email:'', phone:'', message:'' })
   const [enquirySubmitted, setEnquirySubmitted] = useState(false)
-  const [helpfulVotes, setHelpfulVotes] = useState<Record<number,boolean>>({})
+  const [business, setBusiness] = useState<ReturnType<typeof adaptListing> | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [services, setServices] = useState<ServiceRow[]>([])
+  const [reviews, setReviews] = useState<ReviewRow[]>([])
+  const [team, setTeam] = useState<TeamMemberRow[]>([])
+  const [shopItems, setShopItems] = useState<ShopListingRow[]>([])
 
-  const business = mockBusinesses.find(b => b.slug === slug || String(b.id) === slug) ?? mockBusinesses[0]
+  useEffect(() => {
+    if (!slug) return
+    setLoading(true)
+    getListing(slug).then((row) => {
+      if (row) {
+        const adapted = adaptListing(row)
+        setBusiness(adapted)
+        incrementViews(slug)
+        // Fetch tab data in parallel
+        Promise.all([
+          getServices(row.id),
+          getReviews(row.id),
+          getTeamMembers(row.id),
+          getShopListings(row.id),
+        ]).then(([svc, rev, tm, shop]) => {
+          setServices(svc)
+          setReviews(rev)
+          setTeam(tm)
+          setShopItems(shop)
+        })
+      }
+      setLoading(false)
+    })
+  }, [slug])
+
   const cartCount = cartItems.reduce((s,i)=>s+i.qty,0)
   const cartTotal = cartItems.reduce((s,i)=>{
-    const p = mockProducts.find(x=>x.id===i.id)
+    const p = shopItems.find(x=>x.id===i.id)
     return s + (p ? p.price * i.qty : 0)
   },0)
 
-  const addToCart = (id:number) => setCartItems(prev => {
+  const addToCart = (id:string) => setCartItems(prev => {
     const ex = prev.find(i=>i.id===id)
     if (ex) return prev.map(i=>i.id===id ? {...i,qty:i.qty+1} : i)
     return [...prev,{id,qty:1}]
@@ -121,13 +109,46 @@ export default function CompanyPage() {
     { key:'contact', label:'Contact', labelMl:'ബന്ധം' },
   ]
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-kerala-cream">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 size={40} className="animate-spin text-kerala-green" />
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
+  if (!business) {
+    return (
+      <main className="min-h-screen bg-kerala-cream">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+          <Building2 size={48} className="text-gray-300 mb-4" />
+          <h1 className="font-serif text-3xl font-bold text-kerala-deep mb-2">
+            {isMl ? 'ബിസിനസ് കണ്ടെത്തിയില്ല' : 'Business Not Found'}
+          </h1>
+          <p className="text-gray-500 mb-6">
+            {isMl ? 'ഈ ബിസിനസ് ലഭ്യമല്ല അല്ലെങ്കിൽ നീക്കം ചെയ്തു.' : 'This business is not available or has been removed.'}
+          </p>
+          <Link href={`/${locale}/directory`} className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green-light transition-all text-sm">
+            {isMl ? 'ഡയറക്ടറിയിലേക്ക്' : 'Back to Directory'}
+          </Link>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-kerala-cream">
       <Navbar />
 
       {/* Cover Banner */}
       <div className="relative w-full h-72 md:h-96 mt-16">
-        <Image src={business.image} alt={business.name} fill className="object-cover" priority sizes="100vw" />
+        <Image src={business.image || 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80&auto=format&fit=crop'} alt={business.name} fill className="object-cover" priority sizes="100vw" onError={(e)=>{ (e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80&auto=format&fit=crop' }} />
         <div className="absolute inset-0 bg-gradient-to-t from-kerala-deep/85 via-kerala-deep/30 to-transparent" />
         <div className="absolute top-4 left-4 flex gap-2">
           {business.verified && (
@@ -146,7 +167,7 @@ export default function CompanyPage() {
         <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end gap-4">
           {business.logo && (
             <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg flex-shrink-0 bg-white">
-              <Image src={business.logo} alt="logo" fill className="object-cover" sizes="64px"/>
+              <Image src={business.logo} alt="logo" fill className="object-cover" sizes="64px" onError={(e)=>{ (e.target as HTMLImageElement).style.display='none' }}/>
             </div>
           )}
           <div className="flex-1">
@@ -260,21 +281,31 @@ export default function CompanyPage() {
                   <p>{isMl?`ഞങ്ങളുടെ ${business.employees||'10+'} ജീവനക്കാർ ${business.languages.join(', ')} ഭാഷകൾ സംസാരിക്കുന്നു, എല്ലാ കമ്മ്യൂണിറ്റികൾക്കും സർവ്വീസ് ലഭ്യമാക്കുന്നു.`:`Our team of ${business.employees||'10+'} professionals speaks ${business.languages.join(', ')}, ensuring every customer feels at home.`}</p>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
-                <h2 className="font-serif text-2xl font-bold text-kerala-deep mb-5">{isMl?'ഞങ്ങളുടെ ടീം':'Meet the Team'}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {teamMembers.map(m=>(
-                    <div key={m.name} className="text-center">
-                      <div className="relative w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-gray-100">
-                        <Image src={m.photo} alt={m.name} fill className="object-cover" sizes="80px"/>
+              {team.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+                  <h2 className="font-serif text-2xl font-bold text-kerala-deep mb-5">{isMl?'ഞങ്ങളുടെ ടീം':'Meet the Team'}</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    {team.map(m=>(
+                      <div key={m.id} className="text-center">
+                        <div className="relative w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-gray-100 bg-gray-100">
+                          {m.photo_url && (
+                            <Image src={m.photo_url} alt={m.name} fill className="object-cover" sizes="80px"
+                              onError={(e)=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                          )}
+                          {!m.photo_url && (
+                            <div className="w-full h-full flex items-center justify-center bg-kerala-cream">
+                              <Users size={24} className="text-kerala-green/40"/>
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-kerala-deep text-sm">{isMl?(m.name_ml||m.name):m.name}</h3>
+                        <p className="text-kerala-green text-xs mt-0.5">{isMl?(m.role_ml||m.role||''):m.role||''}</p>
+                        {m.years_exp && <p className="text-gray-400 text-xs mt-0.5">{m.years_exp} {isMl?'വർഷം':'yrs'}</p>}
                       </div>
-                      <h3 className="font-semibold text-kerala-deep text-sm">{isMl?m.nameMl:m.name}</h3>
-                      <p className="text-kerala-green text-xs mt-0.5">{isMl?m.roleMl:m.role}</p>
-                      <p className="text-gray-400 text-xs mt-0.5">{m.years} {isMl?'വർഷം':'yrs'}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -312,140 +343,169 @@ export default function CompanyPage() {
               <h2 className="font-serif text-3xl font-bold text-kerala-deep">{isMl?'ഞങ്ങളുടെ സർവ്വീസ്':'Our Services'}</h2>
               <p className="text-gray-500 text-sm mt-1">{isMl?'ഞങ്ങൾ ഓഫർ ചെയ്യുന്ന സർവ്വീസ്':'Services and packages we offer'}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockServices.map(svc=>(
-                <div key={svc.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all group">
-                  <div className="relative h-44 overflow-hidden">
-                    <Image src={svc.image} alt={svc.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="400px"/>
-                    <div className="absolute top-3 right-3 bg-kerala-gold text-white text-xs font-bold px-3 py-1 rounded-full">AED {svc.price}</div>
+            {services.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                <FileText size={40} className="mx-auto mb-3 text-gray-300"/>
+                <p className="font-semibold text-kerala-deep">{isMl?'സർവ്വീസ് ഒന്നും ചേർത്തിട്ടില്ല':'No services listed yet'}</p>
+                <p className="text-sm text-gray-400 mt-1">{isMl?'ഉടൻ ചേർക്കും':'Check back soon'}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.map(svc=>(
+                  <div key={svc.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all group">
+                    {svc.image_url && (
+                      <div className="relative h-44 overflow-hidden">
+                        <Image src={svc.image_url} alt={svc.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="400px"
+                          onError={(e)=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                        {svc.price != null && (
+                          <div className="absolute top-3 right-3 bg-kerala-gold text-white text-xs font-bold px-3 py-1 rounded-full">
+                            {svc.price_unit} {svc.price}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-5">
+                      {svc.price != null && !svc.image_url && (
+                        <span className="inline-block bg-kerala-gold/10 text-kerala-gold text-xs font-bold px-2 py-0.5 rounded-full mb-2">
+                          {svc.price_unit} {svc.price}
+                        </span>
+                      )}
+                      <h3 className="font-serif font-bold text-kerala-deep text-lg mb-1">
+                        {isMl ? (svc.name_ml || svc.name) : svc.name}
+                      </h3>
+                      <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                        {isMl ? (svc.description_ml || svc.description || '') : (svc.description || '')}
+                      </p>
+                      <a href={`https://wa.me/${(business.whatsapp||business.phone).replace(/\D/g,'')}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="w-full bg-kerala-green hover:bg-kerala-green-light text-white text-sm font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2">
+                        <MessageCircle size={14}/>{isMl?'എൻക്വയർ':'Enquire Now'}
+                      </a>
+                    </div>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-serif font-bold text-kerala-deep text-lg mb-1">{isMl?svc.nameMl:svc.name}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-4">{isMl?svc.descMl:svc.desc}</p>
-                    <button className="w-full bg-kerala-green hover:bg-kerala-green-light text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
-                      {isMl?'എൻക്വയർ':'Enquire Now'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* SHOP */}
         {activeTab==='shop' && (
           <div>
-            {/* Header */}
             <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
               <div>
                 <h2 className="font-serif text-3xl font-bold text-kerala-deep">{isMl?'ഷോപ്പ്':'Shop'}</h2>
                 <p className="text-gray-500 text-sm mt-1">{isMl?'ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും':'Products & Services by this vendor'}</p>
               </div>
-              <div className="flex gap-2 items-center flex-wrap">
-                {cartCount>0 && (
-                  <div className="flex items-center gap-2 bg-kerala-green/10 border border-kerala-green/20 text-kerala-green text-sm font-semibold px-4 py-2 rounded-xl">
-                    <ShoppingCart size={16}/>{cartCount} {isMl?'ഇനം':'items'} · AED {cartTotal}
-                  </div>
-                )}
-                {/* Owner CTA — add listing */}
-                <Link href={`/${locale}/dashboard`}
-                  className="flex items-center gap-1.5 bg-kerala-gold text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-kerala-deep transition-colors">
-                  <Plus size={15}/>{isMl?'ലിസ്റ്റിംഗ് ചേർക്കൂ':'Add Listing'}
-                </Link>
-              </div>
+              {cartCount > 0 && (
+                <div className="flex items-center gap-2 bg-kerala-green/10 border border-kerala-green/20 text-kerala-green text-sm font-semibold px-4 py-2 rounded-xl">
+                  <ShoppingCart size={16}/>{cartCount} {isMl?'ഇനം':'items'} · AED {cartTotal}
+                </div>
+              )}
             </div>
 
-            {/* Vendor listings from multi-vendor data */}
-            {(() => {
-              const listings = vendorListings.filter(l => l.vendorSlug === slug)
-              if (listings.length === 0) {
-                // Fall back to mock products if no vendor-specific listings exist
-                return (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
-                    <ShoppingCart size={40} className="mx-auto mb-3 text-gray-300" />
-                    <p className="font-semibold text-kerala-deep">{isMl?'ഷോപ്പ് ഒഴിഞ്ഞിരിക്കുന്നു':'No listings yet'}</p>
-                    <p className="text-sm text-gray-400 mt-1 mb-4">{isMl?'ഉൽപ്പന്നങ്ങൾ / സേവനങ്ങൾ ചേർക്കൂ':'Add your products or services to start selling'}</p>
-                    <Link href={`/${locale}/dashboard`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-deep transition-colors inline-flex items-center gap-2">
-                      <Plus size={15}/>{isMl?'ആദ്യ ലിസ്റ്റിംഗ് ചേർക്കൂ':'Add First Listing'}
-                    </Link>
-                  </div>
-                )
-              }
-              return (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                  {listings.map(listing => {
-                    const meta = LISTING_TYPE_META[listing.listingType]
-                    const discount = listing.originalPrice ? Math.round((1 - listing.price / listing.originalPrice) * 100) : 0
-                    return (
-                      <div key={listing.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:border-kerala-green/20 transition-all group flex flex-col">
-                        <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`} className="relative h-40 overflow-hidden block">
-                          <Image src={listing.image} alt={listing.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"/>
-                          <div className="absolute top-2 left-2 flex gap-1.5">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${meta.color}`}>{meta.label}</span>
-                            {discount > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">-{discount}%</span>}
-                            {listing.bestseller && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-kerala-gold text-white">🔥</span>}
-                          </div>
-                        </Link>
-                        <div className="p-3 flex flex-col flex-1">
-                          <h3 className="font-semibold text-kerala-deep text-sm line-clamp-2 flex-1 mb-1.5">
-                            {isMl?listing.nameMl:listing.name}
-                          </h3>
-                          <div className="flex items-center gap-1 mb-2">
-                            {[1,2,3,4,5].map(i=><Star key={i} size={10} className={i<=Math.floor(listing.rating)?'text-kerala-gold fill-kerala-gold':'text-gray-300'}/>)}
-                            <span className="text-[10px] text-gray-400">({listing.reviews})</span>
-                          </div>
-                          <div className="flex items-baseline gap-1 mb-2.5">
-                            {listing.price > 0 ? (
-                              <>
-                                <span className="font-bold text-kerala-green text-sm">AED {listing.price}</span>
-                                {listing.originalPrice && <span className="text-gray-300 text-xs line-through">AED {listing.originalPrice}</span>}
-                              </>
-                            ) : (
-                              <span className="text-orange-500 font-semibold text-xs">{isMl?'ക്വോട്ട്':'Get Quote'}</span>
-                            )}
-                          </div>
-                          {/* Action by type */}
-                          {listing.listingType === 'contact_only' ? (
-                            <a href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                              className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-[#25D366] text-white hover:bg-[#20bd5a] transition-all">
-                              <MessageCircle size={12}/>WhatsApp
-                            </a>
-                          ) : listing.listingType === 'quote' ? (
-                            <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
-                              className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-orange-500 text-white hover:bg-orange-600 transition-all">
-                              <FileText size={12}/>{isMl?'ക്വോട്ട്':'Get Quote'}
-                            </Link>
-                          ) : listing.listingType === 'appointment' ? (
-                            <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
-                              className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-blue-500 text-white hover:bg-blue-600 transition-all">
-                              <Calendar size={12}/>{isMl?'ബുക്ക്':'Book Slot'}
-                            </Link>
-                          ) : listing.listingType === 'direct_service' ? (
-                            <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
-                              className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-purple-600 text-white hover:bg-purple-700 transition-all">
-                              <Zap size={12}/>{isMl?'ഇപ്പോൾ':'Book Now'}
-                            </Link>
-                          ) : (
-                            <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
-                              className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-kerala-green text-white hover:bg-kerala-deep transition-all">
-                              <ShoppingCart size={12}/>{isMl?'കാർട്ടിൽ':'Add to Cart'}
-                            </Link>
-                          )}
+            {shopItems.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
+                <ShoppingCart size={40} className="mx-auto mb-3 text-gray-300"/>
+                <p className="font-semibold text-kerala-deep">{isMl?'ഷോപ്പ് ഒഴിഞ്ഞിരിക്കുന്നു':'No products listed yet'}</p>
+                <p className="text-sm text-gray-400 mt-1">{isMl?'ഉടൻ ചേർക്കും':'Check back soon'}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                {shopItems.map(item => {
+                  const discount = item.original_price ? Math.round((1 - item.price / item.original_price) * 100) : 0
+                  const typeColors: Record<string,string> = {
+                    product: 'bg-kerala-green text-white',
+                    service: 'bg-blue-500 text-white',
+                    appointment: 'bg-purple-500 text-white',
+                    quote: 'bg-orange-500 text-white',
+                    contact_only: 'bg-green-500 text-white',
+                    direct_service: 'bg-kerala-gold text-white',
+                  }
+                  const typeLabels: Record<string,string> = {
+                    product: isMl?'ഉൽപ്പന്നം':'Product',
+                    service: isMl?'സർവ്വീസ്':'Service',
+                    appointment: isMl?'അപ്പോയ്ന്റ്മെന്റ്':'Appointment',
+                    quote: isMl?'ക്വോട്ട്':'Quote',
+                    contact_only: isMl?'ബന്ധപ്പെടൂ':'Contact',
+                    direct_service: isMl?'ഡയറക്ട്':'Direct',
+                  }
+                  return (
+                    <div key={item.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:border-kerala-green/20 transition-all group flex flex-col">
+                      <div className="relative h-40 overflow-hidden bg-gray-100">
+                        {item.image_url && (
+                          <Image src={item.image_url} alt={item.name} fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"
+                            onError={(e)=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                        )}
+                        <div className="absolute top-2 left-2 flex gap-1.5">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[item.listing_type] || 'bg-gray-500 text-white'}`}>
+                            {typeLabels[item.listing_type] || item.listing_type}
+                          </span>
+                          {discount > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">-{discount}%</span>}
+                          {item.is_bestseller && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-kerala-gold text-white">🔥</span>}
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-
-            {/* Browse all shop CTA */}
-            <div className="mt-8 text-center">
-              <Link href={`/${locale}/shop`}
-                className="inline-flex items-center gap-2 border border-kerala-green text-kerala-green font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green hover:text-white transition-colors text-sm">
-                {isMl?'എല്ലാ ഷോപ്പ് ബ്രൗസ് ചെയ്യൂ':'Browse All Vendors in Marketplace'}
-              </Link>
-            </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <h3 className="font-semibold text-kerala-deep text-sm line-clamp-2 flex-1 mb-1.5">
+                          {isMl ? (item.name_ml || item.name) : item.name}
+                        </h3>
+                        {item.rating_avg > 0 && (
+                          <div className="flex items-center gap-1 mb-2">
+                            {[1,2,3,4,5].map(i=><Star key={i} size={10} className={i<=Math.floor(item.rating_avg)?'text-kerala-gold fill-kerala-gold':'text-gray-300'}/>)}
+                            <span className="text-[10px] text-gray-400">({item.review_count})</span>
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-1 mb-2.5">
+                          {item.price > 0 ? (
+                            <>
+                              <span className="font-bold text-kerala-green text-sm">AED {item.price}</span>
+                              {item.original_price && <span className="text-gray-300 text-xs line-through">AED {item.original_price}</span>}
+                            </>
+                          ) : (
+                            <span className="text-orange-500 font-semibold text-xs">{isMl?'ക്വോട്ട്':'Get Quote'}</span>
+                          )}
+                        </div>
+                        {item.stock_status === 'out_of_stock' ? (
+                          <span className="w-full text-center text-xs font-semibold py-2 rounded-lg bg-gray-100 text-gray-400">
+                            {isMl?'സ്റ്റോക്ക് ഇല്ല':'Out of Stock'}
+                          </span>
+                        ) : item.listing_type === 'contact_only' ? (
+                          <a href={`https://wa.me/${(item.whatsapp||business.whatsapp||business.phone).replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-[#25D366] text-white hover:bg-[#20bd5a] transition-all">
+                            <MessageCircle size={12}/>WhatsApp
+                          </a>
+                        ) : item.listing_type === 'quote' ? (
+                          <a href={`https://wa.me/${(business.whatsapp||business.phone).replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-orange-500 text-white hover:bg-orange-600 transition-all">
+                            <FileText size={12}/>{isMl?'ക്വോട്ട്':'Get Quote'}
+                          </a>
+                        ) : item.listing_type === 'appointment' ? (
+                          <a href={`https://wa.me/${(business.whatsapp||business.phone).replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-blue-500 text-white hover:bg-blue-600 transition-all">
+                            <Calendar size={12}/>{isMl?'ബുക്ക്':'Book Slot'}
+                          </a>
+                        ) : item.listing_type === 'direct_service' ? (
+                          <a href={`https://wa.me/${(business.whatsapp||business.phone).replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-purple-600 text-white hover:bg-purple-700 transition-all">
+                            <Zap size={12}/>{isMl?'ഇപ്പോൾ':'Book Now'}
+                          </a>
+                        ) : (
+                          <button onClick={()=>addToCart(item.id)}
+                            className="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 bg-kerala-green text-white hover:bg-kerala-deep transition-all">
+                            <ShoppingCart size={12}/>{isMl?'കാർട്ടിൽ':'Add to Cart'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -459,7 +519,7 @@ export default function CompanyPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {galleryPhotos.map((photo,i)=>(
+              {(business.photos?.length ? business.photos : FALLBACK_GALLERY).map((photo,i)=>(
                 <button key={i} onClick={()=>setLightbox(photo)} className="relative aspect-square overflow-hidden rounded-xl group hover:shadow-lg transition-all">
                   <Image src={photo} alt={`Gallery ${i+1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"/>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
@@ -483,70 +543,117 @@ export default function CompanyPage() {
         {activeTab==='reviews' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
             <div className="lg:col-span-2 space-y-5">
-              {mockReviews.map(review=>(
+              {reviews.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+                  <Star size={36} className="mx-auto mb-3 text-gray-300"/>
+                  <p className="font-semibold text-kerala-deep">{isMl?'ഇനിയും റിവ്യൂ ഇല്ല':'No reviews yet'}</p>
+                  <p className="text-sm text-gray-400 mt-1">{isMl?'ആദ്യ റിവ്യൂ എഴുതൂ':'Be the first to leave a review'}</p>
+                </div>
+              )}
+              {reviews.map(review=>(
                 <div key={review.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <div className="flex items-start gap-3">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                      <Image src={review.avatar} alt={review.name} fill className="object-cover" sizes="40px"/>
+                    <div className="w-10 h-10 rounded-full bg-kerala-green/10 flex items-center justify-center flex-shrink-0 font-bold text-kerala-green text-sm">
+                      {review.reviewer_name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-kerala-deep text-sm">{isMl?review.nameMl:review.name}</span>
-                        <span className="text-gray-400 text-xs">· {review.date}</span>
+                        <span className="font-semibold text-kerala-deep text-sm">{review.reviewer_name}</span>
+                        {review.is_verified && <BadgeCheck size={13} className="text-kerala-green"/>}
+                        <span className="text-gray-400 text-xs">· {new Date(review.created_at).toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</span>
                       </div>
                       <StarRow rating={review.rating} size={13}/>
-                      <p className="text-gray-600 text-sm mt-2 leading-relaxed">{isMl?review.textMl:review.text}</p>
+                      {review.body && <p className="text-gray-600 text-sm mt-2 leading-relaxed">{review.body}</p>}
                       <div className="flex items-center gap-4 mt-3">
-                        <button onClick={()=>setHelpfulVotes(prev=>({...prev,[review.id]:!prev[review.id]}))}
-                          className={`text-xs flex items-center gap-1 transition-colors ${helpfulVotes[review.id]?'text-kerala-green font-semibold':'text-gray-400 hover:text-gray-600'}`}>
-                          <CheckCircle size={12}/>{isMl?'സഹായകരം':'Helpful'} ({review.helpful+(helpfulVotes[review.id]?1:0)})
+                        <button
+                          onClick={async ()=>{
+                            const fp = Math.random().toString(36).slice(2)
+                            const ok = await voteHelpful(review.id, fp)
+                            if (ok) setReviews(prev=>prev.map(r=>r.id===review.id?{...r,helpful_count:r.helpful_count+1}:r))
+                          }}
+                          className="text-xs flex items-center gap-1 text-gray-400 hover:text-kerala-green transition-colors">
+                          <CheckCircle size={12}/>{isMl?'സഹായകരം':'Helpful'} ({review.helpful_count})
                         </button>
-                        <button className="text-xs text-gray-400 hover:text-gray-600">{isMl?'മറുപടി':'Reply'}</button>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
+              {/* Write a Review */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h3 className="font-serif font-bold text-kerala-deep text-lg mb-4">{isMl?'റിവ്യൂ എഴുതൂ':'Write a Review'}</h3>
                 {reviewSubmitted ? (
-                  <div className="text-center py-6"><CheckCircle size={36} className="text-kerala-green mx-auto mb-2"/><p className="font-semibold text-kerala-deep">{isMl?'നന്ദി! റിവ്യൂ ലഭിച്ചു.':'Thank you! Review submitted.'}</p></div>
+                  <div className="text-center py-6">
+                    <CheckCircle size={36} className="text-kerala-green mx-auto mb-2"/>
+                    <p className="font-semibold text-kerala-deep">{isMl?'നന്ദി! റിവ്യൂ ലഭിച്ചു.':'Thank you! Review submitted.'}</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    <input value={reviewForm.name} onChange={e=>setReviewForm(f=>({...f,name:e.target.value}))} placeholder={isMl?'നിങ്ങളുടെ പേര്':'Your name'} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green"/>
+                    <input value={reviewForm.name} onChange={e=>setReviewForm(f=>({...f,name:e.target.value}))}
+                      placeholder={isMl?'നിങ്ങളുടെ പേര്':'Your name'}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green"/>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-500">{isMl?'റേറ്റിംഗ്:':'Rating:'}</span>
                       <div className="flex gap-1">
                         {[1,2,3,4,5].map(s=>(
                           <button key={s} onClick={()=>setReviewForm(f=>({...f,rating:s}))}>
-                            <svg width={20} height={20} viewBox="0 0 24 24" className={s<=reviewForm.rating?'fill-kerala-gold text-kerala-gold':'fill-gray-200 text-gray-200'}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg width={20} height={20} viewBox="0 0 24 24" className={s<=reviewForm.rating?'fill-kerala-gold text-kerala-gold':'fill-gray-200 text-gray-200'}>
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
                           </button>
                         ))}
                       </div>
                     </div>
-                    <textarea value={reviewForm.text} onChange={e=>setReviewForm(f=>({...f,text:e.target.value}))} rows={3} placeholder={isMl?'നിങ്ങളുടെ അനുഭവം...':'Share your experience...'} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green resize-none"/>
-                    <button onClick={()=>setReviewSubmitted(true)} className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-kerala-green-light transition-all">{isMl?'സമർപ്പിക്കൂ':'Submit Review'}</button>
+                    <textarea value={reviewForm.text} onChange={e=>setReviewForm(f=>({...f,text:e.target.value}))}
+                      rows={3} placeholder={isMl?'നിങ്ങളുടെ അനുഭവം...':'Share your experience...'}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green resize-none"/>
+                    <button
+                      onClick={async ()=>{
+                        if (!reviewForm.name.trim() || !reviewForm.text.trim()) return
+                        const { ok } = await submitReview({
+                          listingId:    business.id,
+                          reviewerName: reviewForm.name,
+                          rating:       reviewForm.rating,
+                          body:         reviewForm.text,
+                        })
+                        if (ok) {
+                          setReviewSubmitted(true)
+                          // Reload reviews
+                          getReviews(business.id).then(setReviews)
+                        }
+                      }}
+                      className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-kerala-green-light transition-all">
+                      {isMl?'സമർപ്പിക്കൂ':'Submit Review'}
+                    </button>
                   </div>
                 )}
               </div>
             </div>
+            {/* Rating Summary */}
             <div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-28">
                 <div className="text-center mb-5">
-                  <div className="font-serif text-6xl font-bold text-kerala-deep">{business.rating}</div>
+                  <div className="font-serif text-6xl font-bold text-kerala-deep">{business.rating.toFixed(1)}</div>
                   <div className="flex justify-center mt-2"><StarRow rating={business.rating} size={20}/></div>
                   <p className="text-gray-500 text-sm mt-1">{business.reviewCount} {isMl?'റിവ്യൂ':'reviews'}</p>
                 </div>
-                <div className="space-y-2">
-                  {ratingBreakdown.map(({stars,pct})=>(
-                    <div key={stars} className="flex items-center gap-2 text-xs">
+                {/* Live breakdown from real reviews */}
+                {[5,4,3,2,1].map(stars=>{
+                  const count = reviews.filter(r=>r.rating===stars).length
+                  const pct = reviews.length > 0 ? Math.round((count/reviews.length)*100) : 0
+                  return (
+                    <div key={stars} className="flex items-center gap-2 text-xs mb-2">
                       <span className="w-3">{stars}</span>
-                      <svg width={10} height={10} viewBox="0 0 24 24" className="fill-kerala-gold"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      <div className="flex-1 bg-gray-100 rounded-full h-2"><div className="bg-kerala-gold h-2 rounded-full" style={{width:`${pct}%`}}/></div>
+                      <svg width={10} height={10} viewBox="0 0 24 24" className="fill-kerala-gold">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                      <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <div className="bg-kerala-gold h-2 rounded-full transition-all" style={{width:`${pct}%`}}/>
+                      </div>
                       <span className="w-7 text-right text-gray-500">{pct}%</span>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
             </div>
           </div>

@@ -4,7 +4,9 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
-import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, CheckCircle, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
+import { signIn, signUp, signInWithGoogle } from '@/lib/auth'
 
 type Tab = 'login' | 'register'
 type AccountType = 'user' | 'business'
@@ -23,10 +25,14 @@ function GoogleIcon() {
 export default function AuthPage() {
   const locale = useLocale()
   const isMl = locale === 'ml'
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>('login')
   const [accountType, setAccountType] = useState<AccountType>('user')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   // Form state
   const [loginEmail, setLoginEmail] = useState('')
@@ -38,6 +44,36 @@ export default function AuthPage() {
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
   const [regBusiness, setRegBusiness] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
+
+  const handleLogin = async () => {
+    if (!loginEmail || !loginPassword) { setError(isMl ? 'എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കൂ' : 'Please fill in all fields'); return }
+    setError(''); setSubmitting(true)
+    const { error: err } = await signIn(loginEmail, loginPassword)
+    setSubmitting(false)
+    if (err) { setError(err.message); return }
+    router.push(`/${locale}/dashboard`)
+  }
+
+  const handleRegister = async () => {
+    if (!regName || !regEmail || !regPassword) { setError(isMl ? 'എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കൂ' : 'Please fill in all fields'); return }
+    if (regPassword !== regConfirmPassword) { setError(isMl ? 'പാസ്‌വേഡ് പൊരുത്തപ്പെടുന്നില്ല' : 'Passwords do not match'); return }
+    if (regPassword.length < 8) { setError(isMl ? 'പാസ്‌വേഡ് കുറഞ്ഞത് 8 അക്ഷരം ആണ്' : 'Password must be at least 8 characters'); return }
+    setError(''); setSubmitting(true)
+    const { error: err } = await signUp({
+      email: regEmail, password: regPassword,
+      fullName: regName, phone: regPhone,
+      isBusiness: accountType === 'business',
+    })
+    setSubmitting(false)
+    if (err) { setError(err.message); return }
+    setSuccessMsg(isMl ? 'അക്കൗണ്ട് ഉണ്ടാക്കി! ഇമെയിൽ സ്ഥിരീകരിക്കൂ.' : 'Account created! Please check your email to verify.')
+  }
+
+  const handleGoogle = async () => {
+    setError('')
+    const { error: err } = await signInWithGoogle(locale)
+    if (err) setError(err.message)
+  }
 
   return (
     <main className="min-h-screen bg-kerala-cream flex">
@@ -123,6 +159,18 @@ export default function AuthPage() {
             ))}
           </div>
 
+          {/* Error / Success banners */}
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+              <AlertCircle size={15}/>{error}
+            </div>
+          )}
+          {successMsg && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+              <CheckCircle size={15}/>{successMsg}
+            </div>
+          )}
+
           {tab === 'login' ? (
             /* ─── LOGIN FORM ─── */
             <div>
@@ -134,7 +182,7 @@ export default function AuthPage() {
               </p>
 
               {/* Google */}
-              <button className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all mb-4">
+              <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all mb-4">
                 <GoogleIcon />
                 {isMl ? 'Google ഉപയോഗിച്ച് ലോഗിൻ' : 'Continue with Google'}
               </button>
@@ -189,9 +237,9 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <button className="w-full mt-5 bg-kerala-green hover:bg-kerala-green-light text-white font-semibold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm">
-                {isMl ? 'ലോഗിൻ' : 'Sign In'}
-                <ArrowRight size={15} />
+              <button onClick={handleLogin} disabled={submitting}
+                className="w-full mt-5 bg-kerala-green hover:bg-kerala-green-light disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm">
+                {submitting ? <Loader2 size={16} className="animate-spin"/> : <>{isMl ? 'ലോഗിൻ' : 'Sign In'}<ArrowRight size={15}/></>}
               </button>
 
               <p className="mt-5 text-center text-sm text-gray-500">
@@ -238,7 +286,7 @@ export default function AuthPage() {
               </div>
 
               {/* Google */}
-              <button className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all mb-4">
+              <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all mb-4">
                 <GoogleIcon />
                 {isMl ? 'Google ഉപയോഗിച്ച് രജിസ്ട്രേഷൻ' : 'Sign up with Google'}
               </button>
@@ -377,11 +425,11 @@ export default function AuthPage() {
               </label>
 
               <button
-                disabled={!agreeTerms}
+                onClick={handleRegister}
+                disabled={!agreeTerms || submitting}
                 className="w-full mt-5 bg-kerala-green hover:bg-kerala-green-light disabled:bg-gray-200 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
               >
-                {isMl ? 'അക്കൗണ്ട് ഉണ്ടാക്കൂ' : 'Create Account'}
-                <ArrowRight size={15} />
+                {submitting ? <Loader2 size={16} className="animate-spin"/> : <>{isMl ? 'അക്കൗണ്ട് ഉണ്ടാക്കൂ' : 'Create Account'}<ArrowRight size={15}/></>}
               </button>
 
               <p className="mt-4 text-center text-sm text-gray-500">
