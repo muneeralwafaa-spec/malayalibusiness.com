@@ -9,7 +9,7 @@ import FiltersSidebar from '@/components/directory/FiltersSidebar'
 import ActiveFilters from '@/components/directory/ActiveFilters'
 import BusinessCard from '@/components/directory/BusinessCard'
 import Pagination from '@/components/directory/Pagination'
-import { getListings, adaptListing } from '@/lib/listings'
+import { getListings, adaptListing, getCategoryCounts, getEmirateCounts } from '@/lib/listings'
 import type { FilterState } from '@/types/business'
 import { Building2, TrendingUp, MapPin, Loader2 } from 'lucide-react'
 
@@ -36,11 +36,19 @@ export default function DirectoryPage() {
   const [businesses, setBusinesses] = useState<ReturnType<typeof adaptListing>[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
+  const [emirateCounts,  setEmirateCounts]  = useState<Record<string, number>>({})
 
   const patchFilters = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch, page: 'page' in patch ? patch.page! : 1 }))
 
   const resetFilters = () => setFilters(defaultFilters)
+
+  // Fetch category + emirate counts once on mount
+  useEffect(() => {
+    getCategoryCounts().then(setCategoryCounts)
+    getEmirateCounts().then(setEmirateCounts)
+  }, [])
 
   // Fetch from Supabase whenever filters change
   useEffect(() => {
@@ -92,8 +100,8 @@ export default function DirectoryPage() {
               </h1>
               <p className="text-white/60 text-base">
                 {isMl
-                  ? 'യുഎഇ മുഴുവൻ 15,000+ മലയാളി ബിസിനസുകൾ കണ്ടെത്തൂ'
-                  : 'Discover 15,000+ Malayali businesses across all UAE emirates'}
+                  ? `യുഎഇ മുഴുവൻ ${total > 0 ? `${total}+` : '465+'} മലയാളി ബിസിനസുകൾ കണ്ടെത്തൂ`
+                  : `Discover ${total > 0 ? `${total}+` : '465+'} Malayali businesses across all UAE emirates`}
               </p>
             </div>
 
@@ -132,6 +140,8 @@ export default function DirectoryPage() {
             onReset={resetFilters}
             mobileOpen={mobileSidebarOpen}
             onMobileClose={() => setMobileSidebarOpen(false)}
+            categoryCounts={categoryCounts}
+            emirateCounts={emirateCounts}
           />
 
           {/* Results */}

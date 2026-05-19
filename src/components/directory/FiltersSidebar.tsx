@@ -12,6 +12,8 @@ type Props = {
   onReset: () => void
   mobileOpen: boolean
   onMobileClose: () => void
+  categoryCounts?: Record<string, number>
+  emirateCounts?: Record<string, number>
 }
 
 function Panel({
@@ -32,7 +34,7 @@ function Panel({
   )
 }
 
-export default function FiltersSidebar({ filters, onChange, onReset, mobileOpen, onMobileClose }: Props) {
+export default function FiltersSidebar({ filters, onChange, onReset, mobileOpen, onMobileClose, categoryCounts, emirateCounts }: Props) {
   const locale = useLocale()
   const isMl = locale === 'ml'
 
@@ -103,7 +105,7 @@ export default function FiltersSidebar({ filters, onChange, onReset, mobileOpen,
               >
                 <span>{isMl ? cat.nameMl : cat.name}</span>
                 <span className={`text-xs ${filters.category === cat.slug ? 'text-white/70' : 'text-gray-400'}`}>
-                  {cat.count.toLocaleString()}
+                  {(categoryCounts?.[cat.slug] ?? 0).toLocaleString()}
                 </span>
               </button>
             ))}
@@ -135,7 +137,7 @@ export default function FiltersSidebar({ filters, onChange, onReset, mobileOpen,
               >
                 <span>{isMl ? em.nameMl : em.name}</span>
                 <span className={`text-xs ${filters.emirate === em.slug ? 'text-white/70' : 'text-gray-400'}`}>
-                  {em.count.toLocaleString()}
+                  {(emirateCounts?.[em.slug] ?? 0).toLocaleString()}
                 </span>
               </button>
             ))}

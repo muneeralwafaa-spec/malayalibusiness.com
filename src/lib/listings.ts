@@ -222,6 +222,36 @@ export async function getShopListings(listingId: string): Promise<ShopListingRow
   return (data ?? []) as ShopListingRow[]
 }
 
+// ── Real category counts from DB ─────────────────────────────────────────────
+
+export async function getCategoryCounts(): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('public_listings')
+    .select('category_slug')
+
+  if (error) { console.error('[getCategoryCounts]', error.message); return {} }
+  return (data ?? []).reduce((acc: Record<string, number>, row: { category_slug: string | null }) => {
+    const slug = row.category_slug
+    if (slug) acc[slug] = (acc[slug] || 0) + 1
+    return acc
+  }, {})
+}
+
+// ── Real emirate counts from DB ───────────────────────────────────────────────
+
+export async function getEmirateCounts(): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('public_listings')
+    .select('emirate')
+
+  if (error) { console.error('[getEmirateCounts]', error.message); return {} }
+  return (data ?? []).reduce((acc: Record<string, number>, row: { emirate: string | null }) => {
+    const slug = row.emirate?.toLowerCase().replace(/\s+/g, '-')
+    if (slug) acc[slug] = (acc[slug] || 0) + 1
+    return acc
+  }, {})
+}
+
 // ── Map Supabase row → frontend-friendly shape ────────────────────────────────
 // Use this to adapt ListingRow to what UI components expect
 
