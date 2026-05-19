@@ -33,7 +33,7 @@ export default function FeaturedListings() {
 
   useEffect(() => {
     getFeaturedListings(6).then((rows) => {
-      setListings(rows.map(adaptListing))
+      setListings(rows.map((r) => adaptListing(r)))
       setLoading(false)
     })
   }, [])
