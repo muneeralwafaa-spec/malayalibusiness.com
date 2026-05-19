@@ -21,6 +21,7 @@ export type ListingsResult = {
   page:     number
   perPage:  number
   pages:    number
+  error?:   string
 }
 
 // ── Shared select fields (query listings table directly — bypasses view perms) ─
@@ -84,7 +85,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
   q = q.range(from, from + perPage - 1)
 
   const { data, error, count } = await q
-  if (error) { console.error('[getListings]', error.message); return { listings: [], total: 0, page, perPage, pages: 0 } }
+  if (error) { console.error('[getListings]', error.message); return { listings: [], total: 0, page, perPage, pages: 0, error: error.message } }
 
   const total = count ?? 0
   return {

@@ -36,6 +36,7 @@ export default function DirectoryPage() {
   const [businesses, setBusinesses] = useState<ReturnType<typeof adaptListing>[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [dbError, setDbError] = useState<string | null>(null)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [emirateCounts,  setEmirateCounts]  = useState<Record<string, number>>({})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,8 +72,9 @@ export default function DirectoryPage() {
       sort:     filters.sort,
       page:     filters.page,
       perPage:  PER_PAGE,
-    }).then(({ listings, total }) => {
+    }).then(({ listings, total, error }) => {
       if (cancelled) return
+      if (error) setDbError(error)
       setBusinesses(listings.map((l) => adaptListing(l, categoryMap)))
       setTotal(total)
       setLoading(false)
@@ -155,6 +157,12 @@ export default function DirectoryPage() {
 
           {/* Results */}
           <div className="flex-1 min-w-0">
+            {/* DEBUG: show Supabase error if any */}
+            {dbError && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-300 rounded-xl text-red-800 text-sm font-mono break-all">
+                <strong>Supabase error:</strong> {dbError}
+              </div>
+            )}
             {/* Active Filters + Sort/View */}
             <ActiveFilters
               filters={filters}
