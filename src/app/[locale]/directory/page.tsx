@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -9,9 +9,9 @@ import FiltersSidebar from '@/components/directory/FiltersSidebar'
 import ActiveFilters from '@/components/directory/ActiveFilters'
 import BusinessCard from '@/components/directory/BusinessCard'
 import Pagination from '@/components/directory/Pagination'
-import { mockBusinesses } from '@/lib/mock-businesses'
+import { getListings, adaptListing } from '@/lib/listings'
 import type { FilterState } from '@/types/business'
-import { Building2, TrendingUp, MapPin } from 'lucide-react'
+import { Building2, TrendingUp, MapPin, Loader2 } from 'lucide-react'
 
 const PER_PAGE = 9
 
@@ -33,46 +33,43 @@ export default function DirectoryPage() {
   const isMl = locale === 'ml'
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [businesses, setBusinesses] = useState<ReturnType<typeof adaptListing>[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   const patchFilters = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch, page: 'page' in patch ? patch.page! : 1 }))
 
   const resetFilters = () => setFilters(defaultFilters)
 
-  // Filter + sort logic
-  const filtered = useMemo(() => {
-    let list = [...mockBusinesses]
-    if (filters.query) {
-      const q = filters.query.toLowerCase()
-      list = list.filter(
-        (b) =>
-          b.name.toLowerCase().includes(q) ||
-          b.nameMl.includes(q) ||
-          b.description.toLowerCase().includes(q) ||
-          b.tags.some((t) => t.toLowerCase().includes(q))
-      )
-    }
-    if (filters.category) list = list.filter((b) => b.categorySlug === filters.category)
-    if (filters.emirate) list = list.filter((b) => b.emirateSlug === filters.emirate)
-    if (filters.rating) list = list.filter((b) => b.rating >= filters.rating!)
-    if (filters.priceRange.length) list = list.filter((b) => filters.priceRange.includes(b.priceRange))
-    if (filters.verified) list = list.filter((b) => b.verified)
-    if (filters.open) list = list.filter((b) => b.open)
-
-    if (filters.sort === 'rating') list.sort((a, b) => b.rating - a.rating)
-    else if (filters.sort === 'reviews') list.sort((a, b) => b.reviewCount - a.reviewCount)
-    else if (filters.sort === 'newest') list.sort((a, b) => (b.established ?? 0) - (a.established ?? 0))
-    else list.sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0))
-
-    return list
+  // Fetch from Supabase whenever filters change
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    getListings({
+      query:    filters.query,
+      category: filters.category,
+      emirate:  filters.emirate,
+      verified: filters.verified || undefined,
+      sort:     filters.sort,
+      page:     filters.page,
+      perPage:  PER_PAGE,
+    }).then(({ listings, total }) => {
+      if (cancelled) return
+      setBusinesses(listings.map(adaptListing))
+      setTotal(total)
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [filters])
-
-  const paginated = filtered.slice((filters.page - 1) * PER_PAGE, filters.page * PER_PAGE)
 
   const activeFilterCount = [
     filters.category, filters.emirate, filters.rating,
     filters.verified, filters.open,
   ].filter(Boolean).length
+
+  const filtered = businesses   // already filtered server-side
+  const paginated = businesses  // already paginated server-side
 
   return (
     <main className="min-h-screen bg-kerala-cream">
@@ -103,9 +100,9 @@ export default function DirectoryPage() {
             {/* Quick stats */}
             <div className="flex items-center gap-6 flex-shrink-0">
               {[
-                { icon: Building2, val: '15K+', label: isMl ? 'ബിസിനസ്' : 'Businesses' },
+                { icon: Building2, val: total > 0 ? `${total}+` : '465+', label: isMl ? 'ബിസിനസ്' : 'Businesses' },
                 { icon: MapPin, val: '7', label: isMl ? 'എമിറേറ്റ്' : 'Emirates' },
-                { icon: TrendingUp, val: '50K+', label: isMl ? 'റിവ്യൂ' : 'Reviews' },
+                { icon: TrendingUp, val: '7', label: isMl ? 'കാറ്റഗറി' : 'Categories' },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <div className="text-kerala-gold-light font-serif font-bold text-xl">{s.val}</div>
@@ -148,7 +145,11 @@ export default function DirectoryPage() {
             />
 
             {/* Grid / List */}
-            {paginated.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-32">
+                <Loader2 size={36} className="animate-spin text-kerala-green" />
+              </div>
+            ) : paginated.length === 0 ? (
               <EmptyState isMl={isMl} onReset={resetFilters} />
             ) : (
               <>
@@ -166,7 +167,7 @@ export default function DirectoryPage() {
 
                 <Pagination
                   page={filters.page}
-                  total={filtered.length}
+                  total={total}
                   perPage={PER_PAGE}
                   onChange={(p) => {
                     patchFilters({ page: p })
