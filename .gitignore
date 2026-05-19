@@ -35,3 +35,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .next-dev.log
+
+# migration script — secrets and output files
+scripts/.env.migration
+scripts/migration-report.json
+scripts/error-log.json
+scripts/node_modules
