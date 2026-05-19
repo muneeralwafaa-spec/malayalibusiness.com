@@ -32,7 +32,7 @@ const LISTING_SELECT = `
   plan, is_featured, is_verified,
   rating_avg, review_count, views_count, created_at,
   gallery_urls, services, languages,
-  categories ( slug, name, name_ml, icon )
+  category_id
 ` as const
 
 // ── Fetch listings (paginated + filtered) ─────────────────────────────────────
@@ -232,15 +232,29 @@ export async function getShopListings(listingId: string): Promise<ShopListingRow
 // ── Real category counts from DB ─────────────────────────────────────────────
 
 export async function getCategoryCounts(): Promise<Record<string, number>> {
+  // Count listings per category by joining category_id with categories table
+  const { data: cats, error: catErr } = await supabase
+    .from('categories')
+    .select('id, slug')
+
+  if (catErr) { console.error('[getCategoryCounts cats]', catErr.message); return {} }
+
   const { data, error } = await supabase
     .from('listings')
-    .select('categories ( slug )')
+    .select('category_id')
     .eq('status', 'active')
 
   if (error) { console.error('[getCategoryCounts]', error.message); return {} }
+
+  // Build id→slug map
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const idToSlug: Record<string, string> = (cats ?? []).reduce((acc: Record<string, string>, c: any) => {
+    acc[c.id] = c.slug; return acc
+  }, {})
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).reduce((acc: Record<string, number>, row: any) => {
-    const slug = row.categories?.slug
+    const slug = idToSlug[row.category_id]
     if (slug) acc[slug] = (acc[slug] || 0) + 1
     return acc
   }, {})
@@ -267,10 +281,12 @@ export async function getEmirateCounts(): Promise<Record<string, number>> {
 // Use this to adapt ListingRow to what UI components expect
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function adaptListing(row: ListingRow | any) {
+export function adaptListing(row: ListingRow | any, categoryMap?: Record<string, { name: string; name_ml: string; slug: string }>) {
   // Support both flat (public_listings view) and nested (direct table query) shapes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cat = (row as any).categories as { slug?: string; name?: string; name_ml?: string } | null
+  const cat = categoryMap && row.category_id
+    ? categoryMap[row.category_id]
+    : ((row as any).categories as { slug?: string; name?: string; name_ml?: string } | null)
   return {
     id:           row.id,
     name:         row.name,

@@ -9,7 +9,7 @@ import FiltersSidebar from '@/components/directory/FiltersSidebar'
 import ActiveFilters from '@/components/directory/ActiveFilters'
 import BusinessCard from '@/components/directory/BusinessCard'
 import Pagination from '@/components/directory/Pagination'
-import { getListings, adaptListing, getCategoryCounts, getEmirateCounts } from '@/lib/listings'
+import { getListings, adaptListing, getCategoryCounts, getEmirateCounts, getCategories } from '@/lib/listings'
 import type { FilterState } from '@/types/business'
 import { Building2, TrendingUp, MapPin, Loader2 } from 'lucide-react'
 
@@ -38,6 +38,8 @@ export default function DirectoryPage() {
   const [loading, setLoading] = useState(true)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [emirateCounts,  setEmirateCounts]  = useState<Record<string, number>>({})
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [categoryMap,    setCategoryMap]    = useState<Record<string, any>>({})
 
   const patchFilters = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch, page: 'page' in patch ? patch.page! : 1 }))
@@ -48,6 +50,13 @@ export default function DirectoryPage() {
   useEffect(() => {
     getCategoryCounts().then(setCategoryCounts)
     getEmirateCounts().then(setEmirateCounts)
+    // Build id→{name,name_ml,slug} map for adaptListing
+    getCategories().then((cats) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map: Record<string, any> = {}
+      cats.forEach((c: any) => { map[c.id] = { name: c.name, name_ml: c.name_ml, slug: c.slug } })
+      setCategoryMap(map)
+    })
   }, [])
 
   // Fetch from Supabase whenever filters change
@@ -64,7 +73,7 @@ export default function DirectoryPage() {
       perPage:  PER_PAGE,
     }).then(({ listings, total }) => {
       if (cancelled) return
-      setBusinesses(listings.map(adaptListing))
+      setBusinesses(listings.map((l) => adaptListing(l, categoryMap)))
       setTotal(total)
       setLoading(false)
     })
