@@ -2,17 +2,15 @@
   "name": "malayalibusiness-migration",
   "version": "1.0.0",
   "description": "Data migration script — scrape WordPress site → Supabase",
-  "type": "module",
   "private": true,
   "scripts": {
-    "migrate": "node migrate.mjs",
-    "dry-run": "node migrate.mjs --dry-run",
-    "test-scrape": "node migrate.mjs --test-scrape"
+    "migrate": "node migrate.js",
+    "test-scrape": "node migrate.js --test-scrape"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.4",
-    "axios": "^1.7.9",
-    "cheerio": "^1.0.0",
-    "dotenv": "^16.4.7"
+    "@supabase/supabase-js": "^2.106.0",
+    "axios": "^1.16.1",
+    "cheerio": "^1.2.0",
+    "dotenv": "^16.6.1"
   }
 }
