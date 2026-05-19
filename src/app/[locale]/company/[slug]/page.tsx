@@ -205,7 +205,7 @@ export default function CompanyPage() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h2 className="font-serif text-xl font-bold text-kerala-deep mb-3">{isMl?'ഞങ്ങളെ കുറിച്ച്':'About Us'}</h2>
                 <p className="text-gray-600 text-sm leading-relaxed">{isMl?business.descriptionMl:business.description}</p>
-                <div className="flex flex-wrap gap-2 mt-4">{(isMl?business.tagsMl:business.tags).map(tag=><span key={tag} className="bg-kerala-cream text-kerala-green text-xs font-medium px-3 py-1 rounded-full">{tag}</span>)}</div>
+                <div className="flex flex-wrap gap-2 mt-4">{(isMl?business.tagsMl:business.tags).map((tag: string)=><span key={tag} className="bg-kerala-cream text-kerala-green text-xs font-medium px-3 py-1 rounded-full">{tag}</span>)}</div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
@@ -221,7 +221,7 @@ export default function CompanyPage() {
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-3"><Languages size={16} className="text-kerala-green"/><h3 className="font-semibold text-kerala-deep text-sm">{isMl?'ഭാഷകൾ':'Languages'}</h3></div>
-                <div className="flex flex-wrap gap-2">{business.languages.map(l=><span key={l} className="bg-kerala-cream border border-kerala-green/20 text-kerala-deep text-xs px-3 py-1 rounded-full">{l}</span>)}</div>
+                <div className="flex flex-wrap gap-2">{business.languages.map((l: string)=><span key={l} className="bg-kerala-cream border border-kerala-green/20 text-kerala-deep text-xs px-3 py-1 rounded-full">{l}</span>)}</div>
               </div>
             </div>
             <div className="space-y-5">
@@ -519,7 +519,7 @@ export default function CompanyPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {(business.photos?.length ? business.photos : FALLBACK_GALLERY).map((photo,i)=>(
+              {(business.photos?.length ? business.photos : FALLBACK_GALLERY).map((photo: string, i: number)=>(
                 <button key={i} onClick={()=>setLightbox(photo)} className="relative aspect-square overflow-hidden rounded-xl group hover:shadow-lg transition-all">
                   <Image src={photo} alt={`Gallery ${i+1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"/>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">

@@ -23,6 +23,18 @@ export type ListingsResult = {
   pages:    number
 }
 
+// ── Shared select fields (query listings table directly — bypasses view perms) ─
+
+const LISTING_SELECT = `
+  id, slug, name, name_ml, tagline, tagline_ml,
+  logo_url, cover_url, emirate, area, address,
+  phone, whatsapp, email, website, description,
+  plan, is_featured, is_verified,
+  rating_avg, review_count, views_count, created_at,
+  gallery_urls, services, languages,
+  categories ( slug, name, name_ml, icon )
+` as const
+
 // ── Fetch listings (paginated + filtered) ─────────────────────────────────────
 
 export async function getListings(filters: ListingFilters = {}): Promise<ListingsResult> {
@@ -38,47 +50,46 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
     perPage  = 9,
   } = filters
 
-  let q = supabase
-    .from('public_listings')
-    .select('*', { count: 'exact' })
-
-  // Text search
-  if (query) {
-    q = q.or(`name.ilike.%${query}%,tagline.ilike.%${query}%,description.ilike.%${query}%`)
+  // Resolve category slug → ID (one cheap lookup)
+  let categoryId: string | null = null
+  if (category) {
+    const { data: cat } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', category)
+      .single()
+    if (!cat) return { listings: [], total: 0, page, perPage, pages: 0 }
+    categoryId = cat.id as string
   }
 
-  // Filters
-  if (category) q = q.eq('category_slug', category)
-  if (emirate)  q = q.eq('emirate', emirate)
-  if (verified) q = q.eq('is_verified', true)
-  if (featured) q = q.eq('is_featured', true)
-  if (plan)     q = q.eq('plan', plan)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = supabase
+    .from('listings')
+    .select(LISTING_SELECT, { count: 'exact' })
+    .eq('status', 'active')
 
-  // Sorting
-  if (sort === 'rating')    q = q.order('rating_avg',   { ascending: false })
+  if (query)      q = q.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+  if (categoryId) q = q.eq('category_id', categoryId)
+  if (emirate)    q = q.eq('emirate', emirate)
+  if (verified)   q = q.eq('is_verified', true)
+  if (featured)   q = q.eq('is_featured', true)
+  if (plan)       q = q.eq('plan', plan)
+
+  if (sort === 'rating')       q = q.order('rating_avg',   { ascending: false })
   else if (sort === 'reviews') q = q.order('review_count', { ascending: false })
   else if (sort === 'newest')  q = q.order('created_at',   { ascending: false })
-  else {
-    // relevance: featured first, then by rating
-    q = q.order('is_featured', { ascending: false })
-         .order('rating_avg',  { ascending: false })
-  }
+  else q = q.order('is_featured', { ascending: false }).order('rating_avg', { ascending: false })
 
-  // Pagination
   const from = (page - 1) * perPage
-  const to   = from + perPage - 1
-  q = q.range(from, to)
+  q = q.range(from, from + perPage - 1)
 
   const { data, error, count } = await q
-
-  if (error) {
-    console.error('[getListings]', error.message)
-    return { listings: [], total: 0, page, perPage, pages: 0 }
-  }
+  if (error) { console.error('[getListings]', error.message); return { listings: [], total: 0, page, perPage, pages: 0 } }
 
   const total = count ?? 0
   return {
-    listings: (data ?? []) as ListingRow[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listings: (data ?? []) as any[],
     total,
     page,
     perPage,
@@ -90,33 +101,29 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
 
 export async function getListing(slug: string): Promise<ListingRow | null> {
   const { data, error } = await supabase
-    .from('public_listings')
-    .select('*')
+    .from('listings')
+    .select(LISTING_SELECT)
     .eq('slug', slug)
+    .eq('status', 'active')
     .single()
 
-  if (error) {
-    console.error('[getListing]', error.message)
-    return null
-  }
-  return data as ListingRow
+  if (error) { console.error('[getListing]', error.message); return null }
+  return data as unknown as ListingRow
 }
 
 // ── Fetch featured listings (for homepage) ────────────────────────────────────
 
 export async function getFeaturedListings(limit = 6): Promise<ListingRow[]> {
   const { data, error } = await supabase
-    .from('public_listings')
-    .select('*')
+    .from('listings')
+    .select(LISTING_SELECT)
+    .eq('status', 'active')
     .order('is_featured', { ascending: false })
     .order('rating_avg',  { ascending: false })
     .limit(limit)
 
-  if (error) {
-    console.error('[getFeaturedListings]', error.message)
-    return []
-  }
-  return (data ?? []) as ListingRow[]
+  if (error) { console.error('[getFeaturedListings]', error.message); return [] }
+  return (data ?? []) as unknown as ListingRow[]
 }
 
 // ── Fetch all categories ──────────────────────────────────────────────────────
@@ -226,12 +233,14 @@ export async function getShopListings(listingId: string): Promise<ShopListingRow
 
 export async function getCategoryCounts(): Promise<Record<string, number>> {
   const { data, error } = await supabase
-    .from('public_listings')
-    .select('category_slug')
+    .from('listings')
+    .select('categories ( slug )')
+    .eq('status', 'active')
 
   if (error) { console.error('[getCategoryCounts]', error.message); return {} }
-  return (data ?? []).reduce((acc: Record<string, number>, row: { category_slug: string | null }) => {
-    const slug = row.category_slug
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).reduce((acc: Record<string, number>, row: any) => {
+    const slug = row.categories?.slug
     if (slug) acc[slug] = (acc[slug] || 0) + 1
     return acc
   }, {})
@@ -241,12 +250,13 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
 
 export async function getEmirateCounts(): Promise<Record<string, number>> {
   const { data, error } = await supabase
-    .from('public_listings')
+    .from('listings')
     .select('emirate')
+    .eq('status', 'active')
 
   if (error) { console.error('[getEmirateCounts]', error.message); return {} }
-  return (data ?? []).reduce((acc: Record<string, number>, row: { emirate: string | null }) => {
-    // DB stores emirate as lowercase slug with underscores e.g. 'abu_dhabi'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).reduce((acc: Record<string, number>, row: any) => {
     const slug = row.emirate?.toLowerCase()
     if (slug) acc[slug] = (acc[slug] || 0) + 1
     return acc
@@ -256,15 +266,19 @@ export async function getEmirateCounts(): Promise<Record<string, number>> {
 // ── Map Supabase row → frontend-friendly shape ────────────────────────────────
 // Use this to adapt ListingRow to what UI components expect
 
-export function adaptListing(row: ListingRow) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptListing(row: ListingRow | any) {
+  // Support both flat (public_listings view) and nested (direct table query) shapes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cat = (row as any).categories as { slug?: string; name?: string; name_ml?: string } | null
   return {
     id:           row.id,
     name:         row.name,
     nameMl:       row.name_ml        ?? row.name,
     slug:         row.slug,
-    category:     row.category_name  ?? '',
-    categoryMl:   row.category_name_ml ?? row.category_name ?? '',
-    categorySlug: row.category_slug  ?? '',
+    category:     cat?.name          ?? row.category_name  ?? '',
+    categoryMl:   cat?.name_ml       ?? row.category_name_ml ?? cat?.name ?? '',
+    categorySlug: cat?.slug          ?? row.category_slug  ?? '',
     location:     [row.area, row.emirate].filter(Boolean).join(', '),
     locationMl:   [row.area, row.emirate].filter(Boolean).join(', '),
     emirate:      row.emirate,
@@ -282,7 +296,7 @@ export function adaptListing(row: ListingRow) {
     photos:       row.gallery_urls   ?? [],
     description:  row.description    ?? '',
     descriptionMl:row.description    ?? '',
-    tags:         row.services?.filter(s => !s.startsWith('source:')) ?? [],
+    tags:         row.services?.filter((s: string) => !s.startsWith('source:')) ?? [],
     tagsMl:       [],
     verified:     row.is_verified,
     featured:     row.is_featured,
