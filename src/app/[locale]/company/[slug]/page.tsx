@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import {
   getListing, adaptListing, incrementViews,
   getServices, getReviews, submitReview, voteHelpful,
-  getTeamMembers, getShopListings,
+  getTeamMembers, getShopListings, getCategories,
 } from '@/lib/listings'
 import type { ServiceRow, ReviewRow, TeamMemberRow, ShopListingRow } from '@/lib/supabase'
 import {
@@ -21,14 +21,6 @@ import {
 
 type Tab = 'home' | 'about' | 'services' | 'shop' | 'gallery' | 'reviews' | 'contact'
 
-const FALLBACK_GALLERY = [
-  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80&auto=format&fit=crop',
-]
 
 function StarRow({ rating, size=14 }: { rating:number; size?:number }) {
   return (
@@ -65,25 +57,32 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!slug) return
     setLoading(true)
-    getListing(slug).then((row) => {
-      if (row) {
-        const adapted = adaptListing(row)
-        setBusiness(adapted)
+    // Load categories map first so adaptListing gets correct category name
+    getCategories().then((cats) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const catMap: Record<string, any> = {}
+      cats.forEach((c: any) => { catMap[c.id] = { name: c.name, name_ml: c.name_ml, slug: c.slug } })
+
+      getListing(slug).then((row) => {
+        if (row) {
+          const adapted = adaptListing(row, catMap)
+          setBusiness(adapted)
         incrementViews(slug)
         // Fetch tab data in parallel
-        Promise.all([
-          getServices(row.id),
-          getReviews(row.id),
-          getTeamMembers(row.id),
-          getShopListings(row.id),
-        ]).then(([svc, rev, tm, shop]) => {
-          setServices(svc)
-          setReviews(rev)
-          setTeam(tm)
-          setShopItems(shop)
-        })
-      }
-      setLoading(false)
+          Promise.all([
+            getServices(row.id),
+            getReviews(row.id),
+            getTeamMembers(row.id),
+            getShopListings(row.id),
+          ]).then(([svc, rev, tm, shop]) => {
+            setServices(svc)
+            setReviews(rev)
+            setTeam(tm)
+            setShopItems(shop)
+          })
+        }
+        setLoading(false)
+      })
     })
   }, [slug])
 
@@ -518,16 +517,24 @@ export default function CompanyPage() {
                 <Camera size={15}/> {isMl?'ഫോട്ടോ ചേർക്കൂ':'Add Photo'}
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {(business.photos?.length ? business.photos : FALLBACK_GALLERY).map((photo: string, i: number)=>(
-                <button key={i} onClick={()=>setLightbox(photo)} className="relative aspect-square overflow-hidden rounded-xl group hover:shadow-lg transition-all">
-                  <Image src={photo} alt={`Gallery ${i+1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"/>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                    <Camera size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity"/>
-                  </div>
-                </button>
-              ))}
-            </div>
+            {business.photos?.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {business.photos.map((photo: string, i: number)=>(
+                  <button key={i} onClick={()=>setLightbox(photo)} className="relative aspect-square overflow-hidden rounded-xl group hover:shadow-lg transition-all">
+                    <Image src={photo} alt={`Gallery ${i+1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="300px"/>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                      <Camera size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity"/>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                <Camera size={40} className="mx-auto mb-3 text-gray-300"/>
+                <p className="font-semibold text-kerala-deep">{isMl?'ഫോട്ടോകൾ ഒന്നും ചേർത്തിട്ടില്ല':'No photos added yet'}</p>
+                <p className="text-sm text-gray-400 mt-1">{isMl?'ഉടൻ ചേർക്കും':'Check back soon'}</p>
+              </div>
+            )}
             {lightbox && (
               <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={()=>setLightbox(null)}>
                 <button className="absolute top-4 right-4 text-white bg-white/20 rounded-full p-2"><X size={20}/></button>
