@@ -39,6 +39,18 @@ export async function signUp(params: {
       },
     },
   })
+
+  // Create profile row immediately after sign-up (no DB trigger exists)
+  if (data.user && !error) {
+    await supabase.from('profiles').upsert({
+      id:                data.user.id,
+      email:             params.email,
+      full_name:         params.fullName || null,
+      phone:             params.phone    || null,
+      is_business_owner: params.isBusiness ?? false,
+    }, { onConflict: 'id', ignoreDuplicates: true })
+  }
+
   return { user: data.user, session: data.session, error }
 }
 
