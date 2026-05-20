@@ -33,14 +33,22 @@ export default function DirectoryPage() {
   const isMl = locale === 'ml'
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [businesses, setBusinesses] = useState<ReturnType<typeof adaptListing>[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [dbError, setDbError] = useState<string | null>(null)
+  // Store raw listings — adapt at render time so categoryMap race is avoided
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawListings,    setRawListings]    = useState<any[]>([])
+  const [total,          setTotal]          = useState(0)
+  const [loading,        setLoading]        = useState(true)
+  const [dbError,        setDbError]        = useState<string | null>(null)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [emirateCounts,  setEmirateCounts]  = useState<Record<string, number>>({})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categoryMap,    setCategoryMap]    = useState<Record<string, any>>({})
+
+  // Adapt raw listings whenever rawListings or categoryMap changes (fixes race condition)
+  const businesses = useMemo(
+    () => rawListings.map((l) => adaptListing(l, categoryMap)),
+    [rawListings, categoryMap]
+  )
 
   const patchFilters = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch, page: 'page' in patch ? patch.page! : 1 }))
@@ -60,7 +68,7 @@ export default function DirectoryPage() {
     })
   }, [])
 
-  // Fetch from Supabase whenever filters change
+  // Fetch from Supabase whenever filters change — store raw (unadapted) rows
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -75,7 +83,7 @@ export default function DirectoryPage() {
     }).then(({ listings, total, error }) => {
       if (cancelled) return
       if (error) setDbError(error)
-      setBusinesses(listings.map((l) => adaptListing(l, categoryMap)))
+      setRawListings(listings)
       setTotal(total)
       setLoading(false)
     })
