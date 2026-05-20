@@ -936,8 +936,11 @@ function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; pr
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
           {/* Avatar */}
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-gray-200">
-              <Image src={avatarPreview} alt="Avatar" fill className="object-cover" sizes="64px" />
+            <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-gray-200 bg-kerala-cream flex items-center justify-center">
+              {avatarPreview
+                ? <Image src={avatarPreview} alt="Avatar" fill className="object-cover" sizes="64px" />
+                : <span className="text-2xl font-bold text-kerala-green">{(profile?.full_name || user?.email || 'U').charAt(0).toUpperCase()}</span>
+              }
             </div>
             <div>
               <p className="font-semibold text-sm text-kerala-deep mb-1">{isMl ? 'പ്രൊഫൈൽ ഫോട്ടോ' : 'Profile Photo'}</p>
@@ -948,36 +951,26 @@ function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; pr
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { label: isMl ? 'പേര് (ഇംഗ്ലീഷ്)' : 'Name (English)', value: 'Rajan Nair', type: 'text' },
-              { label: isMl ? 'പേര് (മലയാളം)' : 'Name (Malayalam)', value: 'രാജൻ നായർ', type: 'text' },
-              { label: isMl ? 'ഇ-മെയിൽ' : 'Email', value: 'rajan@example.com', type: 'email' },
-              { label: isMl ? 'ഫോൺ' : 'Phone', value: '+971 50 123 4567', type: 'tel' },
-              { label: 'WhatsApp', value: '+971 50 123 4567', type: 'tel' },
-              { label: isMl ? 'സ്ഥലം' : 'Location', value: 'Dubai, UAE', type: 'text' },
-            ].map(f => (
-              <div key={f.label}>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{f.label}</label>
-                <input
-                  type={f.type}
-                  defaultValue={f.value}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
-                />
-              </div>
-            ))}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'പേര്' : 'Full Name'}</label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഫോൺ' : 'Phone'}</label>
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഇ-മെയിൽ' : 'Email'}</label>
+              <input type="email" value={user?.email || ''} disabled
+                className="w-full px-3 py-2.5 border border-gray-100 rounded-xl text-sm bg-gray-100 text-gray-400 cursor-not-allowed" />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ബയോ' : 'Bio'}</label>
-            <textarea
-              defaultValue="Business owner with 15 years experience in the hospitality industry in the UAE."
-              rows={3}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none"
-            />
-          </div>
-
-          <button className="bg-kerala-green text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity">
-            {isMl ? 'സേവ് ചെയ്യൂ' : 'Save Changes'}
+          <button onClick={saveProfile} disabled={saving}
+            className="bg-kerala-green text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60">
+            {saving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'സേവ് ചെയ്യുന്നു...' : 'Saving...'}</> : saved ? (isMl ? '✓ സേവ് ചെയ്തു' : '✓ Saved!') : (isMl ? 'സേവ് ചെയ്യൂ' : 'Save Changes')}
           </button>
         </div>
       )}
