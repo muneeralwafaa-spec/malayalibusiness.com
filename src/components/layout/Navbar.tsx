@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { Menu, X, ChevronDown, Globe } from 'lucide-react'
@@ -38,17 +39,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-lg bg-kerala-gold flex items-center justify-center">
-              <span className="text-white font-serif font-bold text-lg">M</span>
-            </div>
-            <div>
-              <span className="text-white font-serif font-bold text-xl tracking-tight leading-none block">
-                MalayaliBusiness
-              </span>
-              <span className="text-kerala-gold text-xs font-medium tracking-widest uppercase">
-                UAE
-              </span>
+          <Link href={`/${locale}`} className="flex items-center group">
+            <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm">
+              <Image
+                src="/logo.png"
+                alt="MalayaliBusiness UAE"
+                width={160}
+                height={44}
+                className="h-9 w-auto"
+                priority
+              />
             </div>
           </Link>
 
