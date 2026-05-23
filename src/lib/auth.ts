@@ -22,11 +22,12 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signUp(params: {
-  email:     string
-  password:  string
-  fullName:  string
-  phone?:    string
-  isBusiness?: boolean
+  email:        string
+  password:     string
+  fullName:     string
+  phone?:       string
+  isBusiness?:  boolean
+  businessName?: string
 }) {
   const { data, error } = await supabase.auth.signUp({
     email:    params.email,
@@ -36,6 +37,7 @@ export async function signUp(params: {
         full_name:         params.fullName,
         phone:             params.phone ?? '',
         is_business_owner: params.isBusiness ?? false,
+        business_name:     params.businessName ?? '',
       },
     },
   })

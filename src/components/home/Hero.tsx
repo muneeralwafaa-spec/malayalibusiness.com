@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Search, MapPin, ChevronDown, Star, Building2, Users, Globe } from 'lucide-react'
 import { useLocale } from 'next-intl'
 
@@ -23,7 +24,15 @@ export default function Hero() {
   const [category, setCategory] = useState('All Categories')
   const [catOpen, setCatOpen] = useState(false)
   const locale = useLocale()
+  const router = useRouter()
   const isMl = locale === 'ml'
+
+  function handleSearch() {
+    const params = new URLSearchParams()
+    if (query) params.set('q', query)
+    if (category && category !== 'All Categories') params.set('cat', category)
+    router.push(`/${locale}/directory?${params.toString()}`)
+  }
 
   return (
     <section className="relative min-h-screen flex flex-col">
@@ -109,7 +118,7 @@ export default function Hero() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={isMl ? 'ബിസിനസുകൾ, സേവനങ്ങൾ...' : 'Search businesses, services, products...'}
                 className="flex-1 py-3 text-gray-800 placeholder-gray-400 outline-none text-sm bg-transparent"
-                onKeyDown={(e) => e.key === 'Enter' && console.log('search', query)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
 
@@ -120,13 +129,13 @@ export default function Hero() {
             </div>
 
             {/* Search Button */}
-            <Link
-              href={`/${locale}/directory?q=${query}&cat=${category}`}
+            <button
+              onClick={handleSearch}
               className="bg-kerala-green hover:bg-kerala-green-light text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 text-sm flex items-center gap-2 justify-center whitespace-nowrap"
             >
               <Search size={16} />
               {isMl ? 'തിരയൂ' : 'Search'}
-            </Link>
+            </button>
           </div>
 
           {/* Quick Links */}

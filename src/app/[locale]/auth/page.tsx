@@ -63,6 +63,7 @@ export default function AuthPage() {
       email: regEmail, password: regPassword,
       fullName: regName, phone: regPhone,
       isBusiness: accountType === 'business',
+      businessName: accountType === 'business' ? regBusiness : undefined,
     })
     setSubmitting(false)
     if (err) { setError(err.message); return }

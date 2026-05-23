@@ -104,9 +104,9 @@ export default function ProductDetailPage() {
   return (
     <main className="min-h-screen bg-kerala-cream">
       <Navbar />
-      <div className="h-1 w-full bg-gradient-to-r from-kerala-green via-kerala-gold to-kerala-green" />
+      <div className="h-1 w-full bg-gradient-to-r from-kerala-green via-kerala-gold to-kerala-green mt-16" />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
           <Link href={`/${locale}`} className="hover:text-kerala-green">{isMl ? 'ഹോം' : 'Home'}</Link>

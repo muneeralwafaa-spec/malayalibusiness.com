@@ -72,9 +72,9 @@ export default function ClassifiedDetailPage() {
       <Navbar />
 
       {/* Top bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-kerala-green via-kerala-gold to-kerala-green" />
+      <div className="h-1 w-full bg-gradient-to-r from-kerala-green via-kerala-gold to-kerala-green mt-16" />
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-6">
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
