@@ -131,7 +131,7 @@ function AdminDashboardSection({ stats }: { stats: AdminStats }) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <AdminStatCard icon={Building2}     label="Total Listings"     value={v(stats?.totalListings)}   color="text-kerala-green"  bg="bg-kerala-green/10" />
         <AdminStatCard icon={Users}         label="Total Users"        value={v(stats?.totalUsers)}      color="text-blue-600"      bg="bg-blue-50" />
         <AdminStatCard icon={TrendingUp}    label="Premium Listings"   value={v(stats?.premiumListings)} color="text-kerala-gold"   bg="bg-kerala-gold/10" />

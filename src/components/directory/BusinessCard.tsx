@@ -38,13 +38,13 @@ export default function BusinessCard({ business: b, view }: Props) {
     return (
       <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-kerala-green/20 transition-all duration-300 flex">
         {/* Image */}
-        <div className="relative w-40 sm:w-52 flex-shrink-0">
+        <div className="relative w-28 sm:w-40 md:w-52 flex-shrink-0">
           <Image
             src={b.image}
             alt={b.name}
             fill
             className="object-cover"
-            sizes="208px"
+            sizes="(max-width: 640px) 112px, (max-width: 768px) 160px, 208px"
           />
           {b.premium && (
             <div className="absolute top-2 left-2 bg-kerala-gold text-white text-xs font-bold px-2 py-0.5 rounded-full">

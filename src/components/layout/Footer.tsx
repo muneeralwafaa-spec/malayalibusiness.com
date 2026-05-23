@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale } from 'next-intl'
 import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react'
 
@@ -92,13 +93,15 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href={`/${locale}`} className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-kerala-gold flex items-center justify-center">
-                <span className="text-white font-serif font-bold text-lg">M</span>
-              </div>
-              <div>
-                <span className="text-white font-serif font-bold text-xl block">MalayaliBusiness</span>
-                <span className="text-kerala-gold text-xs tracking-widest uppercase">UAE</span>
+            <Link href={`/${locale}`} className="inline-flex mb-4">
+              <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm">
+                <Image
+                  src="/logo.png"
+                  alt="MalayaliBusiness UAE"
+                  width={140}
+                  height={40}
+                  className="h-8 w-auto"
+                />
               </div>
             </Link>
             <p className="text-white/50 text-sm mb-6 max-w-xs leading-relaxed">

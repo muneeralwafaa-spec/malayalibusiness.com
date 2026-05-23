@@ -852,7 +852,7 @@ export default function HelpPage() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Role header */}
-        <div className={`rounded-2xl border ${activeGuide.border} ${activeGuide.bg} p-6 mb-8 flex gap-4`}>
+        <div className={`rounded-2xl border ${activeGuide.border} ${activeGuide.bg} p-6 mb-8 flex flex-col sm:flex-row gap-4`}>
           <div className={`w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm`}>
             <activeGuide.icon size={24} className={activeGuide.color} />
           </div>

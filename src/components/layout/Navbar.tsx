@@ -7,7 +7,7 @@ import { useLocale } from 'next-intl'
 import { Menu, X, ChevronDown, Globe } from 'lucide-react'
 
 const navLinks = [
-  { href: '/directory', label: 'Business Directory', labelMl: 'ഡയറക്ടറി' },
+  { href: '/directory', label: 'Directory', labelMl: 'ഡയറക്ടറി' },
   { href: '/classifieds', label: 'Classifieds', labelMl: 'ക്ലാസിഫൈഡ്സ്' },
   { href: '/events', label: 'Events', labelMl: 'ഇവന്റുകൾ' },
   { href: '/jobs', label: 'Jobs', labelMl: 'ജോലികൾ' },
