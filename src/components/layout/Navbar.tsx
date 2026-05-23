@@ -13,6 +13,7 @@ const navLinks = [
   { href: '/jobs', label: 'Jobs', labelMl: 'ജോലികൾ' },
   { href: '/shop', label: 'Shop', labelMl: 'ഷോപ്പ്' },
   { href: '/community', label: 'Community', labelMl: 'കമ്മ്യൂണിറ്റി' },
+  { href: '/help', label: 'Help', labelMl: 'സഹായം' },
 ]
 
 export default function Navbar() {
