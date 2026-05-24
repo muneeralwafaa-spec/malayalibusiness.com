@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown, Globe, User, LayoutDashboard, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
@@ -27,7 +27,16 @@ export default function Navbar() {
   const locale    = useLocale()
   const isMl      = locale === 'ml'
   const router    = useRouter()
+  const pathname  = usePathname()
   const { user, profile, loading, signOut } = useAuth()
+
+  // Build locale-switch URL that preserves the current path
+  const switchLocaleTo = (newLocale: string) => {
+    // pathname is like /en/events/123  →  swap first segment
+    const parts = pathname.split('/')          // ['', 'en', 'events', '123']
+    parts[1] = newLocale                        // ['', 'ml', 'events', '123']
+    return parts.join('/') || `/${newLocale}`
+  }
 
   const userDropdownRef = useRef<HTMLDivElement>(null)
   const langDropdownRef = useRef<HTMLDivElement>(null)
@@ -118,14 +127,14 @@ export default function Navbar() {
               {langOpen && (
                 <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl py-1 min-w-[100px] z-50">
                   <Link
-                    href="/en"
+                    href={switchLocaleTo('en')}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-kerala-cream hover:text-kerala-green"
                     onClick={() => setLangOpen(false)}
                   >
                     English
                   </Link>
                   <Link
-                    href="/ml"
+                    href={switchLocaleTo('ml')}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-kerala-cream hover:text-kerala-green font-malayalam"
                     onClick={() => setLangOpen(false)}
                   >
@@ -241,7 +250,7 @@ export default function Navbar() {
 
       {/* ── Mobile Menu ──────────────────────────────────────────────────── */}
       {mobileOpen && (
-        <div className="lg:hidden bg-kerala-deep border-t border-white/10 mt-2">
+        <div className="lg:hidden bg-kerala-deep border-t border-white/10 mt-2 max-h-[calc(100vh-72px)] overflow-y-auto">
           <div className="px-4 py-4 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -258,15 +267,15 @@ export default function Navbar() {
               {/* Language switcher */}
               <div className="flex gap-2">
                 <Link
-                  href="/en"
-                  className="flex-1 text-center py-2 text-sm text-white/80 border border-white/20 rounded-lg hover:border-kerala-gold"
+                  href={switchLocaleTo('en')}
+                  className={`flex-1 text-center py-2 text-sm border rounded-lg transition-colors ${locale === 'en' ? 'border-kerala-gold text-kerala-gold' : 'text-white/80 border-white/20 hover:border-kerala-gold'}`}
                   onClick={() => setMobileOpen(false)}
                 >
                   English
                 </Link>
                 <Link
-                  href="/ml"
-                  className="flex-1 text-center py-2 text-sm text-white/80 border border-white/20 rounded-lg hover:border-kerala-gold font-malayalam"
+                  href={switchLocaleTo('ml')}
+                  className={`flex-1 text-center py-2 text-sm border rounded-lg transition-colors font-malayalam ${locale === 'ml' ? 'border-kerala-gold text-kerala-gold' : 'text-white/80 border-white/20 hover:border-kerala-gold'}`}
                   onClick={() => setMobileOpen(false)}
                 >
                   മലയാളം

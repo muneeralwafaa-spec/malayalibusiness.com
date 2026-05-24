@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { Suspense, useState, useMemo, useEffect } from 'react'
 import { useLocale } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import DirectorySearchBar from '@/components/directory/DirectorySearchBar'
@@ -28,12 +29,20 @@ const defaultFilters: FilterState = {
   page: 1,
 }
 
-export default function DirectoryPage() {
+// Inner component that reads searchParams
+function DirectoryContent() {
   const locale = useLocale()
   const isMl = locale === 'ml'
-  const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const searchParams = useSearchParams()
+
+  const [filters, setFilters] = useState<FilterState>(() => ({
+    ...defaultFilters,
+    query:    searchParams.get('q')        ?? '',
+    category: searchParams.get('category') ?? '',
+    emirate:  searchParams.get('location') ?? '',
+  }))
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  // Store raw listings — adapt at render time so categoryMap race is avoided
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [rawListings,    setRawListings]    = useState<any[]>([])
   const [total,          setTotal]          = useState(0)
@@ -43,7 +52,6 @@ export default function DirectoryPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categoryMap,    setCategoryMap]    = useState<Record<string, any>>({})
 
-  // Adapt raw listings whenever rawListings or categoryMap changes (fixes race condition)
   const businesses = useMemo(
     () => rawListings.map((l) => adaptListing(l, categoryMap)),
     [rawListings, categoryMap]
@@ -54,11 +62,10 @@ export default function DirectoryPage() {
 
   const resetFilters = () => setFilters(defaultFilters)
 
-  // Fetch category + emirate counts once on mount
+  // Fetch category + emirate counts + category map once on mount
   useEffect(() => {
     getCategoryCounts().then(setCategoryCounts)
     getEmirateCounts().then(setEmirateCounts)
-    // Build id→{name,name_ml,slug} map for adaptListing
     getCategories().then((cats) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const map: Record<string, any> = {}
@@ -67,7 +74,7 @@ export default function DirectoryPage() {
     })
   }, [])
 
-  // Fetch from Supabase whenever filters change — store raw (unadapted) rows
+  // Fetch listings whenever filters change
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -93,8 +100,7 @@ export default function DirectoryPage() {
     filters.verified, filters.open,
   ].filter(Boolean).length
 
-  const filtered = businesses   // already filtered server-side
-  const paginated = businesses  // already paginated server-side
+  const paginated = businesses
 
   return (
     <main className="min-h-screen bg-kerala-cream">
@@ -103,7 +109,6 @@ export default function DirectoryPage() {
       {/* Page Header */}
       <div className="bg-kerala-deep pt-20 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-white/40 text-xs mb-4">
             <span>{isMl ? 'ഹോം' : 'Home'}</span>
             <span>/</span>
@@ -117,17 +122,16 @@ export default function DirectoryPage() {
               </h1>
               <p className="text-white/60 text-base">
                 {isMl
-                  ? `യുഎഇ മുഴുവൻ ${total > 0 ? `${total}+` : '465+'} മലയാളി ബിസിനസുകൾ കണ്ടെത്തൂ`
-                  : `Discover ${total > 0 ? `${total}+` : '465+'} Malayali businesses across all UAE emirates`}
+                  ? `യുഎഇ മുഴുവൻ ${total > 0 ? `${total}+` : ''} മലയാളി ബിസിനസുകൾ കണ്ടെത്തൂ`
+                  : `Discover ${total > 0 ? `${total}+` : ''} Malayali businesses across all UAE emirates`}
               </p>
             </div>
 
-            {/* Quick stats */}
             <div className="flex items-center gap-6 flex-shrink-0">
               {[
-                { icon: Building2, val: total > 0 ? `${total}+` : '465+', label: isMl ? 'ബിസിനസ്' : 'Businesses' },
-                { icon: MapPin, val: '7', label: isMl ? 'എമിറേറ്റ്' : 'Emirates' },
-                { icon: TrendingUp, val: '7', label: isMl ? 'കാറ്റഗറി' : 'Categories' },
+                { icon: Building2,  val: total > 0 ? `${total}+` : '—', label: isMl ? 'ബിസിനസ്' : 'Businesses' },
+                { icon: MapPin,     val: '7',                           label: isMl ? 'എമിറേറ്റ്' : 'Emirates' },
+                { icon: TrendingUp, val: '7',                           label: isMl ? 'കാറ്റഗറി' : 'Categories' },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <div className="text-kerala-gold-light font-serif font-bold text-xl">{s.val}</div>
@@ -150,7 +154,6 @@ export default function DirectoryPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-7">
-          {/* Sidebar */}
           <FiltersSidebar
             filters={filters}
             onChange={patchFilters}
@@ -161,17 +164,14 @@ export default function DirectoryPage() {
             emirateCounts={emirateCounts}
           />
 
-          {/* Results */}
           <div className="flex-1 min-w-0">
-            {/* Active Filters + Sort/View */}
             <ActiveFilters
               filters={filters}
-              totalResults={filtered.length}
+              totalResults={total}
               onChange={patchFilters}
               onReset={resetFilters}
             />
 
-            {/* Grid / List */}
             {loading ? (
               <div className="flex items-center justify-center py-32">
                 <Loader2 size={36} className="animate-spin text-kerala-green" />
@@ -209,6 +209,19 @@ export default function DirectoryPage() {
 
       <Footer />
     </main>
+  )
+}
+
+// Exported page wraps with Suspense (required for useSearchParams in Next.js 14)
+export default function DirectoryPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-kerala-cream flex items-center justify-center">
+        <Loader2 size={36} className="animate-spin text-kerala-green" />
+      </main>
+    }>
+      <DirectoryContent />
+    </Suspense>
   )
 }
 

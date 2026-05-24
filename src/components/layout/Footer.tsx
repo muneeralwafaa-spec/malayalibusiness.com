@@ -24,12 +24,12 @@ const categories = [
 ]
 
 const support = [
-  { href: '/help', label: 'Help Centre', labelMl: 'ഹെൽപ് സെന്റർ' },
-  { href: '/advertise', label: 'Advertise', labelMl: 'പരസ്യം ചെയ്യൂ' },
+  { href: '/help',    label: 'Help Centre',   labelMl: 'ഹെൽപ് സെന്റർ' },
+  { href: '/pricing', label: 'Advertise',     labelMl: 'പരസ്യം ചെയ്യൂ' },
   { href: '/dashboard', label: 'Add Business', labelMl: 'ബിസിനസ് ചേർക്കൂ' },
-  { href: '/contact', label: 'Contact Us', labelMl: 'ബന്ധപ്പെടൂ' },
-  { href: '/privacy', label: 'Privacy Policy', labelMl: 'സ്വകാര്യതാ നയം' },
-  { href: '/terms', label: 'Terms of Service', labelMl: 'സേവന നിബന്ധനകൾ' },
+  { href: '/help',    label: 'Contact Us',    labelMl: 'ബന്ധപ്പെടൂ' },
+  { href: '/about',   label: 'About Us',      labelMl: 'ഞങ്ങളെ കുറിച്ച്' },
+  { href: '/help',    label: 'Privacy & Terms', labelMl: 'നിബന്ധനകൾ' },
 ]
 
 const socials = [
@@ -225,16 +225,16 @@ export default function Footer() {
             © {new Date().getFullYear()} MalayaliBusiness UAE. {isMl ? 'എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം.' : 'All rights reserved.'}
           </p>
           <div className="flex items-center gap-4 text-white/30 text-xs">
-            <Link href={`/${locale}/privacy`} className="hover:text-kerala-gold-light transition-colors">
+            <Link href={`/${locale}/help`} className="hover:text-kerala-gold-light transition-colors">
               {isMl ? 'സ്വകാര്യതാ നയം' : 'Privacy Policy'}
             </Link>
             <span>·</span>
-            <Link href={`/${locale}/terms`} className="hover:text-kerala-gold-light transition-colors">
+            <Link href={`/${locale}/help`} className="hover:text-kerala-gold-light transition-colors">
               {isMl ? 'നിബന്ധനകൾ' : 'Terms'}
             </Link>
             <span>·</span>
-            <Link href={`/${locale}/cookies`} className="hover:text-kerala-gold-light transition-colors">
-              {isMl ? 'കുക്കി നയം' : 'Cookies'}
+            <Link href={`/${locale}/about`} className="hover:text-kerala-gold-light transition-colors">
+              {isMl ? 'ഞങ്ങളെ കുറിച്ച്' : 'About Us'}
             </Link>
           </div>
         </div>

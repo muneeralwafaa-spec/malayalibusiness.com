@@ -140,13 +140,19 @@ export default function Hero() {
 
           {/* Quick Links */}
           <div className="flex flex-wrap gap-2 justify-center mt-4">
-            {['Restaurants', 'Real Estate', 'Healthcare', 'Jobs', 'Events'].map((q) => (
+            {[
+              { label: 'Restaurants', labelMl: 'റസ്റ്റോറന്റ്',  href: `/${locale}/directory?category=restaurants` },
+              { label: 'Real Estate', labelMl: 'റിയൽ എസ്റ്റേറ്റ്', href: `/${locale}/directory?category=real-estate` },
+              { label: 'Healthcare',  labelMl: 'ആരോഗ്യം',       href: `/${locale}/directory?category=healthcare` },
+              { label: 'Jobs',        labelMl: 'ജോലി',          href: `/${locale}/jobs` },
+              { label: 'Events',      labelMl: 'ഇവന്റ്',        href: `/${locale}/events` },
+            ].map((q) => (
               <Link
-                key={q}
-                href={`/${locale}/directory?q=${q}`}
+                key={q.label}
+                href={q.href}
                 className="text-xs text-white/70 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full transition-all border border-white/20"
               >
-                {q}
+                {isMl ? q.labelMl : q.label}
               </Link>
             ))}
           </div>
