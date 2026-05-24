@@ -284,10 +284,10 @@ export async function getEmirateCounts(): Promise<Record<string, number>> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function adaptListing(row: ListingRow | any, categoryMap?: Record<string, { name: string; name_ml: string; slug: string }>) {
   // Support both flat (public_listings view) and nested (direct table query) shapes
+  const catFromMap = categoryMap && row.category_id ? categoryMap[row.category_id] : undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cat = categoryMap && row.category_id
-    ? categoryMap[row.category_id]
-    : ((row as any).categories as { slug?: string; name?: string; name_ml?: string } | null)
+  const catFromJoin = (row as any).categories as { slug?: string; name?: string; name_ml?: string } | null
+  const cat = catFromMap ?? catFromJoin ?? null
   return {
     id:           row.id,
     name:         row.name,
