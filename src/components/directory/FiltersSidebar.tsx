@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { ChevronDown, ChevronUp, X, SlidersHorizontal } from 'lucide-react'
-import { categories, emirates } from '@/lib/mock-businesses'
+import { categories, emirates } from '@/lib/directory-constants'
 import type { FilterState } from '@/types/business'
 
 type Props = {

@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { mockClassifieds } from '@/lib/mock-classifieds'
+import { getClassified, getClassifieds } from '@/lib/classifieds'
+import type { Classified } from '@/lib/classifieds'
 import {
   MapPin, Clock, Eye, Heart, Share2, ChevronRight,
   Phone, MessageCircle, Flag, Tag, ArrowLeft,
@@ -28,19 +29,60 @@ const CONDITION_LABELS: Record<string, { en: string; ml: string; color: string }
   'fair':     { en: 'Fair',        ml: 'സാധാരണ',          color: 'bg-gray-100 text-gray-600' },
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 export default function ClassifiedDetailPage() {
   const locale = useLocale()
   const params = useParams()
   const isMl = locale === 'ml'
   const id = Number(params.id)
 
-  const item = mockClassifieds.find(c => c.id === id)
+  const [item, setItem] = useState<Classified | null | undefined>(undefined)
+  const [related, setRelated] = useState<Classified[]>([])
   const [activeImg, setActiveImg] = useState(0)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const related = mockClassifieds.filter(c => c.id !== id && c.categorySlug === item?.categorySlug).slice(0, 3)
+  useEffect(() => {
+    async function load() {
+      const c = await getClassified(id)
+      setItem(c)
+      if (c) {
+        const rel = await getClassifieds({ category: c.category, limit: 4 })
+        setRelated(rel.filter(r => r.id !== c.id).slice(0, 3))
+      }
+    }
+    load()
+  }, [id])
 
+  function handleShare() {
+    navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Loading state
+  if (item === undefined) {
+    return (
+      <main className="min-h-screen bg-kerala-cream">
+        <Navbar />
+        <div className="h-1 w-full bg-gradient-to-r from-kerala-green via-kerala-gold to-kerala-green mt-16" />
+        <div className="max-w-6xl mx-auto px-4 pt-10 pb-6 animate-pulse space-y-4">
+          <div className="h-6 bg-gray-100 rounded w-64" />
+          <div className="h-96 bg-gray-100 rounded-2xl" />
+          <div className="h-32 bg-gray-100 rounded-2xl" />
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
+  // Not found
   if (!item) {
     return (
       <main className="min-h-screen bg-kerala-cream">
@@ -61,12 +103,6 @@ export default function ClassifiedDetailPage() {
   const typeInfo = TYPE_LABELS[item.type]
   const conditionInfo = item.condition ? CONDITION_LABELS[item.condition] : null
 
-  function handleShare() {
-    navigator.clipboard.writeText(window.location.href)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   return (
     <main className="min-h-screen bg-kerala-cream">
       <Navbar />
@@ -82,9 +118,11 @@ export default function ClassifiedDetailPage() {
           <ChevronRight size={12} />
           <Link href={`/${locale}/classifieds`} className="hover:text-kerala-green">Classifieds</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/classifieds?cat=${item.categorySlug}`} className="hover:text-kerala-green">{item.category}</Link>
+          <Link href={`/${locale}/classifieds?cat=${item.category}`} className="hover:text-kerala-green">{item.category}</Link>
           <ChevronRight size={12} />
-          <span className="text-kerala-deep font-medium truncate max-w-[180px]">{isMl ? item.titleMl : item.title}</span>
+          <span className="text-kerala-deep font-medium truncate max-w-[180px]">
+            {isMl ? (item.title_ml ?? item.title) : item.title}
+          </span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -94,16 +132,20 @@ export default function ClassifiedDetailPage() {
 
             {/* Image gallery */}
             <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-              {/* Badges over image */}
               <div className="relative">
                 <div className="relative h-72 sm:h-96 w-full bg-gray-100">
-                  <Image
-                    src={item.images[activeImg]}
-                    alt={item.title}
-                    fill
-                    className="object-cover"
-                  />
-                  {/* Urgent badge */}
+                  {item.images[activeImg] ? (
+                    <Image
+                      src={item.images[activeImg]}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Tag size={48} className="text-gray-200" />
+                    </div>
+                  )}
                   {item.urgent && (
                     <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                       <AlertTriangle size={11} /> URGENT
@@ -125,7 +167,7 @@ export default function ClassifiedDetailPage() {
                         onClick={() => setActiveImg(i)}
                         className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${activeImg === i ? 'border-kerala-green' : 'border-transparent'}`}
                       >
-                        <Image src={img} alt="" fill className="object-cover" />
+                        <Image src={img} alt="" fill className="object-cover" sizes="64px" />
                       </button>
                     ))}
                   </div>
@@ -145,22 +187,22 @@ export default function ClassifiedDetailPage() {
                   </span>
                 )}
                 <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <Tag size={10} /> {item.category}
+                  <Tag size={10} /> {isMl ? (item.category_ml ?? item.category) : item.category}
                 </span>
               </div>
 
               <h1 className={`font-bold text-kerala-deep mb-1 leading-snug ${isMl ? 'font-malayalam text-xl' : 'text-2xl'}`}>
-                {isMl ? item.titleMl : item.title}
+                {isMl ? (item.title_ml ?? item.title) : item.title}
               </h1>
-              <p className="text-gray-400 text-xs mb-4 flex items-center gap-3">
-                <span className="flex items-center gap-1"><MapPin size={11} />{isMl ? item.locationMl : item.location}</span>
-                <span className="flex items-center gap-1"><Clock size={11} />{isMl ? item.postedAtMl : item.postedAt}</span>
+              <p className="text-gray-400 text-xs mb-4 flex items-center gap-3 flex-wrap">
+                {item.location && <span className="flex items-center gap-1"><MapPin size={11} />{isMl ? (item.location_ml ?? item.location) : item.location}</span>}
+                <span className="flex items-center gap-1"><Clock size={11} />{timeAgo(item.created_at)}</span>
                 <span className="flex items-center gap-1"><Eye size={11} />{item.views} views</span>
               </p>
 
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <p className="text-3xl font-bold text-kerala-green">{item.price}</p>
+                  <p className="text-3xl font-bold text-kerala-green">{item.price ?? 'Free'}</p>
                   {item.negotiable && (
                     <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                       <RefreshCw size={10} /> {isMl ? 'വില ചർച്ചചെയ്യാം' : 'Price negotiable'}
@@ -192,7 +234,7 @@ export default function ClassifiedDetailPage() {
                 {isMl ? 'വിവരണം' : 'Description'}
               </h2>
               <p className={`text-gray-600 leading-relaxed whitespace-pre-line ${isMl ? 'font-malayalam' : ''}`}>
-                {isMl ? item.descriptionMl : item.description}
+                {isMl ? (item.description_ml ?? item.description) : item.description}
               </p>
             </div>
 
@@ -203,12 +245,12 @@ export default function ClassifiedDetailPage() {
               </h2>
               <div className="grid grid-cols-2 gap-y-3 text-sm">
                 {[
-                  { label: isMl ? 'വിഭാഗം' : 'Category',  value: isMl ? item.categoryMl : item.category },
-                  { label: isMl ? 'തരം' : 'Type',         value: isMl ? typeInfo.ml : typeInfo.en },
+                  { label: isMl ? 'വിഭാഗം' : 'Category',   value: isMl ? (item.category_ml ?? item.category) : item.category },
+                  { label: isMl ? 'തരം' : 'Type',           value: isMl ? typeInfo.ml : typeInfo.en },
                   { label: isMl ? 'എമിറേറ്റ്' : 'Emirate', value: item.emirate },
-                  { label: isMl ? 'സ്ഥലം' : 'Location',   value: isMl ? item.locationMl : item.location },
-                  ...(item.condition ? [{ label: isMl ? 'അവസ്ഥ' : 'Condition', value: isMl ? conditionInfo?.ml ?? '' : conditionInfo?.en ?? '' }] : []),
-                  { label: isMl ? 'കാണലുകൾ' : 'Views',    value: String(item.views) },
+                  { label: isMl ? 'സ്ഥലം' : 'Location',     value: isMl ? (item.location_ml ?? item.location ?? '') : (item.location ?? '') },
+                  ...(item.condition ? [{ label: isMl ? 'അവസ്ഥ' : 'Condition', value: isMl ? (conditionInfo?.ml ?? '') : (conditionInfo?.en ?? '') }] : []),
+                  { label: isMl ? 'കാണലുകൾ' : 'Views',     value: String(item.views) },
                 ].map(row => (
                   <div key={row.label} className="contents">
                     <span className="text-gray-400 font-medium">{row.label}</span>
@@ -228,13 +270,15 @@ export default function ClassifiedDetailPage() {
                   {related.map(r => (
                     <Link key={r.id} href={`/${locale}/classifieds/${r.id}`}
                       className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md hover:border-kerala-green/30 transition-all group">
-                      <div className="relative h-36">
-                        <Image src={r.images[0]} alt={r.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="relative h-36 bg-gray-100">
+                        {r.images[0] && (
+                          <Image src={r.images[0]} alt={r.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 100vw, 33vw" />
+                        )}
                       </div>
                       <div className="p-3">
-                        <p className="text-kerala-green font-bold text-sm">{r.price}</p>
-                        <p className="text-kerala-deep text-xs font-semibold line-clamp-2 mt-0.5">{isMl ? r.titleMl : r.title}</p>
-                        <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={9} />{isMl ? r.locationMl : r.location}</p>
+                        <p className="text-kerala-green font-bold text-sm">{r.price ?? 'Free'}</p>
+                        <p className="text-kerala-deep text-xs font-semibold line-clamp-2 mt-0.5">{isMl ? (r.title_ml ?? r.title) : r.title}</p>
+                        {r.location && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={9} />{isMl ? (r.location_ml ?? r.location) : r.location}</p>}
                       </div>
                     </Link>
                   ))}
@@ -249,12 +293,18 @@ export default function ClassifiedDetailPage() {
             {/* Contact card */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 sticky top-4">
               <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                  <Image src={item.sellerAvatar} alt={item.seller} fill className="object-cover" />
+                <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-kerala-cream">
+                  {item.seller_avatar ? (
+                    <Image src={item.seller_avatar} alt={item.seller_name ?? ''} fill className="object-cover" sizes="48px" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-kerala-green font-bold text-lg">
+                      {(item.seller_name ?? 'A')[0]}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className={`font-bold text-kerala-deep text-sm ${isMl ? 'font-malayalam' : ''}`}>
-                    {isMl ? item.sellerMl : item.seller}
+                    {isMl ? (item.seller_name_ml ?? item.seller_name) : item.seller_name}
                   </p>
                   <p className="text-xs text-gray-400 flex items-center gap-1">
                     <CheckCircle size={11} className="text-kerala-green" />
@@ -264,22 +314,26 @@ export default function ClassifiedDetailPage() {
               </div>
 
               <div className="space-y-2.5">
-                <a
-                  href={`https://wa.me/${item.whatsapp.replace(/\D/g,'')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#20bd5a] transition-colors"
-                >
-                  <MessageCircle size={16} />
-                  {isMl ? 'WhatsApp-ൽ ബന്ധപ്പെടൂ' : 'Chat on WhatsApp'}
-                </a>
-                <a
-                  href={`tel:${item.phone}`}
-                  className="flex items-center justify-center gap-2 w-full bg-kerala-green text-white py-3 rounded-xl font-semibold text-sm hover:bg-kerala-green-light transition-colors"
-                >
-                  <Phone size={16} />
-                  {isMl ? 'വിളിക്കൂ' : 'Call Seller'}
-                </a>
+                {item.whatsapp && (
+                  <a
+                    href={`https://wa.me/${item.whatsapp.replace(/\D/g,'')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#20bd5a] transition-colors"
+                  >
+                    <MessageCircle size={16} />
+                    {isMl ? 'WhatsApp-ൽ ബന്ധപ്പെടൂ' : 'Chat on WhatsApp'}
+                  </a>
+                )}
+                {item.phone && (
+                  <a
+                    href={`tel:${item.phone}`}
+                    className="flex items-center justify-center gap-2 w-full bg-kerala-green text-white py-3 rounded-xl font-semibold text-sm hover:bg-kerala-green-light transition-colors"
+                  >
+                    <Phone size={16} />
+                    {isMl ? 'വിളിക്കൂ' : 'Call Seller'}
+                  </a>
+                )}
               </div>
 
               <p className="text-xs text-gray-400 text-center mt-3">

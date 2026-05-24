@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { classifiedCategories } from '@/lib/mock-classifieds'
+import { classifiedCategories } from '@/lib/classifieds'
 import {
   ChevronRight, Upload, X, CheckCircle,
   MapPin, Phone, Tag, AlertCircle

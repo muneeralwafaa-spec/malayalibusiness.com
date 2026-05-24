@@ -1,273 +1,18 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { getJobs } from '@/lib/jobs'
+import type { Job, JobType, ExperienceLevel } from '@/lib/jobs'
 import {
   Search, MapPin, Briefcase, Clock, DollarSign, Filter, ChevronDown,
   Building2, Star, ArrowRight, X, BookmarkPlus, Share2, CheckCircle
 } from 'lucide-react'
 
-type JobType = 'full-time' | 'part-time' | 'contract' | 'freelance' | 'internship'
-type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead' | 'executive'
-
-interface Job {
-  id: string
-  title: string
-  titleMl: string
-  company: string
-  companyMl: string
-  logo: string
-  emirate: string
-  emirateMl: string
-  location: string
-  locationMl: string
-  type: JobType
-  experience: ExperienceLevel
-  salaryMin: number
-  salaryMax: number
-  category: string
-  categoryMl: string
-  description: string
-  descriptionMl: string
-  requirements: string[]
-  requirementsMl: string[]
-  posted: string
-  deadline: string
-  featured: boolean
-  urgent: boolean
-  verified: boolean
-  applicants: number
-}
-
-const jobs: Job[] = [
-  {
-    id: 'sr-software-engineer-dubizzle',
-    title: 'Senior Software Engineer',
-    titleMl: 'സീനിയർ സോഫ്റ്റ്‌വെയർ എഞ്ചിനീയർ',
-    company: 'TechVentures MENA',
-    companyMl: 'ടെക്‌വെഞ്ചേഴ്‌സ് MENA',
-    logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&q=80',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    location: 'Dubai Internet City',
-    locationMl: 'ദുബായ് ഇന്റർനെറ്റ് സിറ്റി',
-    type: 'full-time',
-    experience: 'senior',
-    salaryMin: 20000,
-    salaryMax: 30000,
-    category: 'Technology',
-    categoryMl: 'ടെക്നോളജി',
-    description: 'We are looking for an experienced Senior Software Engineer to join our growing fintech team. You will design and build scalable backend services using Node.js, Go, and cloud-native technologies.',
-    descriptionMl: 'ഞങ്ങളുടെ ഫിൻടെക് ടീമിൽ ചേരാൻ ഒരു പരിചയസമ്പന്നനായ സീനിയർ സോഫ്റ്റ്‌വെയർ എഞ്ചിനീയറെ ആവശ്യമുണ്ട്.',
-    requirements: ['5+ years experience', 'Node.js / Go', 'AWS / GCP', 'System Design', 'Microservices'],
-    requirementsMl: ['5+ വർഷം പരിചയം', 'Node.js / Go', 'AWS / GCP', 'സിസ്റ്റം ഡിസൈൻ', 'മൈക്രോസർവീസസ്'],
-    posted: '2025-05-14',
-    deadline: '2025-06-14',
-    featured: true,
-    urgent: false,
-    verified: true,
-    applicants: 47,
-  },
-  {
-    id: 'account-manager-bank',
-    title: 'Relationship Manager – NRI Banking',
-    titleMl: 'റിലേഷൻഷിപ്പ് മാനേജർ – NRI ബാങ്കിംഗ്',
-    company: 'Emirates National Bank',
-    companyMl: 'എമിറേറ്റ്‌സ് നാഷനൽ ബാങ്ക്',
-    logo: 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=100&q=80',
-    emirate: 'Abu Dhabi',
-    emirateMl: 'അബൂദബി',
-    location: 'Abu Dhabi City Centre',
-    locationMl: 'അബൂദബി സിറ്റി സെന്റർ',
-    type: 'full-time',
-    experience: 'mid',
-    salaryMin: 14000,
-    salaryMax: 20000,
-    category: 'Finance',
-    categoryMl: 'ഫിനാൻസ്',
-    description: 'Drive NRI banking business through acquiring and managing HNI clients. Malayalam language skills are a strong advantage for serving the Kerala NRI community.',
-    descriptionMl: 'NRI ബാങ്കിംഗ് ബിസിനസ് വളർത്തുക. കേരള NRI കമ്മ്യൂണിറ്റിയെ സേവിക്കാൻ മലയാളം ഭാഷ ഒരു വലിയ മേൽക്കൈ.',
-    requirements: ['3+ years banking', 'Malayalam speaking', 'Investment products', 'CRM tools', 'Regulatory compliance'],
-    requirementsMl: ['3+ വർഷം ബാങ്കിംഗ്', 'മലയാളം സംസാരം', 'നിക്ഷേപ ഉൽപ്പന്നങ്ങൾ'],
-    posted: '2025-05-12',
-    deadline: '2025-06-10',
-    featured: true,
-    urgent: true,
-    verified: true,
-    applicants: 89,
-  },
-  {
-    id: 'general-surgeon',
-    title: 'General Practitioner / Family Doctor',
-    titleMl: 'ജനറൽ പ്രാക്ടീഷണർ / ഫാമിലി ഡോക്ടർ',
-    company: 'Aster DM Healthcare',
-    companyMl: 'ആസ്റ്റർ DM ഹെൽത്ത്കെയർ',
-    logo: 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=100&q=80',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    location: 'Multiple Locations',
-    locationMl: 'ഒന്നിലധികം ലൊക്കേഷനുകൾ',
-    type: 'full-time',
-    experience: 'mid',
-    salaryMin: 25000,
-    salaryMax: 40000,
-    category: 'Healthcare',
-    categoryMl: 'ഹെൽത്ത്കെയർ',
-    description: 'Join Aster\'s growing network of clinics across the UAE. Provide primary care to a diverse patient population including the Malayali community. DHA/MOH license required.',
-    descriptionMl: 'യുഎഇ ഉടനീളം ആസ്റ്ററിന്റെ ക്ലിനിക്കുകളിൽ ചേരൂ. DHA/MOH ലൈസൻസ് ആവശ്യമുണ്ട്.',
-    requirements: ['MBBS + PG preferred', 'DHA/MOH License', '3+ years experience', 'Malayalam/English'],
-    requirementsMl: ['MBBS + PG', 'DHA/MOH ലൈസൻസ്', '3+ വർഷം', 'മലയാളം/ഇംഗ്ലീഷ്'],
-    posted: '2025-05-10',
-    deadline: '2025-07-01',
-    featured: false,
-    urgent: false,
-    verified: true,
-    applicants: 34,
-  },
-  {
-    id: 'civil-engineer-adnoc',
-    title: 'Civil Engineer – Infrastructure Projects',
-    titleMl: 'സിവിൽ എഞ്ചിനീയർ – ഇൻഫ്രാസ്ട്രക്ചർ',
-    company: 'Archirodon Construction',
-    companyMl: 'ആർക്കിറോഡൻ കൺസ്ട്രക്ഷൻ',
-    logo: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&q=80',
-    emirate: 'Abu Dhabi',
-    emirateMl: 'അബൂദബി',
-    location: 'Abu Dhabi – Ruwais',
-    locationMl: 'അബൂദബി – റുവൈസ്',
-    type: 'full-time',
-    experience: 'senior',
-    salaryMin: 16000,
-    salaryMax: 24000,
-    category: 'Engineering',
-    categoryMl: 'എഞ്ചിനീയറിംഗ്',
-    description: 'Lead civil engineering works on large-scale oil & gas infrastructure projects. Site supervision, QA/QC, and subcontractor management.',
-    descriptionMl: 'വലിയ ഓയിൽ & ഗ്യാസ് ഇൻഫ്രാ പ്രൊജക്ടുകളിൽ സിവിൽ എഞ്ചിനീയറിംഗ് ജോലികൾ നയിക്കൂ.',
-    requirements: ['B.E. Civil', '7+ years', 'Oil & Gas sector', 'AutoCAD / Primavera', 'QA/QC'],
-    requirementsMl: ['B.E. സിവിൽ', '7+ വർഷം', 'ഓയിൽ & ഗ്യാസ്', 'AutoCAD'],
-    posted: '2025-05-08',
-    deadline: '2025-06-30',
-    featured: false,
-    urgent: true,
-    verified: true,
-    applicants: 112,
-  },
-  {
-    id: 'marketing-manager',
-    title: 'Digital Marketing Manager',
-    titleMl: 'ഡിജിറ്റൽ മാർക്കറ്റിംഗ് മാനേജർ',
-    company: 'Lulu Hypermarket',
-    companyMl: 'ലുലു ഹൈപ്പർമാർക്കറ്റ്',
-    logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=100&q=80',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    location: 'Dubai – Al Barsha',
-    locationMl: 'ദുബായ് – അൽ ബർഷ',
-    type: 'full-time',
-    experience: 'mid',
-    salaryMin: 12000,
-    salaryMax: 18000,
-    category: 'Marketing',
-    categoryMl: 'മാർക്കറ്റിംഗ്',
-    description: 'Drive digital marketing strategy across social media, SEO, and paid channels. Experience with South Asian market segments and Malayalam content creation preferred.',
-    descriptionMl: 'സോഷ്യൽ മീഡിയ, SEO, പെയ്ഡ് ചാനലുകളിൽ ഡിജിറ്റൽ മാർക്കറ്റിംഗ് തന്ത്രം നടപ്പിലാക്കൂ.',
-    requirements: ['5+ years marketing', 'Google Ads / Meta', 'Malayalam content', 'Analytics', 'E-commerce'],
-    requirementsMl: ['5+ വർഷം', 'Google Ads / Meta', 'മലയാളം കോൺടെന്റ്', 'Analytics'],
-    posted: '2025-05-15',
-    deadline: '2025-06-15',
-    featured: false,
-    urgent: false,
-    verified: true,
-    applicants: 67,
-  },
-  {
-    id: 'accountant-audit',
-    title: 'Senior Accountant / Audit Manager',
-    titleMl: 'സീനിയർ അക്കൗണ്ടന്റ് / ഓഡിറ്റ് മാനേജർ',
-    company: 'PricewaterhouseCoopers UAE',
-    companyMl: 'PricewaterhouseCoopers UAE',
-    logo: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=100&q=80',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    location: 'Dubai DIFC',
-    locationMl: 'ദുബായ് DIFC',
-    type: 'full-time',
-    experience: 'senior',
-    salaryMin: 18000,
-    salaryMax: 28000,
-    category: 'Finance',
-    categoryMl: 'ഫിനാൻസ്',
-    description: 'Lead audit engagements for multinational clients across the MENA region. CA/CPA qualified candidates preferred. Big 4 experience is a plus.',
-    descriptionMl: 'MENA മേഖലയിലെ ബഹുരാഷ്ട്ര കമ്പനികൾക്കായി ഓഡിറ്റ് ജോലികൾ നയിക്കൂ. CA/CPA യോഗ്യതയുള്ളവർ.',
-    requirements: ['CA / CPA / ACCA', '6+ years audit', 'IFRS', 'Big 4 preferred', 'Arabic a plus'],
-    requirementsMl: ['CA / CPA / ACCA', '6+ വർഷം', 'IFRS', 'Big 4 അനുഭവം'],
-    posted: '2025-05-13',
-    deadline: '2025-06-20',
-    featured: false,
-    urgent: false,
-    verified: true,
-    applicants: 55,
-  },
-  {
-    id: 'teacher-cbse',
-    title: 'CBSE Math / Science Teacher',
-    titleMl: 'CBSE ഗണിതം / ശാസ്ത്രം അധ്യാപകൻ',
-    company: 'Our Own English High School',
-    companyMl: 'ഔർ ഓൺ ഇംഗ്ലീഷ് ഹൈ സ്കൂൾ',
-    logo: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=100&q=80',
-    emirate: 'Sharjah',
-    emirateMl: 'ഷാർജ',
-    location: 'Sharjah',
-    locationMl: 'ഷാർജ',
-    type: 'full-time',
-    experience: 'mid',
-    salaryMin: 7000,
-    salaryMax: 11000,
-    category: 'Education',
-    categoryMl: 'വിദ്യാഭ്യാസം',
-    description: 'Seeking passionate CBSE teachers for Math and Science for Grades 9-12. Experience with Indian curriculum and knowledge of Kerala education system preferred.',
-    descriptionMl: 'ഗ്രേഡ് 9-12 ലേക്ക് ഗണിതം, ശാസ്ത്രം അധ്യാപകരെ ആവശ്യമുണ്ട്.',
-    requirements: ['B.Sc + B.Ed', 'CBSE experience', 'Grades 9-12', 'Malayalam preferred', 'KV / Navodaya exp.'],
-    requirementsMl: ['B.Sc + B.Ed', 'CBSE', 'ഗ്രേഡ് 9-12', 'മലയാളം'],
-    posted: '2025-05-07',
-    deadline: '2025-07-31',
-    featured: false,
-    urgent: false,
-    verified: true,
-    applicants: 28,
-  },
-  {
-    id: 'chef-restaurant',
-    title: 'Head Chef – Kerala Cuisine',
-    titleMl: 'ഹെഡ് ഷെഫ് – കേരള ഭക്ഷണം',
-    company: 'Thalassery Restaurant Group',
-    companyMl: 'തലശ്ശേരി റസ്റ്റോറന്റ് ഗ്രൂപ്പ്',
-    logo: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    location: 'Dubai – Bur Dubai',
-    locationMl: 'ദുബായ് – ബർദുബായ്',
-    type: 'full-time',
-    experience: 'senior',
-    salaryMin: 8000,
-    salaryMax: 14000,
-    category: 'Hospitality',
-    categoryMl: 'ഹോസ്പിറ്റാലിറ്റി',
-    description: 'Lead our kitchen team specialising in authentic Kerala and North Kerala (Malabar) cuisine. Menu development, cost control, and training junior chefs.',
-    descriptionMl: 'ആധികാരിക കേരള, മലബാർ ഭക്ഷണ വൈദഗ്ദ്ധ്യമുള്ള ഹെഡ് ഷെഫ് ആവശ്യമുണ്ട്.',
-    requirements: ['10+ years culinary', 'Kerala cuisine expert', 'Menu development', 'Team management', 'HACCP'],
-    requirementsMl: ['10+ വർഷം', 'കേരള ഭക്ഷണ വൈദഗ്ദ്ധ്യം', 'മെനു ഡെവലപ്‌മെന്റ്'],
-    posted: '2025-05-11',
-    deadline: '2025-06-30',
-    featured: false,
-    urgent: true,
-    verified: false,
-    applicants: 19,
-  },
-]
+// ─── Mock jobs removed — data now comes from Supabase via useEffect ──────────
 
 const jobCategories = [
   { key: 'all', label: 'All Jobs', labelMl: 'എല്ലാ ജോലികൾ' },
@@ -309,7 +54,7 @@ function timeAgo(dateStr: string, isMl: boolean) {
 }
 
 function JobCard({ job, isMl, featured }: { job: Job; isMl: boolean; featured?: boolean }) {
-  const typeInfo = jobTypeLabels[job.type]
+  const typeInfo = jobTypeLabels[job.job_type]
   const [saved, setSaved] = useState(false)
 
   return (
@@ -322,14 +67,14 @@ function JobCard({ job, isMl, featured }: { job: Job; isMl: boolean; featured?: 
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3">
           <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
-            <Image src={job.logo} alt={job.company} fill className="object-cover" sizes="48px" />
+            {job.logo_url && <Image src={job.logo_url} alt={job.company} fill className="object-cover" sizes="48px" />}
           </div>
           <div>
             <h3 className="font-serif font-bold text-kerala-deep text-base leading-snug group-hover:text-kerala-green transition-colors">
-              {isMl ? job.titleMl : job.title}
+              {isMl ? (job.title_ml ?? job.title) : job.title}
             </h3>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-sm text-gray-500">{isMl ? job.companyMl : job.company}</span>
+              <span className="text-sm text-gray-500">{isMl ? (job.company_ml ?? job.company) : job.company}</span>
               {job.verified && <CheckCircle size={13} className="text-kerala-green flex-shrink-0" />}
             </div>
           </div>
@@ -366,25 +111,25 @@ function JobCard({ job, isMl, featured }: { job: Job; isMl: boolean; featured?: 
       <div className="grid grid-cols-2 gap-1.5 mb-4">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <MapPin size={12} className="text-kerala-green" />
-          <span className="truncate">{isMl ? job.locationMl : job.location}</span>
+          <span className="truncate">{isMl ? (job.location_ml ?? job.location) : job.location}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Briefcase size={12} className="text-kerala-green" />
-          <span>{isMl ? job.categoryMl : job.category}</span>
+          <span>{isMl ? (job.category_ml ?? job.category) : job.category}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <DollarSign size={12} className="text-kerala-green" />
-          <span>AED {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}</span>
+          <span>{job.salary_min && job.salary_max ? `AED ${job.salary_min.toLocaleString()}–${job.salary_max.toLocaleString()}` : 'Negotiable'}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Clock size={12} className="text-kerala-green" />
-          <span>{timeAgo(job.posted, isMl)}</span>
+          <span>{timeAgo(job.created_at, isMl)}</span>
         </div>
       </div>
 
       {/* Requirements chips */}
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {(isMl ? job.requirementsMl : job.requirements).slice(0, 4).map((req) => (
+        {(isMl ? job.requirements_ml : job.requirements).slice(0, 4).map((req) => (
           <span key={req} className="bg-kerala-cream text-kerala-deep text-xs px-2 py-0.5 rounded-lg">
             {req}
           </span>
@@ -418,10 +163,16 @@ export default function JobsPage() {
   const [jobTypeFilter, setJobTypeFilter] = useState<JobType | 'all'>('all')
   const [salaryFilter, setSalaryFilter] = useState<'all' | '5k' | '10k' | '20k'>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [allJobs, setAllJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const featuredJobs = useMemo(() => jobs.filter(j => j.featured), [])
+  useEffect(() => {
+    getJobs({ limit: 100 }).then(items => { setAllJobs(items); setLoading(false) })
+  }, [])
+
+  const featuredJobs = useMemo(() => allJobs.filter(j => j.featured), [allJobs])
   const filtered = useMemo(() => {
-    let list = [...jobs]
+    let list = [...allJobs]
     if (activeCategory !== 'all') list = list.filter(j => j.category === activeCategory)
     if (query) {
       const q = query.toLowerCase()
@@ -432,12 +183,12 @@ export default function JobsPage() {
       )
     }
     if (selectedEmirate !== 'All Emirates') list = list.filter(j => j.emirate === selectedEmirate)
-    if (jobTypeFilter !== 'all') list = list.filter(j => j.type === jobTypeFilter)
-    if (salaryFilter === '5k') list = list.filter(j => j.salaryMin >= 5000)
-    else if (salaryFilter === '10k') list = list.filter(j => j.salaryMin >= 10000)
-    else if (salaryFilter === '20k') list = list.filter(j => j.salaryMin >= 20000)
+    if (jobTypeFilter !== 'all') list = list.filter(j => j.job_type === jobTypeFilter)
+    if (salaryFilter === '5k') list = list.filter(j => (j.salary_min ?? 0) >= 5000)
+    else if (salaryFilter === '10k') list = list.filter(j => (j.salary_min ?? 0) >= 10000)
+    else if (salaryFilter === '20k') list = list.filter(j => (j.salary_min ?? 0) >= 20000)
     return list
-  }, [query, activeCategory, selectedEmirate, jobTypeFilter, salaryFilter])
+  }, [allJobs, query, activeCategory, selectedEmirate, jobTypeFilter, salaryFilter])
 
   return (
     <main className="min-h-screen bg-kerala-cream">
@@ -614,7 +365,23 @@ export default function JobsPage() {
             </div>
 
             {/* All Jobs */}
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-5 animate-pulse space-y-3 border border-gray-100">
+                    <div className="flex gap-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-100 rounded w-3/4" />
+                        <div className="h-3 bg-gray-100 rounded w-1/2" />
+                      </div>
+                    </div>
+                    <div className="h-3 bg-gray-100 rounded w-full" />
+                    <div className="h-3 bg-gray-100 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-4">
                   <Briefcase size={28} className="text-gray-300" />
@@ -681,10 +448,10 @@ export default function JobsPage() {
                 {isMl ? 'ടോപ്പ് കമ്പനികൾ' : 'Top Hiring Companies'}
               </h3>
               <div className="space-y-3">
-                {jobs.slice(0, 5).map(j => (
+                {allJobs.slice(0, 5).map(j => (
                   <div key={j.id} className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                      <Image src={j.logo} alt={j.company} fill className="object-cover" sizes="32px" />
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-100">
+                      {j.logo_url && <Image src={j.logo_url} alt={j.company} fill className="object-cover" sizes="32px" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-kerala-deep truncate">{j.company}</p>

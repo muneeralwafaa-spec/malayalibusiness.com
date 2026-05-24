@@ -1,10 +1,16 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
-import type { VendorListing } from '@/lib/mock-vendor-products'
+import type { MarketplaceListing } from '@/lib/shop'
+
+// Minimal cart-compatible shape (supports both real DB listings and legacy shapes)
+export type CartListing = MarketplaceListing & {
+  // Legacy camelCase aliases kept for CartDrawer compatibility
+  vendorSlug?: string
+}
 
 export interface CartItem {
-  listing: VendorListing
+  listing: CartListing
   quantity: number
   selectedSlot?: string   // for appointments
   selectedDate?: string
@@ -13,7 +19,7 @@ export interface CartItem {
 
 interface CartContextValue {
   items: CartItem[]
-  addItem: (listing: VendorListing, opts?: { slot?: string; date?: string; note?: string }) => void
+  addItem: (listing: CartListing, opts?: { slot?: string; date?: string; note?: string }) => void
   removeItem: (id: string) => void
   updateQty: (id: string, qty: number) => void
   clearCart: () => void
@@ -32,7 +38,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  const addItem = useCallback((listing: VendorListing, opts?: { slot?: string; date?: string; note?: string }) => {
+  const addItem = useCallback((listing: CartListing, opts?: { slot?: string; date?: string; note?: string }) => {
     setItems(prev => {
       const existing = prev.find(i => i.listing.id === listing.id)
       if (existing) {
@@ -58,7 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalAmount = items.reduce((s, i) => s + i.listing.price * i.quantity, 0)
 
   const byVendor = items.reduce<Record<string, CartItem[]>>((acc, item) => {
-    const key = item.listing.vendorSlug
+    const key = item.listing.vendor_slug ?? item.listing.vendorSlug ?? 'unknown'
     if (!acc[key]) acc[key] = []
     acc[key].push(item)
     return acc

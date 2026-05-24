@@ -1,241 +1,19 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { getEvents } from '@/lib/events'
+import type { MalayaliEvent } from '@/lib/events'
 import {
   Search, MapPin, Calendar, Clock, Users, Filter, ChevronDown,
   Star, Ticket, ArrowRight, X, Tag
 } from 'lucide-react'
 
-type EventCategory = 'all' | 'cultural' | 'networking' | 'food' | 'business' | 'sports' | 'education'
-
-interface MalayaliEvent {
-  id: string
-  title: string
-  titleMl: string
-  description: string
-  descriptionMl: string
-  category: Exclude<EventCategory, 'all'>
-  date: string
-  time: string
-  endTime: string
-  emirate: string
-  emirateMl: string
-  venue: string
-  venueMl: string
-  price: number | 'free'
-  capacity: number
-  registered: number
-  image: string
-  organizer: string
-  featured: boolean
-  tags: string[]
-}
-
-const events: MalayaliEvent[] = [
-  {
-    id: 'onam-2025',
-    title: 'Grand Onam Celebration 2025',
-    titleMl: 'ഓണം ആഘോഷം 2025',
-    description: 'Join thousands of Malayalis for the biggest Onam celebration in Dubai. Traditional Pookalam competition, Vallam Kali, Onasadya, cultural performances, and much more.',
-    descriptionMl: 'ദുബായിലെ ഏറ്റവും വലിയ ഓണം ആഘോഷത്തിൽ ആയിരക്കണക്കിന് മലയാളികളോടൊപ്പം പങ്കുചേരൂ. പൂക്കളം, വള്ളം കളി, ഓണസദ്യ, സാംസ്കാരിക പ്രകടനങ്ങൾ.',
-    category: 'cultural',
-    date: '2025-09-06',
-    time: '10:00 AM',
-    endTime: '10:00 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'Dubai World Trade Centre',
-    venueMl: 'ദുബായ് വേൾഡ് ട്രേഡ് സെന്റർ',
-    price: 'free',
-    capacity: 5000,
-    registered: 3847,
-    image: 'https://images.unsplash.com/photo-1602491453631-e2a5ad90a131?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Dubai Malayali Association',
-    featured: true,
-    tags: ['Onam', 'Cultural', 'Family', 'Free Entry'],
-  },
-  {
-    id: 'kerala-business-summit',
-    title: 'Kerala Business Summit 2025',
-    titleMl: 'കേരള ബിസിനസ് സമ്മിറ്റ് 2025',
-    description: 'Connect with 500+ Malayali entrepreneurs, investors, and business leaders. Keynote speeches, panel discussions, and networking dinner.',
-    descriptionMl: '500-ലധികം മലയാളി സംരംഭകർ, നിക്ഷേപകർ, ബിസിനസ് നേതാക്കൾ. കീനോട്ട്, പാനൽ ചർച്ചകൾ.',
-    category: 'business',
-    date: '2025-10-15',
-    time: '9:00 AM',
-    endTime: '8:00 PM',
-    emirate: 'Abu Dhabi',
-    emirateMl: 'അബൂദബി',
-    venue: 'ADNEC Convention Centre',
-    venueMl: 'ADNEC കൺവെൻഷൻ സെന്റർ',
-    price: 150,
-    capacity: 500,
-    registered: 312,
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Malayali Business Council UAE',
-    featured: true,
-    tags: ['Business', 'Networking', 'Investment', 'Leadership'],
-  },
-  {
-    id: 'kerala-food-festival',
-    title: 'Kerala Food Festival',
-    titleMl: 'കേരള ഫുഡ് ഫെസ്റ്റിവൽ',
-    description: 'A 3-day celebration of authentic Kerala cuisine featuring 50+ stalls, cooking competitions, chef masterclasses, and food photography contest.',
-    descriptionMl: '50-ലധികം സ്റ്റോളുകളോടെ 3 ദിവസത്തെ കേരള ഭക്ഷണ ഉത്സവം. പാചക മത്സരം, ഫോട്ടോഗ്രഫി.',
-    category: 'food',
-    date: '2025-11-07',
-    time: '12:00 PM',
-    endTime: '11:00 PM',
-    emirate: 'Sharjah',
-    emirateMl: 'ഷാർജ',
-    venue: 'Expo Centre Sharjah',
-    venueMl: 'എക്സ്പോ സെന്റർ ഷാർജ',
-    price: 25,
-    capacity: 2000,
-    registered: 1456,
-    image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Kerala Cuisine Society',
-    featured: false,
-    tags: ['Food', 'Culture', 'Family', 'Competition'],
-  },
-  {
-    id: 'malayali-networking-night',
-    title: 'Malayali Professionals Networking Night',
-    titleMl: 'മലയാളി പ്രൊഫഷണൽസ് നെറ്റ്വർക്കിംഗ്',
-    description: 'Monthly networking event for Malayali professionals in tech, finance, healthcare, and engineering. Speed networking, elevator pitches, and cocktail dinner.',
-    descriptionMl: 'ടെക്, ഫിനാൻസ്, ഹെൽത്ത്കെയർ, എഞ്ചിനീയറിംഗ് മേഖലകളിലെ മലയാളി പ്രൊഫഷണലുകൾ.',
-    category: 'networking',
-    date: '2025-09-19',
-    time: '7:00 PM',
-    endTime: '10:30 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'La Ville Hotel & Suites',
-    venueMl: 'ലാ വില്ലെ ഹോട്ടൽ',
-    price: 75,
-    capacity: 150,
-    registered: 98,
-    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Malayali Professionals UAE',
-    featured: false,
-    tags: ['Networking', 'Professional', 'Tech', 'Finance'],
-  },
-  {
-    id: 'vishu-celebrations',
-    title: 'Vishu Celebrations & Cultural Night',
-    titleMl: 'വിഷു ആഘോഷവും സാംസ്കാരിക രാത്രിയും',
-    description: 'Traditional Vishu celebrations with Vishukkani, cultural performances by renowned Kerala artists, Vishu Sadya, and family entertainment.',
-    descriptionMl: 'വിഷുക്കണി, കേരള കലാകാരന്മാരുടെ സാംസ്കാരിക പ്രകടനങ്ങൾ, വിഷുസദ്യ.',
-    category: 'cultural',
-    date: '2026-04-14',
-    time: '5:00 PM',
-    endTime: '11:00 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'Madinat Jumeirah',
-    venueMl: 'മദീനത്ത് ജുമൈറ',
-    price: 50,
-    capacity: 800,
-    registered: 423,
-    image: 'https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Kerala Cultural Association Dubai',
-    featured: false,
-    tags: ['Vishu', 'Cultural', 'Family', 'Traditional'],
-  },
-  {
-    id: 'malayali-startup-pitch',
-    title: 'Malayali Startup Pitch Night',
-    titleMl: 'മലയാളി സ്റ്റാർട്ടപ്പ് പിച്ച് നൈറ്റ്',
-    description: 'Top 10 Malayali startups pitch to a panel of investors. AED 100,000 in funding up for grabs. Open for public viewing.',
-    descriptionMl: '10 മലയാളി സ്റ്റാർട്ടപ്പുകൾ നിക്ഷേപകർക്ക് മുന്നിൽ. 1 ലക്ഷം ദിർഹം ഫണ്ടിംഗ്.',
-    category: 'business',
-    date: '2025-10-28',
-    time: '6:00 PM',
-    endTime: '10:00 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'In5 Tech Innovation Centre',
-    venueMl: 'In5 ടെക് ഇന്നൊവേഷൻ സെന്റർ',
-    price: 'free',
-    capacity: 300,
-    registered: 287,
-    image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Startup Malayali',
-    featured: false,
-    tags: ['Startup', 'Investment', 'Innovation', 'Tech'],
-  },
-  {
-    id: 'kerala-arts-exhibition',
-    title: 'Kerala Arts & Crafts Exhibition',
-    titleMl: 'കേരള കലാ & കരകൗശല പ്രദർശനം',
-    description: 'A 5-day exhibition showcasing traditional Kerala arts including Kathakali, Mohiniyattam paintings, Theyyam masks, and handloomed textiles.',
-    descriptionMl: 'കഥകളി, മോഹിനിയാട്ടം, തെയ്യം, കൈത്തറി തുടങ്ങിയ കലകൾ.',
-    category: 'cultural',
-    date: '2025-12-10',
-    time: '10:00 AM',
-    endTime: '9:00 PM',
-    emirate: 'Abu Dhabi',
-    emirateMl: 'അബൂദബി',
-    venue: 'Louvre Abu Dhabi Grounds',
-    venueMl: 'ലൂവ്‌ർ അബൂദബി',
-    price: 30,
-    capacity: 1000,
-    registered: 234,
-    image: 'https://images.unsplash.com/photo-1578301978018-3005759f48f7?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Kerala Cultural Foundation',
-    featured: false,
-    tags: ['Art', 'Culture', 'Exhibition', 'Handicrafts'],
-  },
-  {
-    id: 'malayali-cricket-tournament',
-    title: 'Malayali Premier League Cricket',
-    titleMl: 'മലയാളി പ്രീമിയർ ലീഗ് ക്രിക്കറ്റ്',
-    description: '16-team cricket tournament for Malayali expats. Day & night matches, trophy presentation, after-match dinner.',
-    descriptionMl: 'മലയാളി പ്രവാസികൾക്കായി 16 ടീം ക്രിക്കറ്റ് ടൂർണമെന്റ്.',
-    category: 'sports',
-    date: '2025-10-03',
-    time: '7:00 AM',
-    endTime: '8:00 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'ICC Cricket Academy',
-    venueMl: 'ICC ക്രിക്കറ്റ് അക്കാദമി',
-    price: 'free',
-    capacity: 2000,
-    registered: 1234,
-    image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Malayali Sports Club UAE',
-    featured: false,
-    tags: ['Cricket', 'Sports', 'Tournament', 'Family'],
-  },
-  {
-    id: 'kerala-education-fair',
-    title: 'Kerala Education & Study Abroad Fair',
-    titleMl: 'കേരള വിദ്യാഭ്യാസ & വിദേശ പഠന മേള',
-    description: 'Connect with 40+ top Indian and international universities. Scholarship information, visa guidance, and direct admissions. Free counselling.',
-    descriptionMl: '40-ലധികം ഇന്ത്യൻ, അന്തർദ്ദേശീയ സർവ്വകലാശാലകൾ. സ്കോളർഷിപ്പ്, വിസ മാർഗ്ഗനിർദ്ദേശം.',
-    category: 'education',
-    date: '2025-09-27',
-    time: '10:00 AM',
-    endTime: '6:00 PM',
-    emirate: 'Dubai',
-    emirateMl: 'ദുബായ്',
-    venue: 'Dubai International Convention Centre',
-    venueMl: 'ദുബായ് ഇന്റർനാഷണൽ കൺവെൻഷൻ സെന്റർ',
-    price: 'free',
-    capacity: 3000,
-    registered: 1876,
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80&auto=format&fit=crop',
-    organizer: 'Kerala Education Council',
-    featured: false,
-    tags: ['Education', 'Universities', 'Scholarship', 'Students'],
-  },
-]
+// ─── Mock events removed — data now comes from Supabase via useEffect ───────
 
 const categoryTabs = [
   { key: 'all', label: 'All Events', labelMl: 'എല്ലാം', emoji: '🎉' },
@@ -279,26 +57,28 @@ function SeatsBar({ registered, capacity }: { registered: number; capacity: numb
 }
 
 function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
-  const daysUntil = getDaysUntil(event.date)
-  const isFull = event.registered >= event.capacity
+  const daysUntil = getDaysUntil(event.event_date)
+  const isFull = event.registered >= (event.capacity ?? 9999)
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 flex flex-col">
       <div className="relative h-48 overflow-hidden">
-        <Image
-          src={event.image}
-          alt={event.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-        />
+        {event.image_url && (
+          <Image
+            src={event.image_url}
+            alt={event.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+          />
+        )}
         <div className="absolute top-3 left-3">
           <span className="bg-white/90 backdrop-blur-sm text-kerala-deep text-xs font-semibold px-3 py-1 rounded-full capitalize">
             {categoryTabs.find(c => c.key === event.category)?.[isMl ? 'labelMl' : 'label']}
           </span>
         </div>
         <div className="absolute top-3 right-3">
-          {event.price === 'free' ? (
+          {event.price === null ? (
             <span className="bg-kerala-green text-white text-xs font-bold px-3 py-1 rounded-full">
               {isMl ? 'സൗജന്യം' : 'FREE'}
             </span>
@@ -317,20 +97,20 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
 
       <div className="p-5 flex flex-col flex-1">
         <h3 className="font-serif font-bold text-kerala-deep text-lg leading-tight mb-2 group-hover:text-kerala-green transition-colors">
-          {isMl ? event.titleMl : event.title}
+          {isMl ? (event.title_ml ?? event.title) : event.title}
         </h3>
 
         <div className="space-y-1.5 mb-3">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Calendar size={13} className="text-kerala-green flex-shrink-0" />
-            <span>{formatDate(event.date, isMl)}</span>
+            <span>{formatDate(event.event_date, isMl)}</span>
             <span className="text-gray-300">·</span>
             <Clock size={13} className="text-kerala-green flex-shrink-0" />
-            <span>{event.time}</span>
+            <span>{event.event_time}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <MapPin size={13} className="text-kerala-green flex-shrink-0" />
-            <span className="truncate">{isMl ? event.venueMl : event.venue}, {isMl ? event.emirateMl : event.emirate}</span>
+            <span className="truncate">{isMl ? (event.venue_ml ?? event.venue) : event.venue}, {isMl ? (event.emirate_ml ?? event.emirate) : event.emirate}</span>
           </div>
         </div>
 
@@ -343,7 +123,7 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
         </div>
 
         <div className="mt-auto space-y-3">
-          <SeatsBar registered={event.registered} capacity={event.capacity} />
+          {event.capacity && <SeatsBar registered={event.registered} capacity={event.capacity} />}
           <div className="flex items-center gap-3">
             <button
               disabled={isFull}
@@ -355,7 +135,7 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
             >
               {isFull
                 ? (isMl ? 'സ്ഥലം നിറഞ്ഞു' : 'Fully Booked')
-                : event.price === 'free'
+                : event.price === null
                   ? (isMl ? 'രജിസ്റ്റർ ചെയ്യൂ' : 'Register Free')
                   : (isMl ? 'ടിക്കറ്റ് വാങ്ങൂ' : 'Get Tickets')}
             </button>
@@ -373,20 +153,22 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
 }
 
 function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
-  const daysUntil = getDaysUntil(event.date)
-  const spotsLeft = event.capacity - event.registered
+  const daysUntil = getDaysUntil(event.event_date)
+  const spotsLeft = (event.capacity ?? 0) - event.registered
 
   return (
     <div className="relative rounded-3xl overflow-hidden shadow-2xl mb-8">
       <div className="relative h-[420px] md:h-[480px]">
-        <Image
-          src={event.image}
-          alt={event.title}
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
-        />
+        {event.image_url && (
+          <Image
+            src={event.image_url}
+            alt={event.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-kerala-deep/90 via-kerala-deep/60 to-transparent" />
       </div>
 
@@ -398,24 +180,24 @@ function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: bool
           </div>
 
           <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-3 leading-tight">
-            {isMl ? event.titleMl : event.title}
+            {isMl ? (event.title_ml ?? event.title) : event.title}
           </h2>
           <p className="text-white/75 text-sm md:text-base leading-relaxed mb-5 max-w-lg line-clamp-2">
-            {isMl ? event.descriptionMl : event.description}
+            {isMl ? (event.description_ml ?? event.description) : event.description}
           </p>
 
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <Calendar size={15} className="text-kerala-gold-light" />
-              <span>{formatDate(event.date, isMl)}</span>
+              <span>{formatDate(event.event_date, isMl)}</span>
             </div>
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <Clock size={15} className="text-kerala-gold-light" />
-              <span>{event.time} – {event.endTime}</span>
+              <span>{event.event_time} – {event.end_time}</span>
             </div>
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <MapPin size={15} className="text-kerala-gold-light" />
-              <span>{isMl ? event.venueMl : event.venue}</span>
+              <span>{isMl ? (event.venue_ml ?? event.venue) : event.venue}</span>
             </div>
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <Users size={15} className="text-kerala-gold-light" />
@@ -426,7 +208,7 @@ function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: bool
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg">
               <Ticket size={16} />
-              {event.price === 'free'
+              {event.price === null
                 ? (isMl ? 'സൗജന്യ രജിസ്ട്രേഷൻ' : 'Register Free')
                 : `${isMl ? 'ടിക്കറ്റ്' : 'Tickets from'} AED ${event.price}`}
             </button>
@@ -451,13 +233,19 @@ export default function EventsPage() {
   const [selectedEmirate, setSelectedEmirate] = useState('All Emirates')
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [allEvents, setAllEvents] = useState<MalayaliEvent[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const featured = useMemo(() => events.find(e => e.featured) ?? events[0], [])
+  useEffect(() => {
+    getEvents({ limit: 100 }).then(items => { setAllEvents(items); setLoading(false) })
+  }, [])
+
+  const featured = useMemo(() => allEvents.find(e => e.featured) ?? allEvents[0], [allEvents])
 
   const isDefaultView = activeCategory === 'all' && !query && selectedEmirate === 'All Emirates' && priceFilter === 'all'
 
   const filtered = useMemo(() => {
-    let list = [...events]
+    let list = [...allEvents]
 
     if (activeCategory !== 'all') {
       list = list.filter(e => e.category === activeCategory)
@@ -466,19 +254,19 @@ export default function EventsPage() {
       const q = query.toLowerCase()
       list = list.filter(e =>
         e.title.toLowerCase().includes(q) ||
-        e.titleMl.includes(q) ||
+        (e.title_ml ?? '').includes(q) ||
         e.tags.some(t => t.toLowerCase().includes(q)) ||
-        e.venue.toLowerCase().includes(q)
+        (e.venue ?? '').toLowerCase().includes(q)
       )
     }
     if (selectedEmirate !== 'All Emirates') {
       list = list.filter(e => e.emirate === selectedEmirate)
     }
-    if (priceFilter === 'free') list = list.filter(e => e.price === 'free')
-    else if (priceFilter === 'paid') list = list.filter(e => e.price !== 'free')
+    if (priceFilter === 'free') list = list.filter(e => e.price === null)
+    else if (priceFilter === 'paid') list = list.filter(e => e.price !== null)
 
-    return list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [query, activeCategory, selectedEmirate, priceFilter])
+    return list.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  }, [allEvents, query, activeCategory, selectedEmirate, priceFilter])
 
   return (
     <main className="min-h-screen bg-kerala-cream">
@@ -616,7 +404,20 @@ export default function EventsPage() {
         </div>
 
         {/* Events Grid */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-100" />
+                <div className="p-5 space-y-3">
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-5 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-4">
               <Calendar size={28} className="text-gray-300" />

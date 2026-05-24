@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/context/CartContext'
-import { vendorListings, LISTING_TYPE_META, type ListingType } from '@/lib/mock-vendor-products'
+import { getMarketplaceListings, LISTING_TYPE_META, type MarketplaceListing, type ListingType } from '@/lib/shop'
 import {
   Search, ShoppingCart, Star, Filter, X, ChevronDown,
   BadgeCheck, MapPin, Clock, MessageCircle, Phone,
@@ -17,12 +17,12 @@ import CartDrawer from '@/components/shop/CartDrawer'
 
 const CATEGORIES = ['All', 'Food & Grocery', 'Healthcare', 'Beauty & Wellness', 'Technology', 'Legal & Finance', 'Services']
 const TYPES: { value: ListingType | 'all'; label: string; icon: React.ReactNode }[] = [
-  { value: 'all',          label: 'All Types',    icon: <Package size={14} /> },
-  { value: 'product',      label: 'Products',     icon: <Package size={14} /> },
-  { value: 'appointment',  label: 'Appointments', icon: <Calendar size={14} /> },
-  { value: 'quote',        label: 'Get Quote',    icon: <FileText size={14} /> },
-  { value: 'direct_service', label: 'Services',   icon: <Zap size={14} /> },
-  { value: 'contact_only', label: 'Enquire',      icon: <MessageCircle size={14} /> },
+  { value: 'all',            label: 'All Types',    icon: <Package size={14} /> },
+  { value: 'product',        label: 'Products',     icon: <Package size={14} /> },
+  { value: 'appointment',    label: 'Appointments', icon: <Calendar size={14} /> },
+  { value: 'quote',          label: 'Get Quote',    icon: <FileText size={14} /> },
+  { value: 'direct_service', label: 'Services',     icon: <Zap size={14} /> },
+  { value: 'contact_only',   label: 'Enquire',      icon: <MessageCircle size={14} /> },
 ]
 
 export default function ShopPage() {
@@ -30,34 +30,51 @@ export default function ShopPage() {
   const isMl = locale === 'ml'
   const { addItem, totalItems, openCart } = useCart()
 
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('All')
-  const [typeFilter, setTypeFilter] = useState<ListingType | 'all'>('all')
-  const [emirate, setEmirate] = useState('All')
-  const [vendor, setVendor] = useState('All')
-  const [sortBy, setSortBy] = useState('featured')
-  const [showFilters, setShowFilters] = useState(false)
-  const [addedId, setAddedId] = useState<string | null>(null)
+  const [allListings, setAllListings] = useState<MarketplaceListing[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const vendors = useMemo(() => ['All', ...Array.from(new Set(vendorListings.map(l => l.vendorName)))], [])
-  const emirates = useMemo(() => ['All', ...Array.from(new Set(vendorListings.map(l => l.vendorEmirate)))], [])
+  const [search, setSearch]       = useState('')
+  const [category, setCategory]   = useState('All')
+  const [typeFilter, setTypeFilter] = useState<ListingType | 'all'>('all')
+  const [emirate, setEmirate]     = useState('All')
+  const [vendor, setVendor]       = useState('All')
+  const [sortBy, setSortBy]       = useState('featured')
+  const [showFilters, setShowFilters] = useState(false)
+  const [addedId, setAddedId]     = useState<string | null>(null)
+
+  useEffect(() => {
+    getMarketplaceListings({ limit: 200 }).then(data => {
+      setAllListings(data)
+      setLoading(false)
+    })
+  }, [])
+
+  const vendors  = useMemo(() => ['All', ...Array.from(new Set(allListings.map(l => l.vendor_name)))], [allListings])
+  const emirates = useMemo(() => ['All', ...Array.from(new Set(allListings.map(l => l.vendor_emirate)))], [allListings])
 
   const filtered = useMemo(() => {
-    let list = [...vendorListings]
-    if (search) list = list.filter(l => l.name.toLowerCase().includes(search.toLowerCase()) || l.vendorName.toLowerCase().includes(search.toLowerCase()) || l.tags.some(t => t.toLowerCase().includes(search.toLowerCase())))
-    if (category !== 'All') list = list.filter(l => l.category === category)
-    if (typeFilter !== 'all') list = list.filter(l => l.listingType === typeFilter)
-    if (emirate !== 'All') list = list.filter(l => l.vendorEmirate === emirate)
-    if (vendor !== 'All') list = list.filter(l => l.vendorName === vendor)
-    if (sortBy === 'price-asc') list.sort((a, b) => a.price - b.price)
+    let list = [...allListings]
+    if (search)
+      list = list.filter(l =>
+        l.name.toLowerCase().includes(search.toLowerCase()) ||
+        l.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
+        l.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+      )
+    if (category !== 'All')   list = list.filter(l => l.category === category)
+    if (typeFilter !== 'all') list = list.filter(l => l.listing_type === typeFilter)
+    if (emirate !== 'All')    list = list.filter(l => l.vendor_emirate === emirate)
+    if (vendor !== 'All')     list = list.filter(l => l.vendor_name === vendor)
+    if (sortBy === 'price-asc')  list.sort((a, b) => a.price - b.price)
     else if (sortBy === 'price-desc') list.sort((a, b) => b.price - a.price)
-    else if (sortBy === 'rating') list.sort((a, b) => b.rating - a.rating)
-    else list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+    else if (sortBy === 'rating') list.sort((a, b) => b.rating_avg - a.rating_avg)
+    else list.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0))
     return list
-  }, [search, category, typeFilter, emirate, vendor, sortBy])
+  }, [search, category, typeFilter, emirate, vendor, sortBy, allListings])
 
-  function handleAdd(listing: typeof vendorListings[0]) {
-    addItem(listing)
+  function handleAdd(listing: MarketplaceListing) {
+    // adapt to cart shape (CartContext expects certain fields)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addItem(listing as any)
     setAddedId(listing.id)
     setTimeout(() => setAddedId(null), 1500)
   }
@@ -161,34 +178,59 @@ export default function ShopPage() {
         {/* Results count */}
         <div className="flex items-center justify-between mb-5">
           <p className="text-sm text-gray-500">
-            <span className="font-bold text-kerala-deep">{filtered.length}</span> {isMl ? 'ഇനങ്ങൾ' : 'listings found'}
-            {(category !== 'All' || typeFilter !== 'all' || vendor !== 'All') && (
-              <button onClick={() => { setCategory('All'); setTypeFilter('all'); setVendor('All'); setEmirate('All') }} className="ml-2 text-red-400 hover:text-red-500 text-xs underline">
-                Clear filters
-              </button>
+            {loading ? (
+              <span className="animate-pulse bg-gray-200 rounded h-4 w-32 inline-block" />
+            ) : (
+              <>
+                <span className="font-bold text-kerala-deep">{filtered.length}</span> {isMl ? 'ഇനങ്ങൾ' : 'listings found'}
+                {(category !== 'All' || typeFilter !== 'all' || vendor !== 'All') && (
+                  <button onClick={() => { setCategory('All'); setTypeFilter('all'); setVendor('All'); setEmirate('All') }} className="ml-2 text-red-400 hover:text-red-500 text-xs underline">
+                    Clear filters
+                  </button>
+                )}
+              </>
             )}
           </p>
         </div>
 
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse">
+                <div className="h-44 bg-gray-200" />
+                <div className="p-4 space-y-3">
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  <div className="h-4 bg-gray-200 rounded" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-8 bg-gray-200 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Grid */}
-        {filtered.length === 0 ? (
+        {!loading && filtered.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-5xl mb-4">🛍️</p>
             <p className="text-gray-400">{isMl ? 'ഒന്നും കണ്ടെത്തിയില്ല' : 'No listings found'}</p>
           </div>
-        ) : (
+        ) : !loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map(listing => {
-              const meta = LISTING_TYPE_META[listing.listingType]
+              const meta = LISTING_TYPE_META[listing.listing_type]
               const isAdded = addedId === listing.id
-              const discount = listing.originalPrice ? Math.round((1 - listing.price / listing.originalPrice) * 100) : 0
+              const discount = listing.original_price ? Math.round((1 - listing.price / listing.original_price) * 100) : 0
 
               return (
                 <div key={listing.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg hover:border-kerala-green/20 transition-all group flex flex-col">
 
                   {/* Image */}
-                  <div className="relative h-44 overflow-hidden">
-                    <Image src={listing.image} alt={listing.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="relative h-44 overflow-hidden bg-gray-100">
+                    {listing.image_url && (
+                      <Image src={listing.image_url} alt={listing.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    )}
                     <div className="absolute top-2 left-2 flex gap-1.5">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${meta.color}`}>
                         {meta.icon} {meta.label}
@@ -196,7 +238,7 @@ export default function ShopPage() {
                       {discount > 0 && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">-{discount}%</span>
                       )}
-                      {listing.bestseller && (
+                      {listing.is_bestseller && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-kerala-gold text-white">🔥</span>
                       )}
                     </div>
@@ -204,28 +246,33 @@ export default function ShopPage() {
 
                   <div className="p-4 flex flex-col flex-1">
                     {/* Vendor */}
-                    <Link href={`/${locale}/company/${listing.vendorSlug}`} className="flex items-center gap-2 mb-2 group/vendor">
-                      <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                        <Image src={listing.vendorLogo} alt="" fill className="object-cover" />
+                    <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-2 mb-2 group/vendor">
+                      <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+                        {listing.vendor_logo_url && (
+                          <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
+                        )}
                       </div>
                       <span className="text-[11px] text-gray-400 group-hover/vendor:text-kerala-green transition-colors truncate flex items-center gap-1">
-                        {listing.vendorName}
-                        {listing.vendorVerified && <BadgeCheck size={11} className="text-kerala-green flex-shrink-0" />}
+                        {listing.vendor_name}
+                        {listing.vendor_verified && <BadgeCheck size={11} className="text-kerala-green flex-shrink-0" />}
                       </span>
                     </Link>
 
                     {/* Name */}
                     <h3 className={`font-semibold text-kerala-deep text-sm leading-snug mb-1 line-clamp-2 flex-1 ${isMl ? 'font-malayalam' : ''}`}>
-                      {isMl ? listing.nameMl : listing.name}
+                      {isMl ? (listing.name_ml ?? listing.name) : listing.name}
                     </h3>
 
                     {/* Meta */}
                     <div className="flex items-center gap-2 text-[11px] text-gray-400 mb-3">
                       <span className="flex items-center gap-0.5">
                         <Star size={10} className="text-kerala-gold fill-kerala-gold" />
-                        {listing.rating} ({listing.reviews})
+                        {listing.rating_avg} ({listing.review_count})
                       </span>
-                      <span className="flex items-center gap-0.5"><MapPin size={10} />{isMl ? listing.vendorEmirati : listing.vendorEmirate}</span>
+                      <span className="flex items-center gap-0.5">
+                        <MapPin size={10} />
+                        {isMl ? (listing.vendor_emirate_ml ?? listing.vendor_emirate) : listing.vendor_emirate}
+                      </span>
                       {listing.duration && <span className="flex items-center gap-0.5"><Clock size={10} />{listing.duration}</span>}
                     </div>
 
@@ -234,8 +281,8 @@ export default function ShopPage() {
                       {listing.price > 0 ? (
                         <>
                           <span className="font-bold text-kerala-green text-base">AED {listing.price.toLocaleString()}</span>
-                          {listing.originalPrice && <span className="text-xs text-gray-300 line-through">AED {listing.originalPrice}</span>}
-                          {listing.unit && <span className="text-[11px] text-gray-400">/ {isMl ? listing.unitMl : listing.unit}</span>}
+                          {listing.original_price && <span className="text-xs text-gray-300 line-through">AED {listing.original_price}</span>}
+                          {listing.unit && <span className="text-[11px] text-gray-400">/ {isMl ? (listing.unit_ml ?? listing.unit) : listing.unit}</span>}
                         </>
                       ) : (
                         <span className="font-semibold text-orange-500 text-sm">{isMl ? 'ക്വോട്ട് ലഭിക്കും' : 'Get Custom Quote'}</span>
@@ -245,25 +292,25 @@ export default function ShopPage() {
                     {/* Action buttons */}
                     <div className="flex gap-2 mt-auto">
                       <Link
-                        href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                        href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                         className="flex-1 border border-gray-200 text-gray-600 text-xs font-semibold py-2 rounded-xl text-center hover:border-kerala-green hover:text-kerala-green transition-colors"
                       >
                         {isMl ? 'വിശദാംശം' : 'View Details'}
                       </Link>
 
-                      {listing.listingType === 'contact_only' ? (
+                      {listing.listing_type === 'contact_only' ? (
                         <a
-                          href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}`}
+                          href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 bg-[#25D366] text-white text-xs font-semibold py-2 rounded-xl text-center hover:bg-[#20bd5a] transition-colors flex items-center justify-center gap-1"
                         >
                           <MessageCircle size={12} />
-                          {isMl ? 'WhatsApp' : 'WhatsApp'}
+                          WhatsApp
                         </a>
-                      ) : listing.listingType === 'quote' ? (
+                      ) : listing.listing_type === 'quote' ? (
                         <Link
-                          href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                          href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                           className="flex-1 bg-orange-500 text-white text-xs font-semibold py-2 rounded-xl text-center hover:bg-orange-600 transition-colors"
                         >
                           {isMl ? 'ക്വോട്ട്' : 'Get Quote'}

@@ -1,10 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { ShoppingCart, Star, ArrowRight, Truck, Shield, RefreshCw, MessageCircle, Calendar, FileText, Zap, BadgeCheck } from 'lucide-react'
-import { vendorListings, LISTING_TYPE_META } from '@/lib/mock-vendor-products'
+import { getMarketplaceListings, LISTING_TYPE_META, type MarketplaceListing } from '@/lib/shop'
 
 const badges = [
   { icon: Truck,     text: 'Free delivery above AED 100', textMl: 'AED 100 വരെ സൗജന്യ ഡെലിവറി' },
@@ -12,12 +13,17 @@ const badges = [
   { icon: RefreshCw, text: 'Products & services in one place', textMl: 'ഒരിടത്ത് ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും' },
 ]
 
-// Pick 8 featured listings for the home section preview
-const previewListings = vendorListings.filter(l => l.featured).slice(0, 8)
-
 export default function ShopSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
+
+  const [listings, setListings] = useState<MarketplaceListing[]>([])
+
+  useEffect(() => {
+    getMarketplaceListings({ featured: true, limit: 8 }).then(setListings)
+  }, [])
+
+  if (listings.length === 0) return null
 
   return (
     <section className="bg-kerala-cream py-16 px-4 sm:px-6 lg:px-8">
@@ -56,9 +62,9 @@ export default function ShopSection() {
 
         {/* Products & Services Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {previewListings.map((listing) => {
-            const meta = LISTING_TYPE_META[listing.listingType]
-            const discount = listing.originalPrice ? Math.round((1 - listing.price / listing.originalPrice) * 100) : 0
+          {listings.map((listing) => {
+            const meta = LISTING_TYPE_META[listing.listing_type]
+            const discount = listing.original_price ? Math.round((1 - listing.price / listing.original_price) * 100) : 0
 
             return (
               <div
@@ -66,14 +72,16 @@ export default function ShopSection() {
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 hover:border-kerala-green/20 transition-all flex flex-col"
               >
                 {/* Image */}
-                <Link href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`} className="relative h-44 overflow-hidden bg-gray-50 block">
-                  <Image
-                    src={listing.image}
-                    alt={listing.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
+                <Link href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`} className="relative h-44 overflow-hidden bg-gray-50 block">
+                  {listing.image_url && (
+                    <Image
+                      src={listing.image_url}
+                      alt={listing.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  )}
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${meta.color}`}>
@@ -82,7 +90,7 @@ export default function ShopSection() {
                     {discount > 0 && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">-{discount}%</span>
                     )}
-                    {listing.bestseller && (
+                    {listing.is_bestseller && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-kerala-gold text-white">🔥</span>
                     )}
                   </div>
@@ -91,27 +99,29 @@ export default function ShopSection() {
                 {/* Content */}
                 <div className="p-3 flex flex-col flex-1">
                   {/* Vendor */}
-                  <Link href={`/${locale}/company/${listing.vendorSlug}`} className="flex items-center gap-1.5 mb-1.5 group/v">
-                    <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-                      <Image src={listing.vendorLogo} alt="" fill className="object-cover" />
+                  <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-1.5 mb-1.5 group/v">
+                    <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+                      {listing.vendor_logo_url && (
+                        <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
+                      )}
                     </div>
                     <span className="text-[10px] text-gray-400 group-hover/v:text-kerala-green transition-colors flex items-center gap-0.5 truncate">
-                      {listing.vendorName}
-                      {listing.vendorVerified && <BadgeCheck size={10} className="text-kerala-green flex-shrink-0" />}
+                      {listing.vendor_name}
+                      {listing.vendor_verified && <BadgeCheck size={10} className="text-kerala-green flex-shrink-0" />}
                     </span>
                   </Link>
 
                   <h3 className="font-medium text-kerala-deep text-xs leading-snug group-hover:text-kerala-green transition-colors mb-1.5 line-clamp-2 flex-1">
-                    {isMl ? listing.nameMl : listing.name}
+                    {isMl ? (listing.name_ml ?? listing.name) : listing.name}
                   </h3>
 
                   <div className="flex items-center gap-1 mb-1.5">
                     <div className="flex">
                       {[1,2,3,4,5].map((i) => (
-                        <Star key={i} size={10} className={i <= Math.floor(listing.rating) ? 'text-kerala-gold fill-kerala-gold' : 'text-gray-300'} />
+                        <Star key={i} size={10} className={i <= Math.floor(listing.rating_avg) ? 'text-kerala-gold fill-kerala-gold' : 'text-gray-300'} />
                       ))}
                     </div>
-                    <span className="text-gray-400 text-[10px]">({listing.reviews})</span>
+                    <span className="text-gray-400 text-[10px]">({listing.review_count})</span>
                   </div>
 
                   {/* Price */}
@@ -119,8 +129,8 @@ export default function ShopSection() {
                     {listing.price > 0 ? (
                       <>
                         <span className="text-kerala-green font-bold text-sm">AED {listing.price}</span>
-                        {listing.originalPrice && (
-                          <span className="text-gray-300 text-xs line-through">AED {listing.originalPrice}</span>
+                        {listing.original_price && (
+                          <span className="text-gray-300 text-xs line-through">AED {listing.original_price}</span>
                         )}
                       </>
                     ) : (
@@ -131,39 +141,39 @@ export default function ShopSection() {
                   </div>
 
                   {/* Action button */}
-                  {listing.listingType === 'contact_only' ? (
+                  {listing.listing_type === 'contact_only' ? (
                     <a
-                      href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-[#25D366] text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-[#20bd5a] transition-colors"
                     >
                       <MessageCircle size={11} /> WhatsApp
                     </a>
-                  ) : listing.listingType === 'appointment' ? (
+                  ) : listing.listing_type === 'appointment' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                       className="w-full bg-blue-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-blue-600 transition-colors"
                     >
                       <Calendar size={11} /> {isMl ? 'ബുക്ക് ചെയ്യൂ' : 'Book Slot'}
                     </Link>
-                  ) : listing.listingType === 'quote' ? (
+                  ) : listing.listing_type === 'quote' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                       className="w-full bg-orange-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-orange-600 transition-colors"
                     >
                       <FileText size={11} /> {isMl ? 'ക്വോട്ട്' : 'Get Quote'}
                     </Link>
-                  ) : listing.listingType === 'direct_service' ? (
+                  ) : listing.listing_type === 'direct_service' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                       className="w-full bg-purple-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-purple-600 transition-colors"
                     >
                       <Zap size={11} /> {isMl ? 'ഉടൻ വാങ്ങൂ' : 'Buy Now'}
                     </Link>
                   ) : (
                     <Link
-                      href={`/${locale}/company/${listing.vendorSlug}/shop/${listing.id}`}
+                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
                       className="w-full bg-kerala-green text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-kerala-deep transition-colors"
                     >
                       <ShoppingCart size={11} /> {isMl ? 'കാർട്ടിൽ' : 'Add to Cart'}
@@ -181,7 +191,7 @@ export default function ShopSection() {
             href={`/${locale}/shop`}
             className="inline-flex items-center gap-2 bg-kerala-deep text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-kerala-green transition-colors"
           >
-            {isMl ? 'എല്ലാ ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും കാണൂ' : 'Browse All Products & Services'}
+            {isMl ? 'എല്ലാ ഉൽപ്പന്നങ്ങളും കാണൂ' : 'View All Products & Services'}
             <ArrowRight size={16} />
           </Link>
         </div>

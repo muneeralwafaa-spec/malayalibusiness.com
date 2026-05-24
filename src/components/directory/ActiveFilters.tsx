@@ -2,7 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import { X, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
-import { categories, emirates } from '@/lib/mock-businesses'
+import { categories, emirates } from '@/lib/directory-constants'
 import type { FilterState } from '@/types/business'
 
 type Props = {

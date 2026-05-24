@@ -1,180 +1,19 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { getPosts } from '@/lib/community'
+import type { CommunityPost as Article } from '@/lib/community'
 import {
   Search, Clock, Eye, MessageCircle, Heart,
   BookOpen, TrendingUp, Users, Star, Tag, ChevronRight
 } from 'lucide-react'
 
-interface Article {
-  id: string
-  title: string
-  titleMl: string
-  excerpt: string
-  excerptMl: string
-  category: string
-  categoryMl: string
-  author: string
-  authorMl: string
-  authorAvatar: string
-  authorRole: string
-  authorRoleMl: string
-  date: string
-  readTime: number
-  image: string
-  views: number
-  likes: number
-  comments: number
-  featured: boolean
-  trending: boolean
-  tags: string[]
-}
 
-const articles: Article[] = [
-  {
-    id: 'uae-business-setup-guide',
-    title: 'Complete Guide to Starting a Business in UAE as a Malayali',
-    titleMl: 'UAE-ൽ ഒരു മലയാളി ബിസിനസ് ആരംഭിക്കുന്നതിനുള്ള പൂർണ്ണ ഗൈഡ്',
-    excerpt: 'From free zone vs mainland to visa sponsorship — everything a Malayali entrepreneur needs to know before incorporating in the UAE.',
-    excerptMl: 'ഫ്രീ സോൺ vs മെയിൻലാൻഡ് മുതൽ വിസ സ്പോൺസർഷിപ്പ് വരെ — UAE-ൽ ബിസിനസ് ആരംഭിക്കുന്നതിന് ഒരു മലയാളി സംരംഭകൻ അറിഞ്ഞിരിക്കേണ്ട എല്ലാം.',
-    category: 'Business',
-    categoryMl: 'ബിസിനസ്',
-    author: 'Rajan Nair',
-    authorMl: 'രാജൻ നായർ',
-    authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
-    authorRole: 'Business Consultant',
-    authorRoleMl: 'ബിസിനസ് കൺസൾട്ടന്റ്',
-    date: '2025-05-10',
-    readTime: 8,
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80&auto=format&fit=crop',
-    views: 12450,
-    likes: 342,
-    comments: 47,
-    featured: true,
-    trending: true,
-    tags: ['Business Setup', 'Freezone', 'Visa', 'Entrepreneur'],
-  },
-  {
-    id: 'nri-investment-kerala',
-    title: 'Smart Investment Options for UAE-Based Malayalis Back in Kerala',
-    titleMl: 'UAE-ൽ ഉള്ള മലയാളികൾക്ക് കേരളത്തിൽ ബുദ്ധിമുട്ടില്ലാത്ത നിക്ഷേപ ഓപ്ഷനുകൾ',
-    excerpt: 'Real estate, mutual funds, NRE accounts, and government bonds — a financial advisor\'s guide to growing your wealth back home.',
-    excerptMl: 'റിയൽ എസ്റ്റേറ്റ്, മ്യൂച്ചൽ ഫണ്ടുകൾ, NRE അക്കൗണ്ടുകൾ, സർക്കാർ ബോണ്ടുകൾ — നാട്ടിൽ സമ്പത്ത് വളർത്താനുള്ള ഗൈഡ്.',
-    category: 'Finance',
-    categoryMl: 'ഫിനാൻസ്',
-    author: 'Priya Menon',
-    authorMl: 'പ്രിയ മേനോൻ',
-    authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
-    authorRole: 'Financial Advisor',
-    authorRoleMl: 'ഫിനാൻഷ്യൽ അഡ്വൈസർ',
-    date: '2025-05-08',
-    readTime: 10,
-    image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1200&q=80&auto=format&fit=crop',
-    views: 8920,
-    likes: 218,
-    comments: 34,
-    featured: true,
-    trending: false,
-    tags: ['Investment', 'NRI', 'Real Estate', 'Finance'],
-  },
-  {
-    id: 'onam-recipes-uae',
-    title: 'Authentic Onam Sadya Recipes You Can Make in Dubai',
-    titleMl: 'ദുബായിൽ ഉണ്ടാക്കാൻ കഴിയുന്ന ആധികാരിക ഓണസദ്യ റെസിപ്പികൾ',
-    excerpt: 'All 26 dishes of the traditional Onam feast with modern adaptations for UAE kitchens. Where to find authentic Kerala ingredients in Dubai.',
-    excerptMl: 'UAE അടുക്കളകൾക്ക് ആധുനിക അഡാപ്‌റ്റേഷനുകളോടെ പരമ്പരാഗത ഓണ സദ്യയുടെ 26 വിഭവങ്ങൾ.',
-    category: 'Food & Culture',
-    categoryMl: 'ഭക്ഷണം & സംസ്കാരം',
-    author: 'Lakshmi Krishnan',
-    authorMl: 'ലക്ഷ്മി കൃഷ്ണൻ',
-    authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80',
-    authorRole: 'Food Blogger',
-    authorRoleMl: 'ഫുഡ് ബ്ലോഗർ',
-    date: '2025-05-05',
-    readTime: 12,
-    image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&q=80&auto=format&fit=crop',
-    views: 21300,
-    likes: 567,
-    comments: 89,
-    featured: false,
-    trending: true,
-    tags: ['Onam', 'Sadya', 'Recipes', 'Kerala Food'],
-  },
-  {
-    id: 'remote-work-tips',
-    title: 'Working Remotely from UAE While Managing a Kerala Business',
-    titleMl: 'UAE-ൽ ഇരുന്ന് കേരള ബിസിനസ് നടത്തൽ: ടിപ്സ് & ട്രിക്സ്',
-    excerpt: 'Digital tools, banking strategies, and legal considerations for Malayali entrepreneurs managing businesses in both UAE and India simultaneously.',
-    excerptMl: 'UAE-ലും ഇന്ത്യയിലും ഒരേ സമയം ബിസിനസ് നടത്തുന്ന മലയാളി സംരംഭകർക്കുള്ള ഡിജിറ്റൽ ടൂളുകൾ.',
-    category: 'Business',
-    categoryMl: 'ബിസിനസ്',
-    author: 'Suresh Pillai',
-    authorMl: 'സുരേഷ് പിള്ള',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
-    authorRole: 'Serial Entrepreneur',
-    authorRoleMl: 'സീരിയൽ സംരംഭകൻ',
-    date: '2025-05-01',
-    readTime: 7,
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1200&q=80&auto=format&fit=crop',
-    views: 6780,
-    likes: 198,
-    comments: 28,
-    featured: false,
-    trending: false,
-    tags: ['Remote Work', 'Entrepreneur', 'Digital Tools', 'Cross-border'],
-  },
-  {
-    id: 'malayali-community-dubai',
-    title: 'The Malayali Community in Dubai: A 50-Year Story',
-    titleMl: 'ദുബായിലെ മലയാളി സമൂഹം: 50 വർഷത്തെ കഥ',
-    excerpt: 'From the early oil boom migrants to tech executives — how the Malayali community shaped the UAE\'s economy and culture over five decades.',
-    excerptMl: 'ആദ്യകാല എണ്ണ ബൂം കുടിയേറ്റക്കാർ മുതൽ ടെക് എക്‌സിക്യൂട്ടീവുകൾ വരെ — മലയാളി സമൂഹം UAE ൻ്റെ സമ്പദ്‌വ്യവസ്ഥ രൂപപ്പെടുത്തിയ കഥ.',
-    category: 'Community',
-    categoryMl: 'കമ്മ്യൂണിറ്റി',
-    author: 'Dr. Thomas Varghese',
-    authorMl: 'ഡോ. തോമസ് വർഗ്ഗീസ്',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-    authorRole: 'Historian & Author',
-    authorRoleMl: 'ചരിത്രകാരൻ & എഴുത്തുകാരൻ',
-    date: '2025-04-28',
-    readTime: 15,
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80&auto=format&fit=crop',
-    views: 15600,
-    likes: 412,
-    comments: 63,
-    featured: false,
-    trending: true,
-    tags: ['Community', 'History', 'Dubai', 'Migration'],
-  },
-  {
-    id: 'uae-healthcare-guide',
-    title: 'Navigating UAE Healthcare: A Guide for Malayali Expats',
-    titleMl: 'UAE ആരോഗ്യ സംരക്ഷണം: മലയാളി പ്രവാസികൾക്കുള്ള ഗൈഡ്',
-    excerpt: 'DHA vs HAAD insurance, finding Malayalam-speaking doctors, and the best Ayurvedic clinics in the UAE.',
-    excerptMl: 'DHA vs HAAD ഇൻഷുറൻസ്, മലയാളം സംസാരിക്കുന്ന ഡോക്ടർമാരെ കണ്ടെത്തൽ, UAE-ൽ മികച്ച ആയുർവേദ ക്ലിനിക്കുകൾ.',
-    category: 'Health',
-    categoryMl: 'ആരോഗ്യം',
-    author: 'Dr. Anitha Nambiar',
-    authorMl: 'ഡോ. അനിത നമ്പ്യാർ',
-    authorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&q=80',
-    authorRole: 'GP Physician, Dubai',
-    authorRoleMl: 'GP ഫിസിഷ്യൻ, ദുബായ്',
-    date: '2025-04-25',
-    readTime: 9,
-    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&q=80&auto=format&fit=crop',
-    views: 9240,
-    likes: 245,
-    comments: 41,
-    featured: false,
-    trending: false,
-    tags: ['Healthcare', 'Insurance', 'Ayurveda', 'Expat'],
-  },
-]
 
 const articleCategories = [
   { key: 'all', label: 'All', labelMl: 'എല്ലാം' },
@@ -195,10 +34,10 @@ function timeAgo(dateStr: string, isMl: boolean) {
 
 function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
   return (
-    <Link href={`/en/community/${article.id}`} className="group block">
+    <Link href={`/en/community/${article.slug}`} className="group block">
       <div className="relative rounded-2xl overflow-hidden h-72 mb-4">
         <Image
-          src={article.image}
+          src={article.image_url ?? ""}
           alt={article.title}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -207,10 +46,10 @@ function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
           <span className="bg-kerala-gold text-white text-xs font-bold px-2.5 py-1 rounded-full mb-2 inline-block">
-            {isMl ? article.categoryMl : article.category}
+            {isMl ? article.category_ml : article.category}
           </span>
           <h3 className="font-serif font-bold text-white text-lg leading-snug line-clamp-2 group-hover:text-kerala-gold-light transition-colors">
-            {isMl ? article.titleMl : article.title}
+            {isMl ? article.title_ml : article.title}
           </h3>
         </div>
         {article.trending && (
@@ -220,19 +59,19 @@ function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
           </div>
         )}
       </div>
-      <p className="text-gray-600 text-sm line-clamp-2 mb-3">{isMl ? article.excerptMl : article.excerpt}</p>
+      <p className="text-gray-600 text-sm line-clamp-2 mb-3">{isMl ? article.excerpt_ml : article.excerpt}</p>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative w-7 h-7 rounded-full overflow-hidden">
-            <Image src={article.authorAvatar} alt={article.author} fill className="object-cover" sizes="28px" />
+            <Image src={article.author_avatar ?? ""} alt={article.author_name} fill className="object-cover" sizes="28px" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-kerala-deep">{isMl ? article.authorMl : article.author}</p>
-            <p className="text-xs text-gray-400">{isMl ? article.authorRoleMl : article.authorRole}</p>
+            <p className="text-xs font-semibold text-kerala-deep">{isMl ? article.author_name_ml : article.author_name}</p>
+            <p className="text-xs text-gray-400">{isMl ? article.author_role_ml : article.author_role}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span className="flex items-center gap-1"><Clock size={11} /> {article.readTime}m</span>
+          <span className="flex items-center gap-1"><Clock size={11} /> {article.read_time}m</span>
           <span className="flex items-center gap-1"><Eye size={11} /> {(article.views / 1000).toFixed(1)}K</span>
         </div>
       </div>
@@ -245,18 +84,18 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
 
   if (horizontal) {
     return (
-      <Link href={`/en/community/${article.id}`} className="group flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
+      <Link href={`/en/community/${article.slug}`} className="group flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
         <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
-          <Image src={article.image} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="96px" />
+          <Image src={article.image_url ?? ""} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="96px" />
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-xs font-semibold text-kerala-green">{isMl ? article.categoryMl : article.category}</span>
+          <span className="text-xs font-semibold text-kerala-green">{isMl ? article.category_ml : article.category}</span>
           <h4 className="font-serif font-semibold text-kerala-deep text-sm leading-snug mt-0.5 mb-1 line-clamp-2 group-hover:text-kerala-green transition-colors">
-            {isMl ? article.titleMl : article.title}
+            {isMl ? article.title_ml : article.title}
           </h4>
           <div className="flex items-center gap-3 text-xs text-gray-400">
-            <span>{timeAgo(article.date, isMl)}</span>
-            <span className="flex items-center gap-1"><Clock size={10} /> {article.readTime}m</span>
+            <span>{timeAgo(article.published_at, isMl)}</span>
+            <span className="flex items-center gap-1"><Clock size={10} /> {article.read_time}m</span>
             <span className="flex items-center gap-1"><Eye size={10} /> {article.views.toLocaleString()}</span>
           </div>
         </div>
@@ -266,10 +105,10 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
-      <Link href={`/en/community/${article.id}`} className="block">
+      <Link href={`/en/community/${article.slug}`} className="block">
         <div className="relative h-44 overflow-hidden">
           <Image
-            src={article.image}
+            src={article.image_url ?? ""}
             alt={article.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -277,7 +116,7 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
           />
           <div className="absolute top-3 left-3">
             <span className="bg-white/90 backdrop-blur-sm text-kerala-deep text-xs font-semibold px-2.5 py-1 rounded-full">
-              {isMl ? article.categoryMl : article.category}
+              {isMl ? article.category_ml : article.category}
             </span>
           </div>
           {article.trending && (
@@ -290,12 +129,12 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
       </Link>
 
       <div className="p-4">
-        <Link href={`/en/community/${article.id}`}>
+        <Link href={`/en/community/${article.slug}`}>
           <h3 className="font-serif font-semibold text-kerala-deep text-base leading-snug mb-2 line-clamp-2 group-hover:text-kerala-green transition-colors">
-            {isMl ? article.titleMl : article.title}
+            {isMl ? article.title_ml : article.title}
           </h3>
         </Link>
-        <p className="text-gray-500 text-xs line-clamp-2 mb-3">{isMl ? article.excerptMl : article.excerpt}</p>
+        <p className="text-gray-500 text-xs line-clamp-2 mb-3">{isMl ? article.excerpt_ml : article.excerpt}</p>
 
         <div className="flex flex-wrap gap-1.5 mb-3">
           {article.tags.slice(0, 3).map(tag => (
@@ -306,12 +145,12 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
         <div className="flex items-center justify-between pt-3 border-t border-gray-50">
           <div className="flex items-center gap-2">
             <div className="relative w-6 h-6 rounded-full overflow-hidden">
-              <Image src={article.authorAvatar} alt={article.author} fill className="object-cover" sizes="24px" />
+              <Image src={article.author_avatar ?? ""} alt={article.author_name} fill className="object-cover" sizes="24px" />
             </div>
-            <span className="text-xs text-gray-600 font-medium truncate max-w-[100px]">{isMl ? article.authorMl : article.author}</span>
+            <span className="text-xs text-gray-600 font-medium truncate max-w-[100px]">{isMl ? article.author_name_ml : article.author_name}</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-gray-400">
-            <span className="flex items-center gap-1"><Clock size={10} /> {article.readTime}m</span>
+            <span className="flex items-center gap-1"><Clock size={10} /> {article.read_time}m</span>
             <button
               onClick={() => setLiked(!liked)}
               className={`flex items-center gap-1 transition-colors ${liked ? 'text-red-500' : 'hover:text-red-400'}`}
@@ -319,7 +158,7 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
               <Heart size={11} fill={liked ? 'currentColor' : 'none'} />
               {article.likes + (liked ? 1 : 0)}
             </button>
-            <span className="flex items-center gap-1"><MessageCircle size={10} /> {article.comments}</span>
+            <span className="flex items-center gap-1"><MessageCircle size={10} /> {article.comments_count}</span>
           </div>
         </div>
       </div>
@@ -332,22 +171,28 @@ export default function CommunityPage() {
   const isMl = locale === 'ml'
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [allPosts, setAllPosts] = useState<Article[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const featured = useMemo(() => articles.filter(a => a.featured), [])
-  const trending = useMemo(() => articles.filter(a => a.trending).slice(0, 4), [])
+  useEffect(() => {
+    getPosts({ limit: 50 }).then(items => { setAllPosts(items); setLoading(false) })
+  }, [])
+
+  const featured = useMemo(() => allPosts.filter(a => a.featured), [allPosts])
+  const trending = useMemo(() => allPosts.filter(a => a.trending).slice(0, 4), [allPosts])
 
   const filtered = useMemo(() => {
-    let list = [...articles]
+    let list = [...allPosts]
     if (activeCategory !== 'all') list = list.filter(a => a.category === activeCategory)
     if (query) {
       const q = query.toLowerCase()
       list = list.filter(a =>
         a.title.toLowerCase().includes(q) ||
-        a.titleMl.includes(q) ||
+        (a.title_ml ?? '').includes(q) ||
         a.tags.some(t => t.toLowerCase().includes(q))
       )
     }
-    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return list.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
   }, [query, activeCategory])
 
   return (
@@ -497,9 +342,9 @@ export default function CommunityPage() {
                   <Link key={a.id} href={`/en/community/${a.id}`} className="flex gap-3 group">
                     <span className="font-serif font-bold text-2xl text-gray-200 leading-none w-6 flex-shrink-0">{i + 1}</span>
                     <div>
-                      <p className="text-xs font-semibold text-kerala-green mb-0.5">{isMl ? a.categoryMl : a.category}</p>
+                      <p className="text-xs font-semibold text-kerala-green mb-0.5">{isMl ? (a.category_ml ?? a.category) : a.category}</p>
                       <p className="text-sm font-medium text-kerala-deep leading-snug line-clamp-2 group-hover:text-kerala-green transition-colors">
-                        {isMl ? a.titleMl : a.title}
+                        {isMl ? a.title_ml : a.title}
                       </p>
                       <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                         <Eye size={10} /> {a.views.toLocaleString()}

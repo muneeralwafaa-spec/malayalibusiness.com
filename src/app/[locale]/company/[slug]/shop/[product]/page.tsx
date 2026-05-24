@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/context/CartContext'
-import { vendorListings, LISTING_TYPE_META } from '@/lib/mock-vendor-products'
+import { getMarketplaceListing, getRelatedListings, LISTING_TYPE_META, type MarketplaceListing } from '@/lib/shop'
 import {
   Star, MapPin, BadgeCheck, Clock, ChevronRight, MessageCircle,
   Phone, ShoppingCart, Calendar, FileText, Zap, ArrowLeft,
@@ -21,25 +21,57 @@ export default function ProductDetailPage() {
   const params = useParams()
   const productId = params.product as string
 
-  const listing = vendorListings.find(l => l.id === productId)
-  const { addItem, openCart } = useCart()
+  const [listing, setListing]   = useState<MarketplaceListing | null | undefined>(undefined)
+  const [related, setRelated]   = useState<MarketplaceListing[]>([])
+  const { addItem, openCart }   = useCart()
 
   // UI state
   const [activeImage, setActiveImage] = useState(0)
-  const [qty, setQty] = useState(1)
-  const [added, setAdded] = useState(false)
-  const [saved, setSaved] = useState(false)
-  // Appointment state
+  const [qty, setQty]           = useState(1)
+  const [added, setAdded]       = useState(false)
+  const [saved, setSaved]       = useState(false)
+  // Appointment
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
-  const [bookingDone, setBookingDone] = useState(false)
-  // Quote state
-  const [quoteName, setQuoteName] = useState('')
+  const [bookingDone, setBookingDone]   = useState(false)
+  // Quote
+  const [quoteName, setQuoteName]   = useState('')
   const [quotePhone, setQuotePhone] = useState('')
-  const [quoteMsg, setQuoteMsg] = useState('')
-  const [quoteSent, setQuoteSent] = useState(false)
+  const [quoteMsg, setQuoteMsg]     = useState('')
+  const [quoteSent, setQuoteSent]   = useState(false)
 
-  if (!listing) {
+  useEffect(() => {
+    getMarketplaceListing(productId).then(item => {
+      setListing(item ?? null)
+      if (item) {
+        getRelatedListings(item, 4).then(setRelated)
+      }
+    })
+  }, [productId])
+
+  // Loading state
+  if (listing === undefined) {
+    return (
+      <main className="min-h-screen bg-kerala-cream">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 pt-8 animate-pulse">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-8">
+            <div className="aspect-square rounded-3xl bg-gray-200" />
+            <div className="space-y-4">
+              <div className="h-6 bg-gray-200 rounded w-1/3" />
+              <div className="h-8 bg-gray-200 rounded" />
+              <div className="h-8 bg-gray-200 rounded w-2/3" />
+              <div className="h-24 bg-gray-200 rounded" />
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
+  // Not found
+  if (listing === null) {
     return (
       <main className="min-h-screen bg-kerala-cream">
         <Navbar />
@@ -57,20 +89,13 @@ export default function ProductDetailPage() {
     )
   }
 
-  const meta = LISTING_TYPE_META[listing.listingType]
-  const discount = listing.originalPrice ? Math.round((1 - listing.price / listing.originalPrice) * 100) : 0
-  const images = listing.images?.length ? listing.images : [listing.image]
-
-  // Related listings from same vendor or same category
-  // listing is guaranteed non-null here (early return above handles undefined)
-  const safeListing = listing!
-
-  const related = vendorListings
-    .filter(l => l.id !== safeListing.id && (l.vendorSlug === safeListing.vendorSlug || l.category === safeListing.category))
-    .slice(0, 4)
+  const meta     = LISTING_TYPE_META[listing.listing_type]
+  const discount = listing.original_price ? Math.round((1 - listing.price / listing.original_price) * 100) : 0
+  const images   = listing.images?.length ? listing.images : (listing.image_url ? [listing.image_url] : [])
 
   function handleAddToCart() {
-    addItem(safeListing, { slot: selectedSlot || undefined, date: selectedDate || undefined })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addItem(listing as any, { slot: selectedSlot || undefined, date: selectedDate || undefined })
     setAdded(true)
     openCart()
     setTimeout(() => setAdded(false), 2000)
@@ -78,21 +103,22 @@ export default function ProductDetailPage() {
 
   function handleBooking() {
     if (!selectedDate || !selectedSlot) return
-    addItem(safeListing, { slot: selectedSlot, date: selectedDate })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addItem(listing as any, { slot: selectedSlot, date: selectedDate })
     setBookingDone(true)
     openCart()
   }
 
   function handleQuote() {
-    if (!quoteName || !quotePhone) return
+    if (!quoteName || !quotePhone || !listing) return
     const msg = encodeURIComponent(
-      `Hi ${safeListing.vendorName}! I'd like a quote for "${safeListing.name}".\n\nName: ${quoteName}\nPhone: ${quotePhone}\n\n${quoteMsg || 'Please send me your best price.'}`
+      `Hi ${listing!.vendor_name}! I'd like a quote for "${listing!.name}".\n\nName: ${quoteName}\nPhone: ${quotePhone}\n\n${quoteMsg || 'Please send me your best price.'}`
     )
-    window.open(`https://wa.me/${safeListing.vendorWhatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${(listing!.vendor_whatsapp ?? '').replace(/\D/g, '')}?text=${msg}`, '_blank')
     setQuoteSent(true)
   }
 
-  // Generate next 7 days for date picker
+  // Generate next 7 days
   const dates = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() + i + 1)
     return {
@@ -113,23 +139,25 @@ export default function ProductDetailPage() {
           <ChevronRight size={12} />
           <Link href={`/${locale}/shop`} className="hover:text-kerala-green">{isMl ? 'ഷോപ്പ്' : 'Shop'}</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/company/${listing.vendorSlug}`} className="hover:text-kerala-green">{listing.vendorName}</Link>
+          <Link href={`/${locale}/company/${listing.vendor_slug}`} className="hover:text-kerala-green">{listing.vendor_name}</Link>
           <ChevronRight size={12} />
-          <span className="text-kerala-deep font-medium truncate max-w-[120px]">{isMl ? listing.nameMl : listing.name}</span>
+          <span className="text-kerala-deep font-medium truncate max-w-[120px]">{isMl ? (listing.name_ml ?? listing.name) : listing.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* ── LEFT: Images ── */}
           <div>
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-gray-100 mb-3">
-              <Image
-                src={images[activeImage]}
-                alt={listing.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
+              {images[activeImage] && (
+                <Image
+                  src={images[activeImage]}
+                  alt={listing.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                />
+              )}
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${meta.color}`}>
@@ -138,7 +166,7 @@ export default function ProductDetailPage() {
                 {discount > 0 && (
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-500 text-white">-{discount}% OFF</span>
                 )}
-                {listing.bestseller && (
+                {listing.is_bestseller && (
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-kerala-gold text-white">🔥 Best Seller</span>
                 )}
               </div>
@@ -176,17 +204,19 @@ export default function ProductDetailPage() {
           {/* ── RIGHT: Details + Action ── */}
           <div className="space-y-5">
             {/* Vendor pill */}
-            <Link href={`/${locale}/company/${listing.vendorSlug}`} className="flex items-center gap-2.5 group w-fit">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-kerala-green/20 flex-shrink-0">
-                <Image src={listing.vendorLogo} alt="" fill className="object-cover" />
+            <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-2.5 group w-fit">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-kerala-green/20 flex-shrink-0 bg-gray-100">
+                {listing.vendor_logo_url && (
+                  <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
+                )}
               </div>
               <div>
                 <p className="text-sm font-semibold text-kerala-deep flex items-center gap-1 group-hover:text-kerala-green transition-colors">
-                  {listing.vendorName}
-                  {listing.vendorVerified && <BadgeCheck size={14} className="text-kerala-green" />}
+                  {listing.vendor_name}
+                  {listing.vendor_verified && <BadgeCheck size={14} className="text-kerala-green" />}
                 </p>
                 <p className="text-xs text-gray-400 flex items-center gap-1">
-                  <MapPin size={10} />{isMl ? listing.vendorEmirati : listing.vendorEmirate}
+                  <MapPin size={10} />{isMl ? (listing.vendor_emirate_ml ?? listing.vendor_emirate) : listing.vendor_emirate}
                 </p>
               </div>
             </Link>
@@ -194,16 +224,16 @@ export default function ProductDetailPage() {
             {/* Title */}
             <div>
               <h1 className={`font-serif text-2xl sm:text-3xl font-bold text-kerala-deep leading-tight ${isMl ? 'font-malayalam' : ''}`}>
-                {isMl ? listing.nameMl : listing.name}
+                {isMl ? (listing.name_ml ?? listing.name) : listing.name}
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
                   {[1,2,3,4,5].map(i => (
-                    <Star key={i} size={14} className={i <= Math.floor(listing.rating) ? 'text-kerala-gold fill-kerala-gold' : 'text-gray-300'} />
+                    <Star key={i} size={14} className={i <= Math.floor(listing.rating_avg) ? 'text-kerala-gold fill-kerala-gold' : 'text-gray-300'} />
                   ))}
-                  <span className="text-sm font-semibold text-kerala-deep ml-1">{listing.rating}</span>
+                  <span className="text-sm font-semibold text-kerala-deep ml-1">{listing.rating_avg}</span>
                 </div>
-                <span className="text-xs text-gray-400">({listing.reviews} {isMl ? 'റിവ്യൂ' : 'reviews'})</span>
+                <span className="text-xs text-gray-400">({listing.review_count} {isMl ? 'റിവ്യൂ' : 'reviews'})</span>
                 {listing.duration && (
                   <span className="flex items-center gap-1 text-xs text-gray-400"><Clock size={11} />{listing.duration}</span>
                 )}
@@ -215,11 +245,11 @@ export default function ProductDetailPage() {
               {listing.price > 0 ? (
                 <>
                   <span className="text-3xl font-bold text-kerala-green">AED {listing.price.toLocaleString()}</span>
-                  {listing.originalPrice && (
-                    <span className="text-lg text-gray-300 line-through">AED {listing.originalPrice}</span>
+                  {listing.original_price && (
+                    <span className="text-lg text-gray-300 line-through">AED {listing.original_price}</span>
                   )}
                   {listing.unit && (
-                    <span className="text-sm text-gray-400">/ {isMl ? listing.unitMl : listing.unit}</span>
+                    <span className="text-sm text-gray-400">/ {isMl ? (listing.unit_ml ?? listing.unit) : listing.unit}</span>
                   )}
                 </>
               ) : (
@@ -231,23 +261,25 @@ export default function ProductDetailPage() {
 
             {/* Description */}
             <p className="text-gray-600 text-sm leading-relaxed">
-              {isMl ? listing.descriptionMl : listing.description}
+              {isMl ? (listing.description_ml ?? listing.description) : listing.description}
             </p>
 
             {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {(isMl ? listing.tagsMl : listing.tags).map(tag => (
-                <span key={tag} className="bg-kerala-cream text-kerala-deep text-xs px-3 py-1 rounded-full border border-kerala-green/20">
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {listing.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {(isMl ? (listing.tags_ml?.length ? listing.tags_ml : listing.tags) : listing.tags).map(tag => (
+                  <span key={tag} className="bg-kerala-cream text-kerala-deep text-xs px-3 py-1 rounded-full border border-kerala-green/20">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* ── ACTION BLOCK by listing type ── */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
 
               {/* PRODUCT — qty + add to cart */}
-              {listing.listingType === 'product' && (
+              {listing.listing_type === 'product' && (
                 <>
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-semibold text-gray-500">{isMl ? 'അളവ്' : 'Quantity'}</span>
@@ -267,7 +299,7 @@ export default function ProductDetailPage() {
                       {added ? (isMl ? '✓ ചേർത്തു!' : '✓ Added!') : (isMl ? 'കാർട്ടിൽ ചേർക്കൂ' : 'Add to Cart')}
                     </button>
                     <a
-                      href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
                       target="_blank" rel="noopener noreferrer"
                       className="px-4 py-3.5 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors flex items-center justify-center"
                     >
@@ -282,10 +314,10 @@ export default function ProductDetailPage() {
               )}
 
               {/* DIRECT SERVICE — buy now */}
-              {listing.listingType === 'direct_service' && (
+              {listing.listing_type === 'direct_service' && (
                 <>
                   <p className="text-sm text-gray-500">
-                    {isMl ? 'ഈ സേവനം ഉടൻ ബുക്ക് ചെയ്യൂ. 24 മണിക്കൂറിനുള്ളിൽ സ്ഥിരീകരിക്കും.' : 'Book this service instantly. We\'ll confirm within 24 hours.'}
+                    {isMl ? 'ഈ സേവനം ഉടൻ ബുക്ക് ചെയ്യൂ. 24 മണിക്കൂറിനുള്ളിൽ സ്ഥിരീകരിക്കും.' : "Book this service instantly. We'll confirm within 24 hours."}
                   </p>
                   <div className="flex gap-3">
                     <button
@@ -296,7 +328,7 @@ export default function ProductDetailPage() {
                       {added ? (isMl ? '✓ ബുക്ക് ചെയ്തു!' : '✓ Booked!') : (isMl ? 'ഇപ്പോൾ ബുക്ക് ചെയ്യൂ' : 'Book Now')}
                     </button>
                     <a
-                      href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
                       target="_blank" rel="noopener noreferrer"
                       className="px-4 py-3.5 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors flex items-center justify-center"
                     >
@@ -307,7 +339,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* APPOINTMENT — date + slot picker */}
-              {listing.listingType === 'appointment' && (
+              {listing.listing_type === 'appointment' && (
                 <>
                   {bookingDone ? (
                     <div className="text-center py-4">
@@ -336,7 +368,7 @@ export default function ProductDetailPage() {
                           ))}
                         </div>
                       </div>
-                      {listing.slots && (
+                      {listing.slots?.length > 0 && (
                         <div>
                           <p className="text-xs font-semibold text-gray-400 uppercase mb-2">{isMl ? 'സമയം തിരഞ്ഞെടുക്കൂ' : 'Select Time Slot'}</p>
                           <div className="grid grid-cols-3 gap-2">
@@ -366,7 +398,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* QUOTE — request form */}
-              {listing.listingType === 'quote' && (
+              {listing.listing_type === 'quote' && (
                 <>
                   {quoteSent ? (
                     <div className="text-center py-4">
@@ -411,23 +443,23 @@ export default function ProductDetailPage() {
                 </>
               )}
 
-              {/* CONTACT ONLY — WhatsApp / Call */}
-              {listing.listingType === 'contact_only' && (
+              {/* CONTACT ONLY */}
+              {listing.listing_type === 'contact_only' && (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-500">
                     {isMl ? 'ഈ സേവനത്തിനായി നേരിട്ട് ബന്ധപ്പെടൂ.' : 'Contact the vendor directly for pricing and availability.'}
                   </p>
                   <a
-                    href={`https://wa.me/${listing.vendorWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi! I'm interested in "${listing.name}". Can you share more details?`)}`}
+                    href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi! I'm interested in "${listing.name}". Can you share more details?`)}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors"
                   >
                     <MessageCircle size={16} />
                     {isMl ? 'WhatsApp-ൽ ബന്ധപ്പെടൂ' : 'Chat on WhatsApp'}
                   </a>
-                  {listing.vendorPhone && (
+                  {listing.vendor_phone && (
                     <a
-                      href={`tel:${listing.vendorPhone}`}
+                      href={`tel:${listing.vendor_phone}`}
                       className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm border-2 border-kerala-green text-kerala-green hover:bg-kerala-green hover:text-white transition-colors"
                     >
                       <Phone size={16} />
@@ -490,22 +522,24 @@ export default function ProductDetailPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {related.map(rel => {
-                const relMeta = LISTING_TYPE_META[rel.listingType]
+                const relMeta = LISTING_TYPE_META[rel.listing_type]
                 return (
                   <Link
                     key={rel.id}
-                    href={`/${locale}/company/${rel.vendorSlug}/shop/${rel.id}`}
+                    href={`/${locale}/company/${rel.vendor_slug}/shop/${rel.id}`}
                     className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg hover:border-kerala-green/20 transition-all"
                   >
-                    <div className="relative h-36 overflow-hidden">
-                      <Image src={rel.image} alt={rel.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 50vw, 25vw" />
+                    <div className="relative h-36 overflow-hidden bg-gray-100">
+                      {rel.image_url && (
+                        <Image src={rel.image_url} alt={rel.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 50vw, 25vw" />
+                      )}
                       <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${relMeta.color}`}>
                         {relMeta.label}
                       </span>
                     </div>
                     <div className="p-3">
                       <p className="text-xs font-semibold text-kerala-deep line-clamp-2 group-hover:text-kerala-green transition-colors">
-                        {isMl ? rel.nameMl : rel.name}
+                        {isMl ? (rel.name_ml ?? rel.name) : rel.name}
                       </p>
                       <p className="text-kerala-green font-bold text-sm mt-1">
                         {rel.price > 0 ? `AED ${rel.price}` : (isMl ? 'ക്വോട്ട്' : 'Quote')}

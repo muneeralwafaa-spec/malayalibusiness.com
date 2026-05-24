@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
 import { signIn, signUp, signInWithGoogle } from '@/lib/auth'
 
@@ -26,7 +26,17 @@ export default function AuthPage() {
   const locale = useLocale()
   const isMl = locale === 'ml'
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>('login')
+  const searchParams = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab')
+    return t === 'register' ? 'register' : 'login'
+  })
+
+  // Sync if URL param changes (e.g. navigating back/forward)
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t === 'register') setTab('register')
+  }, [searchParams])
   const [accountType, setAccountType] = useState<AccountType>('user')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { mockClassifieds, classifiedCategories } from '@/lib/mock-classifieds'
-import type { Classified } from '@/lib/mock-classifieds'
+import { getClassifieds, getCategoryCounts, classifiedCategories } from '@/lib/classifieds'
+import type { Classified } from '@/lib/classifieds'
 import {
   Search, Plus, MapPin, Clock, Eye, Heart, SlidersHorizontal,
   X, MessageCircle, Phone, Tag, AlertCircle
@@ -20,10 +20,17 @@ const typeColors = {
   service: 'bg-purple-100 text-purple-700',
 }
 const typeLabels = {
-  sale: { en: 'For Sale', ml: 'വിൽക്കാൻ' },
-  rent: { en: 'For Rent', ml: 'വാടകയ്ക്ക്' },
-  wanted: { en: 'Wanted', ml: 'ആവശ്യം' },
-  service: { en: 'Service', ml: 'സേവനം' },
+  sale:    { en: 'For Sale', ml: 'വിൽക്കാൻ' },
+  rent:    { en: 'For Rent', ml: 'വാടകയ്ക്ക്' },
+  wanted:  { en: 'Wanted',   ml: 'ആവശ്യം' },
+  service: { en: 'Service',  ml: 'സേവനം' },
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
 }
 
 function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
@@ -85,7 +92,7 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-xs font-semibold text-kerala-green uppercase tracking-wide">
-            {isMl ? item.categoryMl : item.category}
+            {isMl ? (item.category_ml ?? item.category) : item.category}
           </span>
           {item.condition && (
             <span className="text-xs text-gray-400 capitalize">· {item.condition}</span>
@@ -93,37 +100,49 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
         </div>
 
         <Link href={`/${locale}/classifieds/${item.id}`} className="font-semibold text-kerala-deep hover:text-kerala-green transition-colors line-clamp-2 text-sm leading-snug mb-2">
-          {isMl ? item.titleMl : item.title}
+          {isMl ? (item.title_ml ?? item.title) : item.title}
         </Link>
 
         <div className="flex items-center justify-between mb-3">
-          <span className="text-kerala-green font-bold text-lg">{item.price}</span>
+          <span className="text-kerala-green font-bold text-lg">{item.price ?? 'Free'}</span>
           {item.negotiable && (
             <span className="text-xs text-gray-500 italic">{isMl ? 'ചർച്ചചെയ്യാം' : 'Negotiable'}</span>
           )}
         </div>
 
         <div className="flex items-center gap-3 text-gray-400 text-xs mb-3">
-          <span className="flex items-center gap-1"><MapPin size={11} />{isMl ? item.locationMl : item.location}</span>
-          <span className="flex items-center gap-1"><Clock size={11} />{isMl ? item.postedAtMl : item.postedAt}</span>
+          <span className="flex items-center gap-1"><MapPin size={11} />{isMl ? (item.location_ml ?? item.location) : item.location}</span>
+          <span className="flex items-center gap-1"><Clock size={11} />{timeAgo(item.created_at)}</span>
           <span className="flex items-center gap-1 ml-auto"><Eye size={11} />{item.views}</span>
         </div>
 
         {/* Seller */}
         <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-auto">
-          <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
-            <Image src={item.sellerAvatar} alt={item.seller} fill className="object-cover" sizes="28px" />
+          <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+            {item.seller_avatar ? (
+              <Image src={item.seller_avatar} alt={item.seller_name ?? ''} fill className="object-cover" sizes="28px" />
+            ) : (
+              <div className="w-full h-full bg-kerala-cream flex items-center justify-center text-xs text-kerala-green font-bold">
+                {(item.seller_name ?? 'A')[0]}
+              </div>
+            )}
           </div>
-          <span className="text-xs text-gray-600 flex-1 truncate">{isMl ? item.sellerMl : item.seller}</span>
+          <span className="text-xs text-gray-600 flex-1 truncate">
+            {isMl ? (item.seller_name_ml ?? item.seller_name) : item.seller_name}
+          </span>
           <div className="flex gap-1.5">
-            <a href={`https://wa.me/${item.whatsapp.replace(/\D/g,'')}`}
-              className="w-7 h-7 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg flex items-center justify-center hover:bg-emerald-100 transition-colors">
-              <MessageCircle size={12} />
-            </a>
-            <a href={`tel:${item.phone}`}
-              className="w-7 h-7 bg-kerala-cream text-kerala-green border border-kerala-green/20 rounded-lg flex items-center justify-center hover:bg-kerala-green hover:text-white transition-colors">
-              <Phone size={12} />
-            </a>
+            {item.whatsapp && (
+              <a href={`https://wa.me/${item.whatsapp.replace(/\D/g,'')}`}
+                className="w-7 h-7 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg flex items-center justify-center hover:bg-emerald-100 transition-colors">
+                <MessageCircle size={12} />
+              </a>
+            )}
+            {item.phone && (
+              <a href={`tel:${item.phone}`}
+                className="w-7 h-7 bg-kerala-cream text-kerala-green border border-kerala-green/20 rounded-lg flex items-center justify-center hover:bg-kerala-green hover:text-white transition-colors">
+                <Phone size={12} />
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -138,30 +157,52 @@ export default function ClassifiedsPage() {
   const [activeCategory, setActiveCategory] = useState('')
   const [activeType, setActiveType] = useState<string>('')
   const [activeEmirate, setActiveEmirate] = useState('')
-  const [sort, setSort] = useState<'newest' | 'price-asc' | 'price-desc' | 'views'>('newest')
+  const [sort, setSort] = useState<'newest' | 'views'>('newest')
   const [filterOpen, setFilterOpen] = useState(false)
   const [page, setPage] = useState(1)
   const PER = 9
 
+  const [classifieds, setClassifieds] = useState<Classified[]>([])
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [items, counts] = await Promise.all([
+        getClassifieds({ limit: 200 }),
+        getCategoryCounts(),
+      ])
+      setClassifieds(items)
+      setCategoryCounts(counts)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
   const filtered = useMemo(() => {
-    let list = [...mockClassifieds]
+    let list = [...classifieds]
     if (query) {
       const q = query.toLowerCase()
-      list = list.filter(i => i.title.toLowerCase().includes(q) || i.titleMl.includes(q) || i.description.toLowerCase().includes(q))
+      list = list.filter(i =>
+        i.title.toLowerCase().includes(q) ||
+        (i.title_ml ?? '').includes(q) ||
+        (i.description ?? '').toLowerCase().includes(q)
+      )
     }
-    if (activeCategory) list = list.filter(i => i.categorySlug === activeCategory)
-    if (activeType) list = list.filter(i => i.type === activeType)
-    if (activeEmirate) list = list.filter(i => i.emirate.toLowerCase() === activeEmirate)
+    if (activeCategory) list = list.filter(i => i.category === activeCategory)
+    if (activeType)     list = list.filter(i => i.type === activeType)
+    if (activeEmirate)  list = list.filter(i => i.emirate.toLowerCase() === activeEmirate)
     if (sort === 'views') list.sort((a,b) => b.views - a.views)
-    else if (sort === 'newest') list.sort((a,b) => a.postedAt.localeCompare(b.postedAt))
-    list.sort((a,b) => (b.featured ? 1:0) - (a.featured ? 1:0))
+    else list.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    list.sort((a,b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
     return list
-  }, [query, activeCategory, activeType, activeEmirate, sort])
+  }, [classifieds, query, activeCategory, activeType, activeEmirate, sort])
 
   const paginated = filtered.slice((page-1)*PER, page*PER)
   const totalPages = Math.ceil(filtered.length / PER)
 
-  const emirates = Array.from(new Set(mockClassifieds.map(i => i.emirate)))
+  const emirates = Array.from(new Set(classifieds.map(i => i.emirate)))
   const activeCount = [activeCategory, activeType, activeEmirate].filter(Boolean).length
 
   return (
@@ -212,7 +253,6 @@ export default function ClassifiedsPage() {
           {/* Filter panel */}
           {filterOpen && (
             <div className="mt-3 bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {/* Type */}
               <div>
                 <label className="text-white/50 text-xs mb-1 block">{isMl ? 'തരം' : 'Type'}</label>
                 <select value={activeType} onChange={e => { setActiveType(e.target.value); setPage(1) }}
@@ -224,7 +264,6 @@ export default function ClassifiedsPage() {
                   <option value="service">{isMl ? 'സേവനം' : 'Service'}</option>
                 </select>
               </div>
-              {/* Emirate */}
               <div>
                 <label className="text-white/50 text-xs mb-1 block">{isMl ? 'എമിറേറ്റ്' : 'Emirate'}</label>
                 <select value={activeEmirate} onChange={e => { setActiveEmirate(e.target.value); setPage(1) }}
@@ -233,7 +272,6 @@ export default function ClassifiedsPage() {
                   {emirates.map(e => <option key={e} value={e.toLowerCase()}>{e}</option>)}
                 </select>
               </div>
-              {/* Sort */}
               <div>
                 <label className="text-white/50 text-xs mb-1 block">{isMl ? 'ക്രമം' : 'Sort By'}</label>
                 <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}
@@ -242,7 +280,6 @@ export default function ClassifiedsPage() {
                   <option value="views">{isMl ? 'ഏറ്റവും കൂടുതൽ കണ്ടത്' : 'Most Viewed'}</option>
                 </select>
               </div>
-              {/* Clear */}
               <div className="flex items-end">
                 <button onClick={() => { setActiveCategory(''); setActiveType(''); setActiveEmirate(''); setSort('newest'); setPage(1); setFilterOpen(false) }}
                   className="w-full text-center bg-kerala-red/20 hover:bg-kerala-red text-white text-sm py-2 rounded-lg border border-kerala-red/30 transition-colors">
@@ -259,14 +296,14 @@ export default function ClassifiedsPage() {
         <div className="max-w-7xl mx-auto flex items-center gap-2 min-w-max">
           <button onClick={() => { setActiveCategory(''); setPage(1) }}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!activeCategory ? 'bg-kerala-green text-white' : 'bg-kerala-cream text-gray-600 hover:bg-gray-100'}`}>
-            {isMl ? 'എല്ലാം' : 'All'} <span className="text-xs opacity-70">{mockClassifieds.length}</span>
+            {isMl ? 'എല്ലാം' : 'All'} <span className="text-xs opacity-70">{classifieds.length}</span>
           </button>
           {classifiedCategories.map(cat => (
             <button key={cat.slug} onClick={() => { setActiveCategory(cat.slug); setPage(1) }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeCategory === cat.slug ? 'bg-kerala-green text-white' : 'bg-kerala-cream text-gray-600 hover:bg-gray-100'}`}>
               <span>{cat.icon}</span>
               {isMl ? cat.nameMl : cat.name}
-              <span className="text-xs opacity-70">{cat.count}</span>
+              <span className="text-xs opacity-70">{categoryCounts[cat.slug] ?? 0}</span>
             </button>
           ))}
         </div>
@@ -286,8 +323,21 @@ export default function ClassifiedsPage() {
           </Link>
         </div>
 
-        {/* Grid */}
-        {paginated.length === 0 ? (
+        {/* Loading state */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-44 bg-gray-100" />
+                <div className="p-4 space-y-3">
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-5 bg-gray-100 rounded w-1/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : paginated.length === 0 ? (
           <div className="text-center py-20">
             <Tag size={48} className="text-gray-200 mx-auto mb-4" />
             <h3 className="font-serif text-2xl font-semibold text-kerala-deep mb-2">{isMl ? 'ഒന്നും കണ്ടെത്തിയില്ല' : 'No ads found'}</h3>

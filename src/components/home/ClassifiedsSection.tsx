@@ -3,92 +3,58 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
-import { Clock, MapPin, ArrowRight, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Clock, MapPin, ArrowRight, Plus, Loader2 } from 'lucide-react'
+import { getClassifieds } from '@/lib/classifieds'
+import type { Classified } from '@/lib/classifieds'
 
-const classifieds = [
-  {
-    id: 1,
-    title: '2021 Toyota Camry — Excellent Condition',
-    titleMl: '2021 ടൊയോട്ട കാമ്രി — മികച്ച അവസ്ഥ',
-    category: 'For Sale',
-    categoryMl: 'വിൽക്കാനുണ്ട്',
-    price: 'AED 58,000',
-    location: 'Dubai',
-    posted: '2 hours ago',
-    postedMl: '2 മണിക്കൂർ മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-blue-100 text-blue-700',
-  },
-  {
-    id: 2,
-    title: '2BHK Apartment for Rent — Al Nahda',
-    titleMl: '2BHK ഫ്ലാറ്റ് വാടകയ്ക്ക് — അൽ നഹ്ദ',
-    category: 'For Rent',
-    categoryMl: 'വാടകയ്ക്ക്',
-    price: 'AED 42,000/yr',
-    location: 'Sharjah',
-    posted: '5 hours ago',
-    postedMl: '5 മണിക്കൂർ മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-green-100 text-green-700',
-  },
-  {
-    id: 3,
-    title: 'iPhone 15 Pro Max 256GB — Barely Used',
-    titleMl: 'iPhone 15 Pro Max 256GB — ഏറ്റവും കുറഞ്ഞ ഉപയോഗം',
-    category: 'For Sale',
-    categoryMl: 'വിൽക്കാനുണ്ട്',
-    price: 'AED 3,800',
-    location: 'Abu Dhabi',
-    posted: '1 day ago',
-    postedMl: '1 ദിവസം മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-blue-100 text-blue-700',
-  },
-  {
-    id: 4,
-    title: 'Looking for Malayalam-Speaking Nanny',
-    titleMl: 'മലയാളം സംസാരിക്കുന്ന ആയ ആവശ്യമുണ്ട്',
-    category: 'Wanted',
-    categoryMl: 'ആവശ്യമുണ്ട്',
-    price: 'AED 2,500/mo',
-    location: 'Dubai',
-    posted: '3 hours ago',
-    postedMl: '3 മണിക്കൂർ മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-yellow-100 text-yellow-700',
-  },
-  {
-    id: 5,
-    title: 'Kerala Homemade Pickles & Pappadam — Bulk Orders',
-    titleMl: 'കേരള ഹോം മെയ്ഡ് അച്ചാർ & പപ്പടം — ബൾക്ക് ഓർഡർ',
-    category: 'For Sale',
-    categoryMl: 'വിൽക്കാനുണ്ട്',
-    price: 'Negotiable',
-    location: 'Ajman',
-    posted: '6 hours ago',
-    postedMl: '6 മണിക്കൂർ മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1564894809611-1742fc40ed80?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-blue-100 text-blue-700',
-  },
-  {
-    id: 6,
-    title: 'Office Space Available in Business Bay',
-    titleMl: 'ബിസിനസ് ബേയിൽ ഓഫീസ് സ്ഥലം ലഭ്യം',
-    category: 'For Rent',
-    categoryMl: 'വാടകയ്ക്ക്',
-    price: 'AED 6,500/mo',
-    location: 'Dubai',
-    posted: '12 hours ago',
-    postedMl: '12 മണിക്കൂർ മുൻപ്',
-    image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80&auto=format&fit=crop',
-    catColor: 'bg-green-100 text-green-700',
-  },
-]
+const typeColors: Record<string, string> = {
+  sale:    'bg-blue-100 text-blue-700',
+  rent:    'bg-green-100 text-green-700',
+  wanted:  'bg-yellow-100 text-yellow-700',
+  service: 'bg-purple-100 text-purple-700',
+}
+const typeLabels: Record<string, { en: string; ml: string }> = {
+  sale:    { en: 'For Sale', ml: 'വിൽക്കാൻ' },
+  rent:    { en: 'For Rent', ml: 'വാടകയ്ക്ക്' },
+  wanted:  { en: 'Wanted',   ml: 'ആവശ്യം' },
+  service: { en: 'Service',  ml: 'സേവനം' },
+}
+
+function timeAgo(iso: string, isMl: boolean) {
+  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
+  if (h < 1)  return isMl ? 'ഇപ്പോൾ' : 'Just now'
+  if (h < 24) return isMl ? `${h} മണിക്കൂർ മുൻപ്` : `${h}h ago`
+  const d = Math.floor(h / 24)
+  return isMl ? `${d} ദിവസം മുൻപ്` : `${d}d ago`
+}
+
+const FALLBACK = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80'
 
 export default function ClassifiedsSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
+  const [items,   setItems]   = useState<Classified[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getClassifieds({ limit: 6 }).then(data => {
+      setItems(data)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="bg-kerala-cream py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex justify-center py-20">
+          <Loader2 size={36} className="animate-spin text-kerala-green" />
+        </div>
+      </section>
+    )
+  }
+
+  if (!items.length) return null
 
   return (
     <section className="bg-kerala-cream py-16 px-4 sm:px-6 lg:px-8">
@@ -124,46 +90,53 @@ export default function ClassifiedsSection() {
           </div>
         </div>
 
-        {/* Classifieds Grid */}
+        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {classifieds.map((item) => (
+          {items.map((item) => (
             <Link
               key={item.id}
               href={`/${locale}/classifieds/${item.id}`}
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg card-hover border border-gray-100"
             >
-              {/* Image */}
               <div className="relative h-44 overflow-hidden">
                 <Image
-                  src={item.image}
-                  alt={item.title}
+                  src={item.images?.[0] || FALLBACK}
+                  alt={isMl ? (item.title_ml ?? item.title) : item.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
                 />
                 <div className="absolute top-3 left-3">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${item.catColor}`}>
-                    {isMl ? item.categoryMl : item.category}
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeColors[item.type] ?? 'bg-gray-100 text-gray-700'}`}>
+                    {isMl ? (typeLabels[item.type]?.ml ?? item.type) : (typeLabels[item.type]?.en ?? item.type)}
                   </span>
                 </div>
+                {item.urgent && (
+                  <div className="absolute top-3 right-3">
+                    <span className="bg-kerala-red text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                      {isMl ? 'അർജന്റ്' : 'Urgent'}
+                    </span>
+                  </div>
+                )}
               </div>
-
-              {/* Content */}
               <div className="p-4">
                 <h3 className="font-semibold text-kerala-deep text-sm leading-snug group-hover:text-kerala-green transition-colors mb-2 line-clamp-2">
-                  {isMl ? item.titleMl : item.title}
+                  {isMl ? (item.title_ml ?? item.title) : item.title}
                 </h3>
                 <div className="flex items-center justify-between">
-                  <span className="text-kerala-green font-bold text-base">{item.price}</span>
+                  <span className="text-kerala-green font-bold text-base">
+                    {item.price ?? (isMl ? 'വിലം ചോദിക്കൂ' : 'Ask for price')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3 mt-2 text-gray-400 text-xs">
                   <span className="flex items-center gap-1">
                     <MapPin size={11} />
-                    {item.location}
+                    {item.emirate}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock size={11} />
-                    {isMl ? item.postedMl : item.posted}
+                    {timeAgo(item.created_at, isMl)}
                   </span>
                 </div>
               </div>

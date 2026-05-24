@@ -79,17 +79,19 @@ export default function CartDrawer() {
                     {/* Vendor header */}
                     <div className="flex items-center gap-2 px-5 mb-3">
                       <div className="relative w-7 h-7 rounded-full overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
-                        <Image
-                          src={vendor.vendorLogo}
-                          alt={vendor.vendorName}
-                          fill
-                          className="object-cover"
-                        />
+                        {vendor.vendor_logo_url && (
+                          <Image
+                            src={vendor.vendor_logo_url}
+                            alt={vendor.vendor_name}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
                       </div>
                       <span className="text-sm font-semibold text-kerala-deep">
-                        {locale === 'ml' ? vendor.vendorName : vendor.vendorName}
+                        {locale === 'ml' ? vendor.vendor_name : vendor.vendor_name}
                       </span>
-                      {vendor.vendorVerified && (
+                      {vendor.vendor_verified && (
                         <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">✓</span>
                       )}
                     </div>
@@ -100,18 +102,20 @@ export default function CartDrawer() {
                         <div key={item.listing.id} className="flex gap-3">
                           {/* Image */}
                           <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                            <Image
-                              src={item.listing.image}
-                              alt={item.listing.name}
-                              fill
-                              className="object-cover"
-                            />
+                            {item.listing.image_url && (
+                              <Image
+                                src={item.listing.image_url}
+                                alt={item.listing.name}
+                                fill
+                                className="object-cover"
+                              />
+                            )}
                           </div>
 
                           {/* Details */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-kerala-deep truncate">
-                              {locale === 'ml' ? item.listing.nameMl : item.listing.name}
+                              {locale === 'ml' ? item.listing.name_ml : item.listing.name}
                             </p>
 
                             {/* Slot/date if appointment */}
@@ -126,7 +130,7 @@ export default function CartDrawer() {
                               AED {item.listing.price.toFixed(2)}
                               {item.listing.unit && (
                                 <span className="text-xs text-gray-500 font-normal">
-                                  {' '}/ {locale === 'ml' ? item.listing.unitMl : item.listing.unit}
+                                  {' '}/ {locale === 'ml' ? item.listing.unit_ml : item.listing.unit}
                                 </span>
                               )}
                             </p>
@@ -170,7 +174,7 @@ export default function CartDrawer() {
                     {/* Vendor subtotal */}
                     <div className="flex justify-between items-center px-5 mt-3 pt-3 border-t border-dashed border-gray-200">
                       <span className="text-xs text-gray-500">
-                        {locale === 'ml' ? 'ഉപ-ആകെ' : 'Subtotal'} · {vendor.vendorName}
+                        {locale === 'ml' ? 'ഉപ-ആകെ' : 'Subtotal'} · {vendor.vendor_name}
                       </span>
                       <span className="text-sm font-bold text-kerala-deep">
                         AED {vendorTotal.toFixed(2)}
@@ -178,10 +182,10 @@ export default function CartDrawer() {
                     </div>
 
                     {/* WhatsApp contact for this vendor */}
-                    {vendor.vendorWhatsapp && (
+                    {vendor.vendor_whatsapp && (
                       <div className="px-5 mt-2">
                         <a
-                          href={`https://wa.me/${vendor.vendorWhatsapp.replace(/\D/g, '')}?text=Hi! I have a question about my order.`}
+                          href={`https://wa.me/${vendor.vendor_whatsapp.replace(/\D/g, '')}?text=Hi! I have a question about my order.`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1.5 text-xs text-green-600 hover:text-green-700 transition-colors"
