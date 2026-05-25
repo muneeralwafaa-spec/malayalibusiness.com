@@ -148,6 +148,24 @@ function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] })
     : '—'
   const today = new Date().toLocaleDateString(isMl ? 'ml-IN' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
+  const [recentReviews, setRecentReviews] = useState<any[]>([])
+  useEffect(() => {
+    if (!listings.length) return
+    const ids = listings.map((l: any) => l.id)
+    supabase.from('reviews').select('id,reviewer_name,rating,body,created_at,listing_id')
+      .in('listing_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(6)
+      .then(({ data }) => setRecentReviews(data ?? []))
+  }, [listings.length])
+
+  function timeAgo(d: string) {
+    const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
+    if (s < 3600)  return `${Math.floor(s/60)}m ago`
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`
+    return `${Math.floor(s/86400)}d ago`
+  }
+
   return (
     <div className="space-y-6">
       <SectionHeader
@@ -205,18 +223,27 @@ function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] })
           </div>
         </div>
 
-        {/* Recent activity */}
+        {/* Recent activity — real reviews */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-serif font-bold text-kerala-deep mb-4">{isMl ? 'സമീപ പ്രവർത്തനം' : 'Recent Activity'}</h3>
+          <h3 className="font-serif font-bold text-kerala-deep mb-4">{isMl ? 'സമീപ അവലോകനങ്ങൾ' : 'Recent Reviews'}</h3>
           <div className="space-y-3 overflow-y-auto" style={{ maxHeight: '260px' }}>
-            {recentActivity.map(item => (
-              <div key={item.id} className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
-                  <item.icon size={14} />
+            {recentReviews.length === 0 ? (
+              <div className="text-center py-6">
+                <Star size={24} className="mx-auto mb-2 text-gray-200" />
+                <p className="text-xs text-gray-400">{isMl ? 'ഇതുവരെ റിവ്യൂ ഇല്ല' : 'No reviews yet'}</p>
+              </div>
+            ) : recentReviews.map(r => (
+              <div key={r.id} className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-50 text-amber-500">
+                  <Star size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-700 leading-snug">{isMl ? item.textMl : item.text}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-xs font-semibold text-kerala-deep">{r.reviewer_name}</span>
+                    <span className="text-xs text-kerala-gold font-bold">{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</span>
+                  </div>
+                  {r.body && <p className="text-xs text-gray-500 truncate">{r.body}</p>}
+                  <p className="text-xs text-gray-400 mt-0.5">{timeAgo(r.created_at)}</p>
                 </div>
               </div>
             ))}
@@ -644,10 +671,10 @@ function AnalyticsSection({ isMl, listings }: { isMl: boolean; listings: any[] }
           <h3 className="font-serif font-bold text-kerala-deep mb-4">{isMl ? 'മെട്രിക്സ്' : 'Key Metrics'}</h3>
           <div className="space-y-4">
             {[
-              { label: isMl ? 'ടോപ് ലിസ്റ്റിംഗ്' : 'Top Performing Listing', value: isMl ? 'അൽ ബറക്ക' : 'Al Barakah Restaurant' },
-              { label: isMl ? 'ക്ലിക്ക്-ത്രൂ നിരക്ക്' : 'Click-Through Rate', value: '8.4%' },
-              { label: isMl ? 'WhatsApp ക്ലിക്ക്' : 'WhatsApp Clicks', value: '1,240' },
-              { label: isMl ? 'ഫോൺ ക്ലിക്ക്' : 'Phone Clicks', value: '890' },
+              { label: isMl ? 'ടോപ് ലിസ്റ്റിംഗ്' : 'Top Performing Listing', value: listings.length ? (listings.reduce((a, b) => (b.views_count||0) > (a.views_count||0) ? b : a)).name : '—' },
+              { label: isMl ? 'മൊത്തം കാഴ്ചകൾ' : 'Total Views', value: listings.reduce((s, l) => s + (l.views_count||0), 0).toLocaleString() },
+              { label: isMl ? 'മൊത്തം റിവ്യൂ' : 'Total Reviews', value: String(listings.reduce((s, l) => s + (l.review_count||0), 0)) },
+              { label: isMl ? 'ശരാശരി റേറ്റിംഗ്' : 'Avg Rating', value: listings.length ? `${(listings.reduce((s,l)=>s+Number(l.rating_avg||0),0)/listings.length).toFixed(1)}/5` : '—' },
             ].map(m => (
               <div key={m.label} className="flex justify-between items-center">
                 <span className="text-xs text-gray-500">{m.label}</span>
@@ -814,7 +841,7 @@ function BillingSection({ isMl, listings, locale }: { isMl: boolean; listings: a
   )
 }
 
-function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; profile: any }) {
+function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; user: any; profile: any; listings: any[] }) {
   const [subTab, setSubTab] = useState<'personal' | 'business'>('personal')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [fullName, setFullName] = useState(profile?.full_name || '')
@@ -822,11 +849,36 @@ function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; pr
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Business info — editable state pre-seeded from first listing
+  const firstListing = listings[0]
+  const [bizName, setBizName] = useState(firstListing?.name || '')
+  const [bizNameMl, setBizNameMl] = useState(firstListing?.name_ml || '')
+  const [bizWebsite, setBizWebsite] = useState(firstListing?.website || '')
+  const [bizDesc, setBizDesc] = useState(firstListing?.description || '')
+  const [bizPhone, setBizPhone] = useState(firstListing?.phone || '')
+  const [bizWhatsapp, setBizWhatsapp] = useState(firstListing?.whatsapp || '')
+  const [bizSaving, setBizSaving] = useState(false)
+  const [bizSaved, setBizSaved] = useState(false)
+
   const saveProfile = async () => {
     setSaving(true)
     await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user?.id)
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  const saveBusiness = async () => {
+    if (!firstListing?.id) return
+    setBizSaving(true)
+    await supabase.from('listings').update({
+      name: bizName, name_ml: bizNameMl || null,
+      website: bizWebsite || null,
+      description: bizDesc || null,
+      phone: bizPhone || null,
+      whatsapp: bizWhatsapp || null,
+    }).eq('id', firstListing.id)
+    setBizSaving(false); setBizSaved(true)
+    setTimeout(() => setBizSaved(false), 3000)
   }
 
   const avatarPreview = profile?.avatar_url || null
@@ -895,75 +947,56 @@ function SettingsSection({ isMl, user, profile }: { isMl: boolean; user: any; pr
 
       {subTab === 'business' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { label: isMl ? 'ബിസിനസ് നാമം (EN)' : 'Business Name (EN)', value: 'Al Barakah Kerala Restaurant', type: 'text' },
-              { label: isMl ? 'ബിസിനസ് നാമം (ML)' : 'Business Name (ML)', value: 'അൽ ബറക്ക കേരള റസ്റ്റോറന്റ്', type: 'text' },
-              { label: isMl ? 'വെബ്‌സൈറ്റ്' : 'Website', value: 'https://albarakah.ae', type: 'url' },
-            ].map(f => (
-              <div key={f.label} className={f.label.includes('Website') ? 'sm:col-span-2' : ''}>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{f.label}</label>
-                <input
-                  type={f.type}
-                  defaultValue={f.value}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
-                />
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വിഭാഗം' : 'Category'}</label>
-            <select className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50">
-              <option>Restaurants &amp; Food</option>
-              <option>Real Estate</option>
-              <option>Healthcare</option>
-              <option>Retail &amp; Shopping</option>
-              <option>Services</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വിവരണം (EN)' : 'Description (EN)'}</label>
-            <textarea
-              defaultValue="Authentic Kerala cuisine in the heart of Dubai."
-              rows={3}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വിവരണം (ML)' : 'Description (ML)'}</label>
-            <textarea
-              defaultValue="ദുബായ് ഹൃദയത്തിൽ ആധികാരിക കേരള ഭക്ഷണം."
-              rows={3}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ടാഗ്' : 'Tags'}</label>
-            <div className="flex flex-wrap gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50 min-h-[44px]">
-              {['Biryani', 'Seafood', 'Kerala Sadya', 'Halal', 'Delivery'].map(tag => (
-                <span key={tag} className="flex items-center gap-1 bg-kerala-green/10 text-kerala-green text-xs font-semibold px-2.5 py-1 rounded-full">
-                  <Tag size={10} />
-                  {tag}
-                  <button className="text-kerala-green/50 hover:text-kerala-green ml-0.5">
-                    <X size={10} />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                placeholder={isMl ? 'ടാഗ് ചേർക്കൂ...' : 'Add tag...'}
-                className="bg-transparent text-xs focus:outline-none min-w-[80px]"
-              />
+          {!firstListing ? (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              {isMl ? 'ലിസ്റ്റിംഗ് ഒന്നും ഇല്ല. ആദ്യം ഒരു ലിസ്റ്റിംഗ് ചേർക്കൂ.' : 'No listings found. Add a listing first to edit business info.'}
             </div>
-          </div>
-
-          <button className="bg-kerala-green text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity">
-            {isMl ? 'ബിസിനസ് സേവ് ചെയ്യൂ' : 'Save Business Info'}
-          </button>
+          ) : (
+            <>
+              {listings.length > 1 && (
+                <div className="text-xs text-gray-400 bg-kerala-cream px-3 py-2 rounded-xl">
+                  {isMl ? 'ആദ്യ ലിസ്റ്റിംഗ് കാണിക്കുന്നു:' : 'Showing first listing:'} <strong>{firstListing.name}</strong>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ബിസിനസ് നാമം (EN)' : 'Business Name (EN)'}</label>
+                  <input type="text" value={bizName} onChange={e => setBizName(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ബിസിനസ് നാമം (ML)' : 'Business Name (ML)'}</label>
+                  <input type="text" value={bizNameMl} onChange={e => setBizNameMl(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഫോൺ' : 'Phone'}</label>
+                  <input type="tel" value={bizPhone} onChange={e => setBizPhone(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'WhatsApp' : 'WhatsApp'}</label>
+                  <input type="tel" value={bizWhatsapp} onChange={e => setBizWhatsapp(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വെബ്‌സൈറ്റ്' : 'Website'}</label>
+                  <input type="url" value={bizWebsite} onChange={e => setBizWebsite(e.target.value)}
+                    placeholder="https://"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വിവരണം' : 'Description'}</label>
+                <textarea value={bizDesc} onChange={e => setBizDesc(e.target.value)} rows={3}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none" />
+              </div>
+              <button onClick={saveBusiness} disabled={bizSaving}
+                className="bg-kerala-green text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60">
+                {bizSaving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'സേവ് ചെയ്യുന്നു...' : 'Saving...'}</> : bizSaved ? (isMl ? '✓ സേവ് ചെയ്തു' : '✓ Saved!') : (isMl ? 'ബിസിനസ് സേവ് ചെയ്യൂ' : 'Save Business Info')}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -1191,7 +1224,7 @@ export default function DashboardPage() {
             {activeSection === 'analytics' && <AnalyticsSection isMl={isMl} listings={myListings} />}
             {activeSection === 'jobs'      && <JobsSection isMl={isMl} userId={user.id} locale={locale} />}
             {activeSection === 'billing'   && <BillingSection isMl={isMl} listings={myListings} locale={locale} />}
-            {activeSection === 'settings'  && <SettingsSection isMl={isMl} user={user} profile={profile} />}
+            {activeSection === 'settings'  && <SettingsSection isMl={isMl} user={user} profile={profile} listings={myListings} />}
           </div>
         </main>
       </div>

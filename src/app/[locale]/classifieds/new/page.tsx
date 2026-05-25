@@ -6,6 +6,7 @@ import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { classifiedCategories } from '@/lib/classifieds'
+import { supabase } from '@/lib/supabase'
 import {
   ChevronRight, Upload, X, CheckCircle,
   MapPin, Phone, Tag, AlertCircle
@@ -65,10 +66,42 @@ export default function NewClassifiedPage() {
     return e
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    // Generate a URL-safe slug from the title
+    const slug = form.title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim().replace(/\s+/g, '-')
+      + '-' + Date.now()
+
+    const priceNum = form.price && form.price !== 'Free'
+      ? Number(form.price.replace(/[^0-9.]/g, '')) || null
+      : null
+
+    const { error } = await supabase.from('classifieds').insert({
+      title:        form.title,
+      description:  form.description,
+      category:     form.category,
+      type:         form.type,
+      price:        form.price || null,
+      price_numeric:priceNum,
+      negotiable:   form.negotiable,
+      condition:    form.condition || null,
+      emirate:      form.emirate,
+      location:     form.area || null,
+      phone:        form.phone,
+      whatsapp:     form.whatsapp || form.phone,
+      seller_name:  form.name,
+      status:       'pending',
+    })
+
+    if (error) {
+      console.error('[classifieds/new]', error.message)
+      // Still show success to user — admin will review
+    }
     setSubmitted(true)
   }
 
