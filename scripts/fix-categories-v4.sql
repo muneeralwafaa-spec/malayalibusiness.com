@@ -112,6 +112,54 @@ AND (
 AND (SELECT id FROM categories WHERE slug = 'construction-interiors' LIMIT 1) IS NOT NULL;
 
 
+-- ── Computer / Electronics / Gadget stores → Technology & IT ─
+-- v2's broad '%store%' keyword pulled these into Retail & Fashion
+UPDATE listings
+SET category_id = (SELECT id FROM categories WHERE slug = 'technology-it' LIMIT 1)
+WHERE status = 'active'
+AND category_id = (SELECT id FROM categories WHERE slug = 'retail-fashion' LIMIT 1)
+AND (
+  LOWER(name) LIKE '%computer%'       OR
+  LOWER(name) LIKE '%laptop%'         OR
+  LOWER(name) LIKE '%electronics%'    OR
+  LOWER(name) LIKE '%electronic%'     OR
+  LOWER(name) LIKE '%gadget%'         OR
+  LOWER(name) LIKE '%mobile phone%'   OR
+  LOWER(name) LIKE '%phone repair%'   OR
+  LOWER(name) LIKE '%phone accessori%'OR
+  LOWER(name) LIKE '%it accessori%'   OR
+  LOWER(name) LIKE '%tech accessori%' OR
+  LOWER(name) LIKE '%accessories online%'
+)
+AND (SELECT id FROM categories WHERE slug = 'technology-it' LIMIT 1) IS NOT NULL;
+
+
+-- ── Consultancy / Advisory / Group companies → Legal & Finance ─
+-- Generic "Group of Companies", "Consultancy", "Advisory" with no clear
+-- product keyword sit better in Legal & Finance than Retail
+UPDATE listings
+SET category_id = (SELECT id FROM categories WHERE slug = 'legal-finance' LIMIT 1)
+WHERE status = 'active'
+AND category_id = (SELECT id FROM categories WHERE slug = 'retail-fashion' LIMIT 1)
+AND (
+  LOWER(name) LIKE '%group of compan%' OR
+  LOWER(name) LIKE '%holding%'         OR
+  LOWER(name) LIKE '%conglomerate%'    OR
+  LOWER(name) LIKE '%consultancy%'     OR
+  LOWER(name) LIKE '%consulting%'      OR
+  LOWER(name) LIKE '%advisory%'        OR
+  LOWER(name) LIKE '%associates%'      OR
+  LOWER(name) LIKE '%solutions llc%'   OR
+  LOWER(name) LIKE '%services llc%'
+)
+AND LOWER(name) NOT LIKE '%beauty%'
+AND LOWER(name) NOT LIKE '%salon%'
+AND LOWER(name) NOT LIKE '%food%'
+AND LOWER(name) NOT LIKE '%tech%'
+AND LOWER(name) NOT LIKE '%it%'
+AND (SELECT id FROM categories WHERE slug = 'legal-finance' LIMIT 1) IS NOT NULL;
+
+
 -- ── Verify final counts ───────────────────────────────────────
 SELECT c.name, c.slug, COUNT(l.id) AS listing_count
 FROM categories c
