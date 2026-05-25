@@ -291,10 +291,10 @@ export default function EventsPage() {
                   : 'Discover Malayali events across the UAE'}
               </p>
             </div>
-            <button className="self-start sm:self-auto flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
+            <Link href={`/${locale}/events/new`} className="self-start sm:self-auto flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
               <Calendar size={16} />
               {isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Event'}
-            </button>
+            </Link>
           </div>
         </div>
       </div>

@@ -2,13 +2,42 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'MalayaliBusiness UAE - UAE\'s #1 Malayali Business Network',
+  title: {
+    default: 'MalayaliBusiness UAE — UAE\'s #1 Malayali Business Network',
+    template: '%s | MalayaliBusiness UAE',
+  },
   description: 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates. Find Malayali businesses, events, jobs, classifieds and more.',
-  keywords: 'Malayali business UAE, Kerala business Dubai, Malayalam directory UAE, Malayali community UAE',
+  keywords: 'Malayali business UAE, Kerala business Dubai, Malayalam directory UAE, Malayali community UAE, Kerala community Dubai, malayali jobs UAE',
+  metadataBase: new URL('https://malayalibusiness.ae'),
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en': '/en',
+      'ml': '/ml',
+    },
+  },
   openGraph: {
-    title: 'MalayaliBusiness UAE',
-    description: 'UAE\'s #1 Malayali Business Network',
+    title: 'MalayaliBusiness UAE — UAE\'s #1 Malayali Business Network',
+    description: 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates.',
     type: 'website',
+    siteName: 'MalayaliBusiness UAE',
+    locale: 'en_AE',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MalayaliBusiness UAE',
+    description: 'UAE\'s #1 Malayali Business Network — businesses, events, jobs and classifieds.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 }
 
