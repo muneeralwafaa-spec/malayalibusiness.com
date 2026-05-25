@@ -84,15 +84,15 @@ function CartStep({ onNext, isMl, locale }: { onNext: () => void; isMl: boolean;
                 {/* Vendor header */}
                 <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-100">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
-                    <Image src={vendor.vendorLogo} alt={vendor.vendorName} fill className="object-cover" />
+                    {vendor.vendor_logo_url && <Image src={vendor.vendor_logo_url} alt={vendor.vendor_name} fill className="object-cover" />}
                   </div>
                   <span className="font-semibold text-kerala-deep text-sm flex items-center gap-1">
-                    {vendor.vendorName}
-                    {vendor.vendorVerified && <BadgeCheck size={14} className="text-kerala-green" />}
+                    {vendor.vendor_name}
+                    {vendor.vendor_verified && <BadgeCheck size={14} className="text-kerala-green" />}
                   </span>
-                  {vendor.vendorWhatsapp && (
+                  {vendor.vendor_whatsapp && (
                     <a
-                      href={`https://wa.me/${vendor.vendorWhatsapp.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${vendor.vendor_whatsapp.replace(/\D/g, '')}`}
                       target="_blank" rel="noopener noreferrer"
                       className="ml-auto flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
                     >
@@ -107,11 +107,11 @@ function CartStep({ onNext, isMl, locale }: { onNext: () => void; isMl: boolean;
                   {vendorItems.map(item => (
                     <li key={item.listing.id} className="flex gap-4 p-5 hover:bg-gray-50/50 transition-colors">
                       <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                        <Image src={item.listing.image} alt={item.listing.name} fill className="object-cover" />
+                        {item.listing.image_url && <Image src={item.listing.image_url} alt={item.listing.name} fill className="object-cover" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-kerala-deep text-sm leading-snug">
-                          {isMl ? item.listing.nameMl : item.listing.name}
+                          {isMl ? item.listing.name_ml : item.listing.name}
                         </h3>
                         {item.selectedDate && (
                           <p className="text-xs text-gray-500 mt-0.5">
@@ -304,8 +304,8 @@ function PaymentStep({ onBack, onPay, isMl }: { onBack: () => void; onPay: () =>
       Object.entries(byVendor).forEach(([, vendorItems]) => {
         const vendor = vendorItems[0].listing
         const lines = vendorItems.map(i => `• ${i.listing.name} x${i.quantity} = AED ${(i.listing.price * i.quantity).toFixed(2)}`).join('\n')
-        const msg = encodeURIComponent(`Hi ${vendor.vendorName}! I'd like to place an order:\n\n${lines}\n\nTotal: AED ${vendorItems.reduce((s, i) => s + i.listing.price * i.quantity, 0).toFixed(2)}\n\nPlease confirm!`)
-        window.open(`https://wa.me/${vendor.vendorWhatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
+        const msg = encodeURIComponent(`Hi ${vendor.vendor_name}! I'd like to place an order:\n\n${lines}\n\nTotal: AED ${vendorItems.reduce((s, i) => s + i.listing.price * i.quantity, 0).toFixed(2)}\n\nPlease confirm!`)
+        window.open(`https://wa.me/${(vendor.vendor_whatsapp ?? '').replace(/\D/g, '')}?text=${msg}`, '_blank')
       })
       onPay()
       return
@@ -401,11 +401,11 @@ function PaymentStep({ onBack, onPay, isMl }: { onBack: () => void; onPay: () =>
                 </p>
                 <div className="mt-3 space-y-1.5">
                   {Object.entries(byVendor).map(([, vi]) => (
-                    <div key={vi[0].listing.vendorSlug} className="flex items-center gap-2 text-xs text-green-700">
+                    <div key={vi[0].listing.vendor_slug} className="flex items-center gap-2 text-xs text-green-700">
                       <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-                        <Image src={vi[0].listing.vendorLogo} alt="" fill className="object-cover" />
+                        {vi[0].listing.vendor_logo_url && <Image src={vi[0].listing.vendor_logo_url} alt="" fill className="object-cover" />}
                       </div>
-                      {vi[0].listing.vendorName} → {vi[0].listing.vendorWhatsapp}
+                      {vi[0].listing.vendor_name} → {vi[0].listing.vendor_whatsapp}
                     </div>
                   ))}
                 </div>
@@ -420,7 +420,7 @@ function PaymentStep({ onBack, onPay, isMl }: { onBack: () => void; onPay: () =>
           <div className="space-y-2">
             {items.map(i => (
               <div key={i.listing.id} className="flex justify-between text-sm text-gray-600">
-                <span className="truncate max-w-[200px]">{isMl ? i.listing.nameMl : i.listing.name} ×{i.quantity}</span>
+                <span className="truncate max-w-[200px]">{isMl ? i.listing.name_ml : i.listing.name} ×{i.quantity}</span>
                 <span className="font-medium text-kerala-deep flex-shrink-0">AED {(i.listing.price * i.quantity).toFixed(2)}</span>
               </div>
             ))}
@@ -485,7 +485,7 @@ function ConfirmedStep({ orderNumber, locale, isMl }: { orderNumber: string; loc
         <div className="border-t border-gray-200 pt-3 space-y-2">
           {items.map(i => (
             <div key={i.listing.id} className="flex justify-between text-sm">
-              <span className="text-gray-600">{isMl ? i.listing.nameMl : i.listing.name} ×{i.quantity}</span>
+              <span className="text-gray-600">{isMl ? i.listing.name_ml : i.listing.name} ×{i.quantity}</span>
               <span className="font-medium">AED {(i.listing.price * i.quantity).toFixed(2)}</span>
             </div>
           ))}
