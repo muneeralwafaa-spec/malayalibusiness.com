@@ -388,7 +388,7 @@ export default function EventsPage() {
         </div>
 
         {/* Featured Event Banner */}
-        {isDefaultView && <FeaturedEventBanner event={featured} isMl={isMl} />}
+        {isDefaultView && featured && <FeaturedEventBanner event={featured} isMl={isMl} />}
 
         {/* Results header */}
         <div className="flex items-center justify-between mb-5">

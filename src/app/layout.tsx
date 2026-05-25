@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   },
   description: 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates. Find Malayali businesses, events, jobs, classifieds and more.',
   keywords: 'Malayali business UAE, Kerala business Dubai, Malayalam directory UAE, Malayali community UAE, Kerala community Dubai, malayali jobs UAE',
-  metadataBase: new URL('https://malayalibusiness.ae'),
+  metadataBase: new URL('https://www.malayalibusiness.com'),
   alternates: {
     canonical: '/',
     languages: {
