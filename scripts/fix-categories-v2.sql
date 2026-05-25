@@ -6,7 +6,7 @@
 -- STEP 1 ── See what's currently uncategorised or wrongly placed
 -- Run this block first to understand the scope
 -- ============================================================
-SELECT id, name, slug,
+SELECT l.id, l.name, l.slug,
        c.name AS current_category
 FROM listings l
 LEFT JOIN categories c ON c.id = l.category_id
