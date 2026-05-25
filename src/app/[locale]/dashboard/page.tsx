@@ -16,8 +16,10 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getMyListings } from '@/lib/auth'
-import { getServices, getTeamMembers, getShopListings, getReviews } from '@/lib/listings'
+import { getShopListings } from '@/lib/listings'
 import { supabase } from '@/lib/supabase'
+import type { ShopListingRow } from '@/lib/supabase'
+import type { Job } from '@/lib/jobs'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type NavSection =
@@ -54,29 +56,6 @@ const recentActivity = [
   { id: 8, icon: CreditCard, color: 'text-rose-500 bg-rose-50', text: 'Invoice #INV-2024-04 paid – AED 299', textMl: 'ഇൻവോയ്‌സ് അടച്ചു', time: '1 day ago' },
 ]
 
-const mockProducts = [
-  { id: 1, name: 'Malabar Biryani Kit', nameMl: 'മലബാർ ബിരിയാണി കിറ്റ്', price: 85, stock: 24, orders: 312, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=120&q=80' },
-  { id: 2, name: 'Kerala Pickle Set', nameMl: 'കേരള അച്ചാർ സെറ്റ്', price: 45, stock: 3, orders: 187, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=120&q=80' },
-  { id: 3, name: 'Coconut Oil 1L', nameMl: 'വെളിച്ചെണ്ണ 1L', price: 38, stock: 60, orders: 540, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=120&q=80' },
-  { id: 4, name: 'Puttu Maker Set', nameMl: 'പുട്ടുകുറ്റി സെറ്റ്', price: 120, stock: 0, orders: 98, image: 'https://images.unsplash.com/photo-1585155784229-aff921ccfa34?w=120&q=80' },
-]
-
-const mockOrders = [
-  { id: '#1042', customer: 'Mohammed Al Farsi', product: 'Malabar Biryani Kit', amount: 85, status: 'Delivered', date: '18 May 2026' },
-  { id: '#1041', customer: 'Priya Krishnan', product: 'Kerala Pickle Set', amount: 90, status: 'Processing', date: '17 May 2026' },
-  { id: '#1040', customer: 'James Thompson', product: 'Coconut Oil 1L', amount: 76, status: 'Pending', date: '17 May 2026' },
-  { id: '#1039', customer: 'Noora Al Mansoori', product: 'Puttu Maker Set', amount: 120, status: 'Delivered', date: '16 May 2026' },
-  { id: '#1038', customer: 'Srinivas Rao', product: 'Malabar Biryani Kit', amount: 170, status: 'Delivered', date: '15 May 2026' },
-]
-
-const mockEnquiries = [
-  { id: 1, name: 'Ahmed Al Rashidi', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=80', msg: 'Do you offer catering for corporate events? We need service for 200 guests in Business Bay next month.', business: 'Al Barakah Restaurant', time: '10 min ago', unread: true, replied: false },
-  { id: 2, name: 'Fatima Al Zahra', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&q=80', msg: 'What are your delivery charges for Sharjah? Also do you have vegetarian options?', business: 'Al Barakah Restaurant', time: '1 hr ago', unread: true, replied: false },
-  { id: 3, name: 'Srinivas Rao', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=80', msg: 'I would like to book a private dining experience for my wife\'s birthday. Party of 10.', business: 'Al Barakah Restaurant', time: '3 hr ago', unread: false, replied: true },
-  { id: 4, name: 'Noora Al Mansoori', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&q=80', msg: 'Are you open during Eid holidays? Planning a family gathering.', business: 'Al Barakah Restaurant', time: '1 day ago', unread: false, replied: false },
-  { id: 5, name: 'Ravi Varma', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=60&q=80', msg: 'Looking for Kerala meals delivery on a weekly subscription basis. Interested?', business: 'Al Barakah Restaurant', time: '2 days ago', unread: false, replied: true },
-  { id: 6, name: 'Aisha Mohammed', avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=60&q=80', msg: 'Do you provide halal certified food? Please share certificate if available.', business: 'Kerala Properties Dubai', time: '3 days ago', unread: false, replied: false },
-]
 
 const analyticsWeeks = [
   { week: 'W1', views: 8200, enquiries: 34 },
@@ -102,24 +81,6 @@ const emirateBreakdown = [
   { name: 'Others', pct: 7 },
 ]
 
-const mockJobs = [
-  { id: 1, title: 'Head Waiter', titleMl: 'ഹെഡ് വെയ്‌ററ്റർ', applications: 18, posted: '10 May 2026', status: 'Active' },
-  { id: 2, title: 'Kitchen Assistant', titleMl: 'കിച്ചൻ അസിസ്റ്റന്റ്', applications: 34, posted: '5 May 2026', status: 'Active' },
-  { id: 3, title: 'Cashier', titleMl: 'ക്യാഷ്യർ', applications: 9, posted: '1 May 2026', status: 'Closed' },
-]
-
-const jobApplicants = [
-  { name: 'Rajan Thomas', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&q=80', date: '12 May 2026' },
-  { name: 'Suresh Pillai', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=80', date: '11 May 2026' },
-  { name: 'Anvar K', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=60&q=80', date: '10 May 2026' },
-]
-
-const mockInvoices = [
-  { id: 'INV-2026-04', date: '1 Apr 2026', amount: 299, status: 'Paid' },
-  { id: 'INV-2026-03', date: '1 Mar 2026', amount: 299, status: 'Paid' },
-  { id: 'INV-2026-02', date: '1 Feb 2026', amount: 299, status: 'Paid' },
-  { id: 'INV-2026-01', date: '1 Jan 2026', amount: 299, status: 'Overdue' },
-]
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 function StatCard({
@@ -358,14 +319,45 @@ function ListingsSection({ isMl, listings, loading }: { isMl: boolean; listings:
 function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(listings[0]?.id || '')
-  const [shopItems, setShopItems] = useState<any[]>([])
+  const [shopItems, setShopItems] = useState<ShopListingRow[]>([])
   const [shopLoading, setShopLoading] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', name_ml: '', price: '', description: '' })
+  const [addSaving, setAddSaving] = useState(false)
 
   useEffect(() => {
     if (!selectedListingId) return
     setShopLoading(true)
     getShopListings(selectedListingId).then(items => { setShopItems(items); setShopLoading(false) })
   }, [selectedListingId])
+
+  const refreshShop = () => {
+    if (!selectedListingId) return
+    getShopListings(selectedListingId).then(setShopItems)
+  }
+
+  const handleAddProduct = async () => {
+    if (!addForm.name || !addForm.price || !selectedListingId) return
+    setAddSaving(true)
+    await supabase.from('shop_listings').insert({
+      listing_id:   selectedListingId,
+      name:         addForm.name,
+      name_ml:      addForm.name_ml || null,
+      description:  addForm.description || null,
+      price:        Number(addForm.price),
+      listing_type: 'product',
+      stock_status: 'in_stock',
+      is_active:    true,
+    })
+    setAddSaving(false)
+    setShowAddModal(false)
+    setAddForm({ name: '', name_ml: '', price: '', description: '' })
+    refreshShop()
+  }
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('shop_listings').delete().eq('id', id)
+    setShopItems(prev => prev.filter(p => p.id !== id))
+  }
 
   const lowStock = shopItems.some(p => p.stock_status === 'out_of_stock')
 
@@ -393,26 +385,46 @@ function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[]
       </div>
 
       <div className="space-y-3">
-        {mockProducts.map(p => (
+        {shopLoading ? (
+          <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green"/></div>
+        ) : shopItems.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
+            <ShoppingBag size={36} className="mx-auto mb-3 text-gray-300"/>
+            <p className="font-semibold text-kerala-deep">{isMl ? 'ഉൽപ്പന്നം ഒന്നും ഇല്ല' : 'No products yet'}</p>
+            <p className="text-sm text-gray-400 mt-1 mb-4">{isMl ? 'ആദ്യ ഉൽപ്പന്നം ചേർക്കൂ' : 'Add your first product to start selling'}</p>
+            <button onClick={() => setShowAddModal(true)} className="bg-kerala-green text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90">
+              {isMl ? 'ഉൽപ്പന്നം ചേർക്കൂ' : 'Add Product'}
+            </button>
+          </div>
+        ) : shopItems.map(p => (
           <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-center">
-            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-              <Image src={p.image} alt={p.name} fill className="object-cover" sizes="56px" />
+            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+              {p.image_url
+                ? <Image src={p.image_url} alt={p.name} fill className="object-cover" sizes="56px" />
+                : <ShoppingBag size={20} className="text-gray-300" />
+              }
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-kerala-deep text-sm">{isMl ? p.nameMl : p.name}</h4>
+              <h4 className="font-semibold text-kerala-deep text-sm">{isMl && p.name_ml ? p.name_ml : p.name}</h4>
               <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
                 <span className="text-kerala-gold font-bold">AED {p.price}</span>
-                <span className={`font-semibold ${p.stock === 0 ? 'text-red-500' : p.stock <= 5 ? 'text-amber-500' : 'text-gray-500'}`}>
-                  {isMl ? 'സ്റ്റോക്ക്:' : 'Stock:'} {p.stock === 0 ? (isMl ? 'ഇല്ല' : 'Out') : p.stock}
+                <span className={`font-semibold ${
+                  p.stock_status === 'out_of_stock' ? 'text-red-500'
+                  : p.stock_status === 'pre_order' ? 'text-amber-500'
+                  : 'text-green-600'
+                }`}>
+                  {p.stock_status === 'out_of_stock' ? (isMl ? 'സ്റ്റോക്ക് ഇല്ല' : 'Out of stock')
+                   : p.stock_status === 'pre_order' ? (isMl ? 'പ്രീ-ഓർഡർ' : 'Pre-order')
+                   : (isMl ? 'സ്റ്റോക്ക് ഉണ്ട്' : 'In stock')}
                 </span>
-                <span>{isMl ? 'ഓർഡർ:' : 'Orders:'} {p.orders}</span>
+                <span className="capitalize text-gray-400">{p.listing_type}</span>
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              <button className="text-xs text-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-50">
-                <Edit3 size={12} className="inline mr-1" />{isMl ? 'എഡിറ്റ്' : 'Edit'}
-              </button>
-              <button className="text-xs text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50">
+              <button
+                onClick={() => handleDelete(p.id)}
+                className="text-xs text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50"
+              >
                 <Trash2 size={12} className="inline mr-1" />{isMl ? 'ഡിലീറ്റ്' : 'Delete'}
               </button>
             </div>
@@ -431,33 +443,39 @@ function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[]
               </button>
             </div>
             <div className="space-y-4">
-              {[
-                { label: isMl ? 'ഉൽപ്പന്ന നാമം (EN)' : 'Product Name (EN)', type: 'text', placeholder: 'e.g. Malabar Biryani Kit' },
-                { label: isMl ? 'ഉൽപ്പന്ന നാമം (ML)' : 'Product Name (ML)', type: 'text', placeholder: 'ഉദാ. മലബാർ ബിരിയാണി കിറ്റ്' },
-                { label: isMl ? 'വില (AED)' : 'Price (AED)', type: 'number', placeholder: '0.00' },
-                { label: isMl ? 'സ്റ്റോക്ക്' : 'Stock Quantity', type: 'number', placeholder: '0' },
-              ].map(f => (
-                <div key={f.label}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{f.label}</label>
-                  <input
-                    type={f.type}
-                    placeholder={f.placeholder}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'ഉൽപ്പന്ന നാമം (EN)' : 'Product Name (EN)'}</label>
+                <input type="text" value={addForm.name} onChange={e => setAddForm(f => ({...f, name: e.target.value}))}
+                  placeholder="e.g. Malabar Biryani Kit"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'ഉൽപ്പന്ന നാമം (ML)' : 'Product Name (ML)'}</label>
+                <input type="text" value={addForm.name_ml} onChange={e => setAddForm(f => ({...f, name_ml: e.target.value}))}
+                  placeholder="ഉദാ. മലബാർ ബിരിയാണി കിറ്റ്"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'വില (AED)' : 'Price (AED)'}</label>
+                <input type="number" value={addForm.price} onChange={e => setAddForm(f => ({...f, price: e.target.value}))}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'വിവരണം' : 'Description'}</label>
+                <textarea value={addForm.description} onChange={e => setAddForm(f => ({...f, description: e.target.value}))}
+                  placeholder={isMl ? 'ഉൽപ്പന്ന വിവരണം...' : 'Brief product description...'}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none" />
+              </div>
               <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50"
-                >
+                <button onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
                   {isMl ? 'റദ്ദാക്കൂ' : 'Cancel'}
                 </button>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-kerala-green text-white rounded-xl text-sm font-semibold hover:opacity-90"
-                >
-                  {isMl ? 'ചേർക്കൂ' : 'Add Product'}
+                <button onClick={handleAddProduct} disabled={addSaving || !addForm.name || !addForm.price}
+                  className="flex-1 px-4 py-2.5 bg-kerala-green text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2">
+                  {addSaving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'ചേർക്കുന്നു...' : 'Saving...'}</> : (isMl ? 'ചേർക്കൂ' : 'Add Product')}
                 </button>
               </div>
             </div>
@@ -469,148 +487,65 @@ function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[]
 }
 
 function OrdersSection({ isMl }: { isMl: boolean }) {
-  const statusColors: Record<string, string> = {
-    Delivered: 'bg-green-100 text-green-700',
-    Processing: 'bg-blue-100 text-blue-700',
-    Pending: 'bg-amber-100 text-amber-600',
-  }
-  const statusMl: Record<string, string> = {
-    Delivered: 'ഡെലിവർ ചെയ്തു',
-    Processing: 'പ്രോസസ്സിംഗ്',
-    Pending: 'കാത്തിരിക്കുന്നു',
-  }
-
   return (
     <div className="space-y-5">
       <SectionHeader title={isMl ? 'ഓർഡറുകൾ' : 'Orders'} />
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <div className="font-serif font-bold text-2xl text-kerala-deep">45</div>
+          <div className="font-serif font-bold text-2xl text-kerala-deep">0</div>
           <div className="text-xs text-gray-500 mt-1">{isMl ? 'മൊത്തം ഓർഡർ' : 'Total Orders'}</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <div className="font-serif font-bold text-2xl text-amber-600">3</div>
+          <div className="font-serif font-bold text-2xl text-amber-600">0</div>
           <div className="text-xs text-gray-500 mt-1">{isMl ? 'കാത്തിരിക്കുന്നു' : 'Pending'}</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <div className="font-serif font-bold text-xl text-kerala-green">AED 4,120</div>
+          <div className="font-serif font-bold text-xl text-kerala-green">AED 0</div>
           <div className="text-xs text-gray-500 mt-1">{isMl ? 'ഈ മാസം' : 'This Month'}</div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                {[isMl ? 'ഓർഡർ ID' : 'Order ID', isMl ? 'ഉപഭോക്താവ്' : 'Customer', isMl ? 'ഉൽപ്പന്നം' : 'Product', isMl ? 'തുക' : 'Amount', isMl ? 'സ്ഥിതി' : 'Status', isMl ? 'തീയതി' : 'Date', ''].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-gray-500 px-4 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {mockOrders.map(o => (
-                <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700">{o.id}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{o.customer}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{o.product}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-kerala-deep">AED {o.amount}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColors[o.status]}`}>
-                      {isMl ? statusMl[o.status] : o.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-400">{o.date}</td>
-                  <td className="px-4 py-3">
-                    <button className="text-xs text-kerala-green font-semibold hover:underline">{isMl ? 'കാണൂ' : 'View Details'}</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+        <ShoppingCart size={40} className="mx-auto mb-4 text-gray-200" />
+        <p className="font-semibold text-kerala-deep mb-1">
+          {isMl ? 'ഓർഡർ ഒന്നും ഇല്ല' : 'No orders yet'}
+        </p>
+        <p className="text-sm text-gray-400 max-w-sm mx-auto">
+          {isMl
+            ? 'ഉപഭോക്താക്കൾ ഷോപ്പ് വഴി ഓർഡർ ചെയ്യുമ്പോൾ ഇവിടെ കാണാം'
+            : 'Orders placed by customers through your shop will appear here'}
+        </p>
       </div>
     </div>
   )
 }
 
 function EnquiriesSection({ isMl }: { isMl: boolean }) {
-  const [filter, setFilter] = useState<'all' | 'unread' | 'replied'>('all')
-  const [expanded, setExpanded] = useState<number | null>(null)
-  const [replyText, setReplyText] = useState('')
-
-  const filterLabels = {
-    all: isMl ? 'എല്ലാം' : 'All',
-    unread: isMl ? 'വായിക്കാത്തത്' : 'Unread',
-    replied: isMl ? 'മറുപടി' : 'Replied',
-  }
-
-  const filtered = mockEnquiries.filter(e =>
-    filter === 'all' ? true : filter === 'unread' ? e.unread : e.replied
-  )
-
   return (
     <div className="space-y-5">
       <SectionHeader title={isMl ? 'അന്വേഷണങ്ങൾ' : 'Enquiries'} />
 
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['all', 'unread', 'replied'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              filter === f ? 'bg-white text-kerala-deep shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {filterLabels[f]}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        {filtered.map(e => (
-          <div key={e.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <button
-              className="w-full flex items-start gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
-              onClick={() => setExpanded(expanded === e.id ? null : e.id)}
-            >
-              <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                <Image src={e.avatar} alt={e.name} fill className="object-cover" sizes="40px" />
-                {e.unread && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className={`font-semibold text-sm ${e.unread ? 'text-kerala-deep' : 'text-gray-700'}`}>{e.name}</span>
-                  <span className="text-xs text-gray-400 flex-shrink-0">{e.time}</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">{e.msg}</p>
-                <p className="text-xs text-kerala-green mt-0.5">{e.business}</p>
-              </div>
-            </button>
-            {expanded === e.id && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-3">
-                <p className="text-sm text-gray-700 leading-relaxed">{e.msg}</p>
-                <textarea
-                  value={replyText}
-                  onChange={ev => setReplyText(ev.target.value)}
-                  placeholder={isMl ? 'മറുപടി ടൈപ്പ് ചെയ്യൂ...' : 'Type your reply...'}
-                  rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-white resize-none"
-                />
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => { setReplyText(''); setExpanded(null) }}
-                    className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90"
-                  >
-                    <Mail size={14} />
-                    {isMl ? 'അയക്കൂ' : 'Send Reply'}
-                  </button>
-                </div>
-              </div>
-            )}
+      <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+        <MessageSquare size={40} className="mx-auto mb-4 text-gray-200" />
+        <p className="font-semibold text-kerala-deep mb-1">
+          {isMl ? 'അന്വേഷണം ഒന്നും ഇല്ല' : 'No enquiries yet'}
+        </p>
+        <p className="text-sm text-gray-400 max-w-sm mx-auto">
+          {isMl
+            ? 'ഉപഭോക്താക്കൾ WhatsApp അല്ലെങ്കിൽ ഫോൺ വഴി ബന്ധപ്പെടുന്നതാണ്. ഇൻ-ആപ്പ് മെസ്സേജിംഗ് ഉടൻ ലഭ്യമാകും.'
+            : 'Customers currently reach you via WhatsApp or phone. In-app messaging is coming soon.'}
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <div className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-xl px-4 py-2.5">
+            <CheckCircle size={15} className="text-green-500" />
+            <span className="text-xs font-medium text-green-700">{isMl ? 'WhatsApp ആക്ടീവ്' : 'WhatsApp Active'}</span>
           </div>
-        ))}
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+            <CheckCircle size={15} className="text-blue-500" />
+            <span className="text-xs font-medium text-blue-700">{isMl ? 'ഫോൺ ആക്ടീവ്' : 'Phone Active'}</span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -744,75 +679,94 @@ function AnalyticsSection({ isMl, listings }: { isMl: boolean; listings: any[] }
   )
 }
 
-function JobsSection({ isMl }: { isMl: boolean }) {
-  const [expandedJob, setExpandedJob] = useState<number | null>(null)
+function JobsSection({ isMl, userId, locale }: { isMl: boolean; userId: string; locale: string }) {
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) return
+    setLoading(true)
+    supabase
+      .from('jobs')
+      .select('*')
+      .eq('poster_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setJobs((data ?? []) as Job[]); setLoading(false) })
+  }, [userId])
+
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
   return (
     <div className="space-y-5">
       <SectionHeader title={isMl ? 'പോസ്റ്റ് ചെയ്ത ജോലി' : 'Jobs Posted'} />
 
       <div className="flex justify-end">
-        <button className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+        <Link href={`/${locale}/jobs`}
+          className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
           <Plus size={15} />
           {isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post New Job'}
-        </button>
+        </Link>
       </div>
 
-      <div className="space-y-3">
-        {mockJobs.map(job => (
-          <div key={job.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-4 flex items-center gap-4">
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green"/></div>
+      ) : jobs.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+          <Briefcase size={40} className="mx-auto mb-4 text-gray-200" />
+          <p className="font-semibold text-kerala-deep mb-1">
+            {isMl ? 'ജോലി ഒന്നും പോസ്റ്റ് ചെയ്തിട്ടില്ല' : 'No jobs posted yet'}
+          </p>
+          <p className="text-sm text-gray-400 max-w-sm mx-auto">
+            {isMl ? 'ജോലി ഒഴിവ് പോസ്റ്റ് ചെയ്ത് യോഗ്യരായ ഉദ്യോഗാർഥികളെ കണ്ടെത്തൂ' : 'Post a job opening to find qualified candidates from our community'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {jobs.map(job => (
+            <div key={job.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-kerala-green/10 flex items-center justify-center flex-shrink-0">
                 <Briefcase size={18} className="text-kerala-green" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-kerala-deep text-sm">{isMl ? job.titleMl : job.title}</h4>
+                <h4 className="font-semibold text-kerala-deep text-sm">{isMl && job.title_ml ? job.title_ml : job.title}</h4>
                 <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
-                  <span>{isMl ? 'അപേക്ഷ:' : 'Applications:'} <strong className="text-kerala-deep">{job.applications}</strong></span>
-                  <span>{isMl ? 'പോസ്റ്റ്:' : 'Posted:'} {job.posted}</span>
-                  <span className={`font-semibold ${job.status === 'Active' ? 'text-green-600' : 'text-gray-400'}`}>
-                    {job.status === 'Active' ? (isMl ? 'ആക്ടീവ്' : 'Active') : (isMl ? 'അടഞ്ഞു' : 'Closed')}
+                  <span>{isMl ? 'അപേക്ഷ:' : 'Applications:'} <strong className="text-kerala-deep">{job.applicants}</strong></span>
+                  <span>{isMl ? 'പോസ്റ്റ്:' : 'Posted:'} {formatDate(job.created_at)}</span>
+                  <span className={`font-semibold capitalize ${job.status === 'active' ? 'text-green-600' : 'text-gray-400'}`}>
+                    {job.status === 'active' ? (isMl ? 'ആക്ടീവ്' : 'Active') : (isMl ? 'അടഞ്ഞു' : 'Closed')}
                   </span>
+                  <span className="capitalize text-gray-400">{job.job_type?.replace('-', ' ')}</span>
                 </div>
               </div>
-              <button
-                onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
-                className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5 flex-shrink-0"
-              >
-                {isMl ? 'അപേക്ഷ കാണൂ' : 'View Applications'}
-              </button>
+              <Link href={`/${locale}/jobs/${job.id}`}
+                className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5 flex-shrink-0">
+                {isMl ? 'കാണൂ' : 'View'}
+              </Link>
             </div>
-            {expandedJob === job.id && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-3">
-                <p className="text-xs font-semibold text-gray-500 mb-2">{isMl ? 'അപേക്ഷകർ' : 'Applicants'}</p>
-                {jobApplicants.map(ap => (
-                  <div key={ap.name} className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                      <Image src={ap.avatar} alt={ap.name} fill className="object-cover" sizes="32px" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-kerala-deep">{ap.name}</p>
-                      <p className="text-xs text-gray-400">{isMl ? 'അപേക്ഷ:' : 'Applied:'} {ap.date}</p>
-                    </div>
-                    <button className="text-xs text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg hover:bg-blue-50">
-                      {isMl ? 'കാണൂ' : 'View'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function BillingSection({ isMl }: { isMl: boolean }) {
-  const statusColors: Record<string, string> = {
-    Paid: 'bg-green-100 text-green-700',
-    Overdue: 'bg-red-100 text-red-600',
+function BillingSection({ isMl, listings, locale }: { isMl: boolean; listings: any[]; locale: string }) {
+  const topPlan = listings.length > 0
+    ? listings.reduce((best, l) => {
+        const order = ['elite', 'premium', 'basic', 'free']
+        return order.indexOf(l.plan) < order.indexOf(best) ? l.plan : best
+      }, listings[0]?.plan ?? 'free')
+    : 'free'
+
+  const planDetails: Record<string, { name: string; nameMl: string; price: string; color: string; features: string[] }> = {
+    elite:   { name: 'Elite Plan',   nameMl: 'എലൈറ്റ് പ്ലാൻ',   price: 'AED 999', color: 'bg-purple-100 text-purple-700', features: ['Unlimited Listings', 'Featured Placement', 'Shop + Orders', 'Priority Support', 'Analytics', 'Job Postings'] },
+    premium: { name: 'Premium Plan', nameMl: 'പ്രീമിയം പ്ലാൻ', price: 'AED 499', color: 'bg-kerala-gold/15 text-kerala-gold', features: ['5 Listings', 'Featured Placement', 'Shop Feature', 'WhatsApp Button', 'Analytics', 'Job Postings'] },
+    basic:   { name: 'Basic Plan',   nameMl: 'ബേസിക് പ്ലാൻ',   price: 'AED 299', color: 'bg-blue-100 text-blue-700',   features: ['3 Listings', 'Unlimited Photos', 'WhatsApp Button', 'Basic Analytics', 'Shop Feature', 'Job Postings'] },
+    free:    { name: 'Free Plan',    nameMl: 'ഫ്രീ പ്ലാൻ',    price: 'Free',     color: 'bg-gray-100 text-gray-600',   features: ['1 Listing', 'Basic Profile', 'WhatsApp Button'] },
   }
+
+  const plan = planDetails[topPlan] ?? planDetails.free
+  const isUpgradeable = topPlan !== 'elite'
 
   return (
     <div className="space-y-5">
@@ -823,25 +777,21 @@ function BillingSection({ isMl }: { isMl: boolean }) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-serif font-bold text-kerala-deep">{isMl ? 'സ്റ്റാൻഡേർഡ് പ്ലാൻ' : 'Standard Plan'}</h3>
-              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{isMl ? 'നിലവിൽ ആക്ടീവ്' : 'Active'}</span>
+              <h3 className="font-serif font-bold text-kerala-deep">{isMl ? plan.nameMl : plan.name}</h3>
+              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${plan.color}`}>{isMl ? 'ആക്ടീവ്' : 'Active'}</span>
             </div>
-            <p className="text-2xl font-serif font-bold text-kerala-deep">AED 299<span className="text-sm font-normal text-gray-400">/month</span></p>
+            <p className="text-2xl font-serif font-bold text-kerala-deep">{plan.price}<span className="text-sm font-normal text-gray-400">{topPlan !== 'free' ? '/month' : ''}</span></p>
           </div>
-          <button className="flex items-center gap-2 bg-kerala-gold text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90">
-            <Zap size={14} />
-            {isMl ? 'പ്രീമിയം ആക്കൂ' : 'Upgrade to Premium'}
-          </button>
+          {isUpgradeable && (
+            <Link href={`/${locale}/pricing`}
+              className="flex items-center gap-2 bg-kerala-gold text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90">
+              <Zap size={14} />
+              {isMl ? 'അപ്ഗ്രേഡ്' : 'Upgrade Plan'}
+            </Link>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {[
-            isMl ? '3 ലിസ്റ്റിംഗ്' : '3 Business Listings',
-            isMl ? 'അൺലിമിറ്റഡ് ഫോട്ടോ' : 'Unlimited Photos',
-            isMl ? 'WhatsApp ബട്ടൺ' : 'WhatsApp Button',
-            isMl ? 'അനലിറ്റിക്സ്' : 'Basic Analytics',
-            isMl ? 'ഷോപ്പ് ഫീച്ചർ' : 'Shop Feature',
-            isMl ? 'ജോബ് പോസ്റ്റ്' : 'Job Postings',
-          ].map(f => (
+          {plan.features.map(f => (
             <div key={f} className="flex items-center gap-2 text-sm text-gray-600">
               <CheckCircle size={14} className="text-kerala-green flex-shrink-0" />
               {f}
@@ -850,46 +800,14 @@ function BillingSection({ isMl }: { isMl: boolean }) {
         </div>
       </div>
 
-      {/* Invoices */}
+      {/* Invoices — coming soon */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <h3 className="font-serif font-bold text-kerala-deep">{isMl ? 'ഇൻവോയ്സ്' : 'Invoices'}</h3>
         </div>
-        <div className="divide-y divide-gray-50">
-          {mockInvoices.map(inv => (
-            <div key={inv.id} className="flex items-center gap-4 px-4 py-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-mono text-sm font-semibold text-kerala-deep">{inv.id}</p>
-                <p className="text-xs text-gray-400">{inv.date}</p>
-              </div>
-              <span className="font-semibold text-sm text-kerala-deep">AED {inv.amount}</span>
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColors[inv.status]}`}>
-                {inv.status === 'Paid' ? (isMl ? 'അടച്ചു' : 'Paid') : (isMl ? 'കുടിശ്ശിക' : 'Overdue')}
-              </span>
-              <button className="text-gray-400 hover:text-kerala-green transition-colors">
-                <Download size={15} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Payment method */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-serif font-bold text-kerala-deep">{isMl ? 'പേമെന്റ് രീതി' : 'Payment Method'}</h3>
-          <button className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5">
-            {isMl ? 'അപ്ഡേറ്റ്' : 'Update'}
-          </button>
-        </div>
-        <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
-          <div className="w-10 h-7 bg-blue-600 rounded flex items-center justify-center">
-            <span className="text-white text-xs font-bold">VISA</span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-kerala-deep">•••• •••• •••• 4242</p>
-            <p className="text-xs text-gray-400">{isMl ? 'കാലഹരണം:' : 'Expires:'} 09/2028</p>
-          </div>
+        <div className="p-8 text-center">
+          <Download size={28} className="mx-auto mb-3 text-gray-200" />
+          <p className="text-sm text-gray-400">{isMl ? 'ഇൻവോയ്സ് ഇല്ല. ഭാവിയിൽ ഇവിടെ കാണാം.' : 'No invoices yet. Billing history will appear here.'}</p>
         </div>
       </div>
     </div>
@@ -1245,7 +1163,7 @@ export default function DashboardPage() {
                 <h1 className="font-serif font-bold text-lg text-kerala-deep leading-none">
                   {navItems.find(n => n.key === activeSection)?.[isMl ? 'labelMl' : 'label']}
                 </h1>
-                <p className="text-gray-400 text-xs">{isMl ? 'ഇന്ന്, 18 മേയ് 2026' : 'Today, 18 May 2026'}</p>
+                <p className="text-gray-400 text-xs">{new Date().toLocaleDateString(isMl ? 'ml-IN' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1271,8 +1189,8 @@ export default function DashboardPage() {
             {activeSection === 'orders'    && <OrdersSection isMl={isMl} />}
             {activeSection === 'enquiries' && <EnquiriesSection isMl={isMl} />}
             {activeSection === 'analytics' && <AnalyticsSection isMl={isMl} listings={myListings} />}
-            {activeSection === 'jobs'      && <JobsSection isMl={isMl} />}
-            {activeSection === 'billing'   && <BillingSection isMl={isMl} />}
+            {activeSection === 'jobs'      && <JobsSection isMl={isMl} userId={user.id} locale={locale} />}
+            {activeSection === 'billing'   && <BillingSection isMl={isMl} listings={myListings} locale={locale} />}
             {activeSection === 'settings'  && <SettingsSection isMl={isMl} user={user} profile={profile} />}
           </div>
         </main>
