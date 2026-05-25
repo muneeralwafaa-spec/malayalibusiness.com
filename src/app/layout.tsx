@@ -22,11 +22,20 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'MalayaliBusiness UAE',
     locale: 'en_AE',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'MalayaliBusiness UAE — UAE\'s #1 Malayali Business Network',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'MalayaliBusiness UAE',
     description: 'UAE\'s #1 Malayali Business Network — businesses, events, jobs and classifieds.',
+    images: ['/opengraph-image'],
   },
   robots: {
     index: true,
