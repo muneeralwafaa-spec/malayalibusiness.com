@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { ShoppingCart, Star, ArrowRight, Truck, Shield, RefreshCw, MessageCircle, Calendar, FileText, Zap, BadgeCheck } from 'lucide-react'
@@ -13,6 +12,18 @@ const badges = [
   { icon: RefreshCw, text: 'Products & services in one place', textMl: 'ഒരിടത്ത് ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും' },
 ]
 
+const SBASE = { listing_id: null, vendor_name_ml: null, vendor_logo_url: null, vendor_emirate_ml: null, vendor_verified: true, vendor_whatsapp: null, vendor_phone: null, name_ml: null, description: null, description_ml: null, category_ml: null, original_price: null, currency: 'AED', unit: null, unit_ml: null, images: [], rating_avg: 4.5, review_count: 12, is_active: true, is_featured: true, is_bestseller: false, duration: null, slots: [], tags: [], tags_ml: [], sort_order: 0, created_at: new Date().toISOString() }
+const PLACEHOLDER_SHOP: MarketplaceListing[] = [
+  { ...SBASE, id: 'ps1', vendor_slug: 'kerala-kitchen', vendor_name: 'Kerala Kitchen', vendor_emirate: 'Dubai', listing_type: 'product', name: 'Kerala Sadya Meal Box', category: 'Food', price: 45, image_url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=600&q=80' },
+  { ...SBASE, id: 'ps2', vendor_slug: 'glow-beauty', vendor_name: 'Glow Beauty', vendor_emirate: 'Dubai', listing_type: 'appointment', name: 'Bridal Makeup Package', category: 'Beauty', price: 350, original_price: 500, image_url: 'https://images.unsplash.com/photo-1560066984-138daaa7b78a?w=600&q=80', is_bestseller: true },
+  { ...SBASE, id: 'ps3', vendor_slug: 'gulf-travels', vendor_name: 'Gulf Travels', vendor_emirate: 'Abu Dhabi', listing_type: 'product', name: 'Kerala Tour Package 7 Days', category: 'Travel', price: 1200, image_url: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80' },
+  { ...SBASE, id: 'ps4', vendor_slug: 'techfix-uae', vendor_name: 'TechFix UAE', vendor_emirate: 'Sharjah', listing_type: 'direct_service', name: 'Laptop/Phone Repair Service', category: 'Technology', price: 99, image_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80' },
+  { ...SBASE, id: 'ps5', vendor_slug: 'mallu-bakery', vendor_name: 'Mallu Bakery', vendor_emirate: 'Dubai', listing_type: 'product', name: 'Kerala Banana Chips 500g', category: 'Food', price: 18, image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80', is_bestseller: true },
+  { ...SBASE, id: 'ps6', vendor_slug: 'ayur-wellness', vendor_name: 'Ayur Wellness', vendor_emirate: 'Dubai', listing_type: 'appointment', name: 'Ayurvedic Full Body Massage', category: 'Healthcare', price: 180, original_price: 250, image_url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80' },
+  { ...SBASE, id: 'ps7', vendor_slug: 'kerala-textiles', vendor_name: 'Kerala Textiles', vendor_emirate: 'Ajman', listing_type: 'product', name: 'Handloom Kasavu Saree', category: 'Fashion', price: 220, image_url: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80' },
+  { ...SBASE, id: 'ps8', vendor_slug: 'home-repairs-uae', vendor_name: 'Home Repairs UAE', vendor_emirate: 'Dubai', listing_type: 'quote', name: 'AC Service & Maintenance', category: 'Home Services', price: 120, image_url: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80' },
+]
+
 export default function ShopSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
@@ -20,7 +31,9 @@ export default function ShopSection() {
   const [listings, setListings] = useState<MarketplaceListing[]>([])
 
   useEffect(() => {
-    getMarketplaceListings({ featured: true, limit: 8 }).then(setListings)
+    getMarketplaceListings({ featured: true, limit: 8 }).then(data => {
+      setListings(data.length > 0 ? data : PLACEHOLDER_SHOP)
+    })
   }, [])
 
   if (listings.length === 0) return null
@@ -74,12 +87,11 @@ export default function ShopSection() {
                 {/* Image */}
                 <Link href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`} className="relative h-44 overflow-hidden bg-gray-50 block">
                   {listing.image_url && (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={listing.image_url}
                       alt={listing.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
                   {/* Badges */}
@@ -102,7 +114,8 @@ export default function ShopSection() {
                   <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-1.5 mb-1.5 group/v">
                     <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
                       {listing.vendor_logo_url && (
-                        <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={listing.vendor_logo_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
                       )}
                     </div>
                     <span className="text-[10px] text-gray-400 group-hover/v:text-kerala-green transition-colors flex items-center gap-0.5 truncate">

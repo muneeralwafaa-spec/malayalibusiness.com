@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -19,6 +18,14 @@ const categoryColors: Record<string, string> = {
 
 const FALLBACK = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80'
 
+const BBASE = { title_ml: null, excerpt_ml: null, body: null, body_ml: null, category_ml: null, author_name_ml: null, author_avatar: null, author_role_ml: null, views: 1200, likes: 45, comments_count: 8, tags: [], author_id: null, status: 'published' as const, trending: false }
+const PLACEHOLDER_POSTS: CommunityPost[] = [
+  { ...BBASE, id: 'pb1', slug: 'top-malayali-businesses-dubai', title: 'Top 10 Malayali-Owned Businesses in Dubai You Must Visit', excerpt: 'Discover the thriving Malayali business community in Dubai — from authentic restaurants to leading real estate firms.', category: 'Business', author_name: 'Rajan Nair', author_role: 'Business Editor', image_url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80', read_time: 5, featured: true, published_at: new Date(Date.now() - 86400000).toISOString(), created_at: new Date(Date.now() - 86400000).toISOString() },
+  { ...BBASE, id: 'pb2', slug: 'kerala-food-uae', title: 'The Best Kerala Food Spots Across the UAE', excerpt: 'A food lovers guide to authentic Kerala cuisine from Dubai to Abu Dhabi.', category: 'Food & Culture', author_name: 'Meera Thomas', author_role: 'Food Blogger', image_url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=80', read_time: 4, featured: true, published_at: new Date(Date.now() - 172800000).toISOString(), created_at: new Date(Date.now() - 172800000).toISOString() },
+  { ...BBASE, id: 'pb3', slug: 'malayali-finance-uae', title: 'Smart Money Tips for Malayalis Living in UAE', excerpt: 'Expert advice on savings, remittances, and investments for the UAE Malayali community.', category: 'Finance', author_name: 'Suresh Menon', author_role: 'Finance Advisor', image_url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80', read_time: 6, featured: false, trending: true, published_at: new Date(Date.now() - 259200000).toISOString(), created_at: new Date(Date.now() - 259200000).toISOString() },
+  { ...BBASE, id: 'pb4', slug: 'onam-celebrations-uae', title: 'How Malayalis Celebrate Onam Across UAE Emirates', excerpt: 'From grand Onasadya feasts to cultural programs — how the community keeps tradition alive.', category: 'Community', author_name: 'Priya Krishnan', author_role: 'Community Writer', image_url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80', read_time: 3, featured: false, published_at: new Date(Date.now() - 345600000).toISOString(), created_at: new Date(Date.now() - 345600000).toISOString() },
+]
+
 export default function BlogSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
@@ -27,16 +34,11 @@ export default function BlogSection() {
 
   useEffect(() => {
     getPosts({ featured: true, limit: 4 }).then(data => {
-      // If fewer than 4 featured, fall back to latest
-      if (data.length < 4) {
-        getPosts({ limit: 4 }).then(all => {
-          setPosts(all)
-          setLoading(false)
-        })
-      } else {
-        setPosts(data)
+      if (data.length >= 4) { setPosts(data); setLoading(false); return }
+      getPosts({ limit: 4 }).then(all => {
+        setPosts(all.length > 0 ? all : PLACEHOLDER_POSTS)
         setLoading(false)
-      }
+      })
     })
   }, [])
 
@@ -85,13 +87,12 @@ export default function BlogSection() {
             href={`/${locale}/community/${featured.slug}`}
             className="group lg:col-span-3 relative overflow-hidden rounded-3xl h-72 lg:h-auto card-hover min-h-[380px]"
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={featured.image_url || FALLBACK}
               alt={isMl ? (featured.title_ml ?? featured.title) : featured.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-              sizes="(max-width: 1024px) 100vw, 60vw"
               onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             <div className="absolute top-4 left-4">
@@ -130,13 +131,12 @@ export default function BlogSection() {
                 className="group flex gap-4 card-hover"
               >
                 <div className="relative w-28 h-24 rounded-xl overflow-hidden flex-shrink-0">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={post.image_url || FALLBACK}
                     alt={isMl ? (post.title_ml ?? post.title) : post.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="112px"
                     onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

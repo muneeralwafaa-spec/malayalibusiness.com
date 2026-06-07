@@ -5,11 +5,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
-import { signIn, signUp, signInWithGoogle } from '@/lib/auth'
+import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
+import { signIn, signUp, signInWithGoogle, USER_ROLES } from '@/lib/auth'
 
 type Tab = 'login' | 'register'
-type AccountType = 'user' | 'business'
 
 function GoogleIcon() {
   return (
@@ -37,7 +36,7 @@ export default function AuthPage() {
     const t = searchParams.get('tab')
     if (t === 'register') setTab('register')
   }, [searchParams])
-  const [accountType, setAccountType] = useState<AccountType>('user')
+  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set())
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -52,7 +51,6 @@ export default function AuthPage() {
   const [regPhone, setRegPhone] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
-  const [regBusiness, setRegBusiness] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
 
   const handleLogin = async () => {
@@ -72,8 +70,9 @@ export default function AuthPage() {
     const { error: err } = await signUp({
       email: regEmail, password: regPassword,
       fullName: regName, phone: regPhone,
-      isBusiness: accountType === 'business',
-      businessName: accountType === 'business' ? regBusiness : undefined,
+      isBusiness:     selectedRoles.has('is_business_owner'),
+      isProfessional: selectedRoles.has('is_professional'),
+      isMedia:        selectedRoles.has('is_media'),
     })
     setSubmitting(false)
     if (err) { setError(err.message); return }
@@ -270,30 +269,47 @@ export default function AuthPage() {
                 {isMl ? 'UAE മലയാളി കമ്മ്യൂണിറ്റിയിൽ ചേരൂ' : 'Join the UAE Malayali community today'}
               </p>
 
-              {/* Account type toggle */}
+              {/* Role selection — multi-select */}
               <div className="mb-5">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  {isMl ? 'അക്കൗണ്ട് ടൈപ്പ്' : 'Account type'}
+                  {isMl ? 'നിങ്ങൾ ആരാണ്? (ഒന്നിൽ കൂടുതൽ തിരഞ്ഞെടുക്കാം)' : 'I am a… (select all that apply)'}
                 </p>
-                <div className="flex gap-3">
-                  {([
-                    ['user', isMl ? 'വ്യക്തിഗതം' : 'Personal', User],
-                    ['business', isMl ? 'ബിസിനസ്' : 'Business', Building2],
-                  ] as const).map(([t, l, Icon]) => (
-                    <button
-                      key={t}
-                      onClick={() => setAccountType(t)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
-                        accountType === t
-                          ? 'bg-kerala-green/10 border-kerala-green text-kerala-green'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                      }`}
-                    >
-                      <Icon size={15} />
-                      {l}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  {USER_ROLES.map(role => {
+                    const active = selectedRoles.has(role.key)
+                    return (
+                      <button
+                        key={role.key}
+                        type="button"
+                        onClick={() => {
+                          setSelectedRoles(prev => {
+                            const next = new Set(prev)
+                            if (next.has(role.key)) next.delete(role.key)
+                            else next.add(role.key)
+                            return next
+                          })
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all ${
+                          active
+                            ? 'bg-kerala-green/10 border-kerala-green text-kerala-deep'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <span className="text-xl leading-none">{role.emoji}</span>
+                        <div className="flex-1">
+                          <span className="font-semibold block">{isMl ? role.labelMl : role.label}</span>
+                          <span className="text-xs text-gray-400">{role.desc}</span>
+                        </div>
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${active ? 'bg-kerala-green border-kerala-green' : 'border-gray-300'}`}>
+                          {active && <CheckCircle size={13} className="text-white" />}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  {isMl ? 'ഒന്നും തിരഞ്ഞെടുക്കൂ — കമ്മ്യൂണിറ്റി അംഗം ആകാം.' : 'Or skip — you\'ll join as a community member.'}
+                </p>
               </div>
 
               {/* Google */}
@@ -324,24 +340,6 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
-
-                {accountType === 'business' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      {isMl ? 'ബിസിനസ് പേര്' : 'Business name'}
-                    </label>
-                    <div className="relative">
-                      <Building2 size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        value={regBusiness}
-                        onChange={e => setRegBusiness(e.target.value)}
-                        placeholder={isMl ? 'ബിസിനസ് നാമം' : 'Business name'}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
-                      />
-                    </div>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">

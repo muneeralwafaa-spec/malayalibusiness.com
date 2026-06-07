@@ -10,9 +10,18 @@ export type UserProfile = {
   phone:             string | null
   is_admin:          boolean
   is_business_owner: boolean
+  is_professional:   boolean
+  is_media:          boolean
   is_verified:       boolean
   preferred_locale:  string
 }
+
+// All possible roles a user can have (multi-select at signup)
+export const USER_ROLES = [
+  { key: 'is_business_owner', label: 'Business Owner',   labelMl: 'ബിസിനസ് ഉടമ',     emoji: '🏢', desc: 'List and manage your business' },
+  { key: 'is_professional',   label: 'Professional',     labelMl: 'പ്രൊഫഷണൽ',          emoji: '👨‍⚕️', desc: 'Doctor, Advocate, CA, Coach, Artist...' },
+  { key: 'is_media',          label: 'Media / Press',    labelMl: 'മീഡിയ',              emoji: '📺', desc: 'TV, Radio, Digital media, Newspaper' },
+] as const
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 
@@ -22,12 +31,14 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signUp(params: {
-  email:        string
-  password:     string
-  fullName:     string
-  phone?:       string
-  isBusiness?:  boolean
-  businessName?: string
+  email:           string
+  password:        string
+  fullName:        string
+  phone?:          string
+  isBusiness?:     boolean
+  isProfessional?: boolean
+  isMedia?:        boolean
+  businessName?:   string
 }) {
   const { data, error } = await supabase.auth.signUp({
     email:    params.email,
@@ -36,20 +47,24 @@ export async function signUp(params: {
       data: {
         full_name:         params.fullName,
         phone:             params.phone ?? '',
-        is_business_owner: params.isBusiness ?? false,
-        business_name:     params.businessName ?? '',
+        is_business_owner: params.isBusiness     ?? false,
+        is_professional:   params.isProfessional ?? false,
+        is_media:          params.isMedia        ?? false,
+        business_name:     params.businessName   ?? '',
       },
     },
   })
 
-  // Create profile row immediately after sign-up (no DB trigger exists)
+  // Create profile row immediately after sign-up
   if (data.user && !error) {
     await supabase.from('profiles').upsert({
       id:                data.user.id,
       email:             params.email,
-      full_name:         params.fullName || null,
-      phone:             params.phone    || null,
-      is_business_owner: params.isBusiness ?? false,
+      full_name:         params.fullName        || null,
+      phone:             params.phone           || null,
+      is_business_owner: params.isBusiness     ?? false,
+      is_professional:   params.isProfessional ?? false,
+      is_media:          params.isMedia        ?? false,
     }, { onConflict: 'id', ignoreDuplicates: true })
   }
 
@@ -80,7 +95,7 @@ export async function getSession() {
 export async function getProfile(userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, avatar_url, phone, is_admin, is_business_owner, is_verified, preferred_locale')
+    .select('id, email, full_name, avatar_url, phone, is_admin, is_business_owner, is_professional, is_media, is_verified, preferred_locale')
     .eq('id', userId)
     .single()
 

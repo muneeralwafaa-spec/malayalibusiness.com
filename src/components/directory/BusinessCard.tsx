@@ -4,14 +4,122 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { MapPin, Phone, BadgeCheck, Clock, ChevronRight, MessageCircle } from 'lucide-react'
+import { useState } from 'react'
 import type { Business } from '@/types/business'
+import FavouriteButton from '@/components/ui/FavouriteButton'
 
 type Props = {
   business: Business
   view: 'grid' | 'list'
 }
 
-const priceLabels = ['', 'AED', 'AED AED', 'AED AED AED', 'AED AED AED AED']
+// priceRange: 1=free, 2=basic, 3=premium, 4=elite (see adaptListing)
+const planLabels = ['', '', 'Basic', 'Premium', 'Elite']
+
+// Unsplash cover photos by category (fixed, no random so SSR/CSR match)
+const categoryCoverPhotos: Record<string, string> = {
+  restaurant: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
+  food: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
+  'real estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80',
+  property: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80',
+  healthcare: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80',
+  medical: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80',
+  clinic: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80',
+  technology: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80',
+  tech: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80',
+  it: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80',
+  beauty: 'https://images.unsplash.com/photo-1560066984-138daaa7b78a?w=800&q=80',
+  salon: 'https://images.unsplash.com/photo-1560066984-138daaa7b78a?w=800&q=80',
+  spa: 'https://images.unsplash.com/photo-1560066984-138daaa7b78a?w=800&q=80',
+  education: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80',
+  school: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80',
+  finance: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
+  bank: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
+  construction: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
+  contracting: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
+  retail: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
+  shopping: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
+}
+
+const DEFAULT_COVER = 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80' // Dubai skyline
+
+function getCoverPhoto(category: string, existingImage?: string): string {
+  if (existingImage && !existingImage.includes('placeholder') && !existingImage.startsWith('/placeholder')) {
+    return existingImage
+  }
+  const key = category.toLowerCase()
+  for (const [cat, url] of Object.entries(categoryCoverPhotos)) {
+    if (key.includes(cat)) return url
+  }
+  return DEFAULT_COVER
+}
+
+// Initials avatar rendered as a plain div (no broken img)
+function InitialsAvatar({ name, size = 40 }: { name: string; size?: number }) {
+  const initial = (name || '?').trim()[0].toUpperCase()
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        background: '#1a7a4a',
+        borderRadius: size >= 80 ? 16 : 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          color: '#fff',
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: size * 0.45,
+          fontWeight: 700,
+          lineHeight: 1,
+        }}
+      >
+        {initial}
+      </span>
+    </div>
+  )
+}
+
+// Logo with onError fallback to initials
+function BusinessLogo({ logo, name, size = 40 }: { logo?: string; name: string; size?: number }) {
+  const [failed, setFailed] = useState(false)
+
+  if (!logo || failed) {
+    return <InitialsAvatar name={name} size={size} />
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={logo}
+      alt=""
+      width={size}
+      height={size}
+      onError={() => setFailed(true)}
+      style={{ width: size, height: size, objectFit: 'cover', borderRadius: size >= 80 ? 16 : 8 }}
+    />
+  )
+}
+
+// Cover image with onError fallback to category photo
+function CoverImage({ src, alt, category }: { src: string; alt: string; category: string }) {
+  const [imgSrc, setImgSrc] = useState(() => getCoverPhoto(category, src))
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imgSrc}
+      alt={alt}
+      onError={() => setImgSrc(getCoverPhoto(category))}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  )
+}
 
 function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
   return (
@@ -19,7 +127,7 @@ function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <svg
           key={i}
-          className={`w-[${size}px] h-[${size}px] ${i <= Math.floor(rating) ? 'fill-kerala-gold text-kerala-gold' : 'fill-gray-200 text-gray-200'}`}
+          className={`${i <= Math.floor(rating) ? 'fill-kerala-gold text-kerala-gold' : 'fill-gray-200 text-gray-200'}`}
           style={{ width: size, height: size }}
           viewBox="0 0 24 24"
         >
@@ -33,31 +141,26 @@ function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
 export default function BusinessCard({ business: b, view }: Props) {
   const locale = useLocale()
   const isMl = locale === 'ml'
+  const planLabel = planLabels[b.priceRange] || ''
 
   if (view === 'list') {
     return (
       <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-kerala-green/20 transition-all duration-300 flex">
-        {/* Image */}
+        {/* Cover */}
         <div className="relative w-28 sm:w-40 md:w-52 flex-shrink-0">
-          <Image
-            src={b.image}
-            alt={b.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 112px, (max-width: 768px) 160px, 208px"
-          />
+          <CoverImage src={b.image} alt={b.name} category={b.category} />
           {b.premium && (
-            <div className="absolute top-2 left-2 bg-kerala-gold text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            <div className="absolute top-2 left-2 bg-kerala-gold text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">
               Premium
             </div>
           )}
           {b.open ? (
-            <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 z-10">
               <span className="w-1.5 h-1.5 bg-white rounded-full inline-block" />
               {isMl ? 'തുറന്നിരിക്കുന്നു' : 'Open'}
             </div>
           ) : (
-            <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+            <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full z-10">
               {isMl ? 'അടഞ്ഞിരിക്കുന്നു' : 'Closed'}
             </div>
           )}
@@ -66,8 +169,9 @@ export default function BusinessCard({ business: b, view }: Props) {
         {/* Content */}
         <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between min-w-0">
           <div>
-            {/* Category + Verified */}
+            {/* Category + Logo + Verified */}
             <div className="flex items-center gap-2 mb-1.5">
+              <BusinessLogo logo={b.logo} name={b.name} size={32} />
               <span className="text-xs font-semibold text-kerala-green uppercase tracking-wide">
                 {isMl ? b.categoryMl : b.category}
               </span>
@@ -94,8 +198,14 @@ export default function BusinessCard({ business: b, view }: Props) {
               <Stars rating={b.rating} />
               <span className="font-semibold text-sm text-gray-800">{b.rating}</span>
               <span className="text-gray-400 text-sm">({b.reviewCount.toLocaleString()} reviews)</span>
-              <span className="text-gray-300">·</span>
-              <span className="text-gray-500 text-sm font-medium">{priceLabels[b.priceRange]}</span>
+              {planLabel && (
+                <>
+                  <span className="text-gray-300">·</span>
+                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {planLabel}
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Description */}
@@ -149,6 +259,7 @@ export default function BusinessCard({ business: b, view }: Props) {
                 {isMl ? 'കൂടുതൽ' : 'View'}
                 <ChevronRight size={13} />
               </Link>
+              <FavouriteButton itemType="listing" itemId={String(b.id)} size="sm" />
             </div>
           </div>
         </div>
@@ -159,17 +270,14 @@ export default function BusinessCard({ business: b, view }: Props) {
   // Grid view
   return (
     <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:border-kerala-green/20 transition-all duration-300 flex flex-col">
-      {/* Image */}
+      {/* Cover */}
       <div className="relative h-44 overflow-hidden">
-        <Image
-          src={b.image}
-          alt={b.name}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
+        <CoverImage src={b.image} alt={b.name} category={b.category} />
+        {/* Gradient overlay so badges are readable */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           {b.premium && (
             <span className="bg-kerala-gold text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
               Premium
@@ -181,8 +289,9 @@ export default function BusinessCard({ business: b, view }: Props) {
             </span>
           )}
         </div>
+
         {/* Open/Closed */}
-        <div className="absolute bottom-3 right-3">
+        <div className="absolute bottom-3 right-3 z-10">
           {b.open ? (
             <span className="bg-emerald-500/90 backdrop-blur text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-white rounded-full" />
@@ -194,12 +303,16 @@ export default function BusinessCard({ business: b, view }: Props) {
             </span>
           )}
         </div>
-        {/* Logo */}
-        {b.logo && (
-          <div className="absolute bottom-3 left-3 w-10 h-10 rounded-lg border-2 border-white overflow-hidden bg-white shadow-md">
-            <Image src={b.logo} alt="" fill className="object-cover" sizes="40px" />
-          </div>
-        )}
+
+        {/* Logo — always shown, falls back to initials */}
+        <div className="absolute bottom-3 left-3 z-10 rounded-lg border-2 border-white shadow-md overflow-hidden bg-white" style={{ width: 40, height: 40 }}>
+          <BusinessLogo logo={b.logo} name={b.name} size={40} />
+        </div>
+
+        {/* Favourite button */}
+        <div className="absolute top-3 right-3 z-10">
+          <FavouriteButton itemType="listing" itemId={String(b.id)} size="sm" />
+        </div>
       </div>
 
       {/* Body */}
@@ -225,7 +338,11 @@ export default function BusinessCard({ business: b, view }: Props) {
           <Stars rating={b.rating} size={12} />
           <span className="font-semibold text-xs text-gray-800">{b.rating}</span>
           <span className="text-gray-400 text-xs">({b.reviewCount})</span>
-          <span className="ml-auto text-xs font-medium text-gray-500">{priceLabels[b.priceRange]}</span>
+          {planLabel && (
+            <span className="ml-auto text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              {planLabel}
+            </span>
+          )}
         </div>
 
         {/* Location + Hours */}

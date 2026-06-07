@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -90,13 +89,12 @@ export default function FeaturedListings() {
               href={`/${locale}/company/${hero.slug}`}
               className="group block relative overflow-hidden rounded-3xl h-80 lg:h-full min-h-[400px] card-hover"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={hero.image || FALLBACK_IMAGE}
                 alt={hero.name}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="(max-width: 1024px) 100vw, 66vw"
                 onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE }}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
               {hero.featured && (
@@ -144,13 +142,12 @@ export default function FeaturedListings() {
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg card-hover flex flex-col sm:flex-row lg:flex-row gap-0"
             >
               <div className="relative w-full sm:w-32 lg:w-28 h-40 sm:h-auto flex-shrink-0">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={biz.image || FALLBACK_IMAGE}
                   alt={biz.name}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="128px"
                   onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE }}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {biz.premium && (
                   <div className="absolute top-2 left-2">

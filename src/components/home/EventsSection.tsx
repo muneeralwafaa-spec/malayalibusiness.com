@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -25,6 +24,15 @@ function fmtDate(iso: string, isMl: boolean) {
 
 const FALLBACK = 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80'
 
+const EBASE = { description: null, description_ml: null, title_ml: null, emirate_ml: null, venue: null, venue_ml: null, capacity: null, organizer: null, organizer_id: null, tags: [], status: 'active' as const }
+const PLACEHOLDER_EVENTS: MalayaliEvent[] = [
+  { ...EBASE, id: 'pe1', title: 'Onam Grand Celebration 2025 — Dubai', category: 'cultural', event_date: new Date(Date.now() + 7 * 86400000).toISOString(), event_time: '06:00 PM', end_time: null, emirate: 'Dubai', price: null, registered: 320, image_url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80', featured: true, created_at: new Date().toISOString() },
+  { ...EBASE, id: 'pe2', title: 'Malayali Business Networking Night', category: 'networking', event_date: new Date(Date.now() + 14 * 86400000).toISOString(), event_time: '07:00 PM', end_time: null, emirate: 'Dubai', price: 50, registered: 85, image_url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80', featured: false, created_at: new Date().toISOString() },
+  { ...EBASE, id: 'pe3', title: 'Kerala Food Festival — Abu Dhabi', category: 'food', event_date: new Date(Date.now() + 21 * 86400000).toISOString(), event_time: '12:00 PM', end_time: null, emirate: 'Abu Dhabi', price: 30, registered: 150, image_url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=600&q=80', featured: false, created_at: new Date().toISOString() },
+  { ...EBASE, id: 'pe4', title: 'Malayali Entrepreneurs Summit 2025', category: 'business', event_date: new Date(Date.now() + 30 * 86400000).toISOString(), event_time: '09:00 AM', end_time: null, emirate: 'Sharjah', price: 100, registered: 200, image_url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=600&q=80', featured: false, created_at: new Date().toISOString() },
+  { ...EBASE, id: 'pe5', title: 'Malayalam Movie Night — Sharjah', category: 'cultural', event_date: new Date(Date.now() + 5 * 86400000).toISOString(), event_time: '08:00 PM', end_time: null, emirate: 'Sharjah', price: 25, registered: 60, image_url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=80', featured: false, created_at: new Date().toISOString() },
+]
+
 export default function EventsSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
@@ -33,8 +41,11 @@ export default function EventsSection() {
 
   useEffect(() => {
     getEvents({ upcoming: true, limit: 5 }).then(data => {
-      setEvents(data)
-      setLoading(false)
+      if (data.length > 0) { setEvents(data); setLoading(false); return }
+      getEvents({ limit: 5 }).then(all => {
+        setEvents(all.length > 0 ? all : PLACEHOLDER_EVENTS)
+        setLoading(false)
+      })
     })
   }, [])
 
@@ -83,13 +94,12 @@ export default function EventsSection() {
             href={`/${locale}/events/${main.id}`}
             className="group lg:col-span-3 relative overflow-hidden rounded-3xl h-72 lg:h-auto card-hover"
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={main.image_url || FALLBACK}
               alt={isMl ? (main.title_ml ?? main.title) : main.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-              sizes="(max-width: 1024px) 100vw, 60vw"
               onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             <div className="absolute top-4 left-4 flex gap-2">
@@ -145,13 +155,12 @@ export default function EventsSection() {
                 className="group flex gap-4 bg-kerala-cream hover:bg-white rounded-2xl overflow-hidden p-3 card-hover border border-transparent hover:border-gray-100"
               >
                 <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={event.image_url || FALLBACK}
                     alt={isMl ? (event.title_ml ?? event.title) : event.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="96px"
                     onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -13,6 +13,8 @@ import ShopSection from '@/components/home/ShopSection'
 import BlogSection from '@/components/home/BlogSection'
 import CTABanner from '@/components/home/CTABanner'
 import BusinessmenSection from '@/components/home/BusinessmenSection'
+import ProfessionalsSection from '@/components/home/ProfessionalsSection'
+import MediaSection from '@/components/home/MediaSection'
 
 export default function HomePage() {
   return (
@@ -28,6 +30,8 @@ export default function HomePage() {
       <ClassifiedsSection />
       <BusinessOwnersCTA />
       <JobsSection />
+      <ProfessionalsSection />
+      <MediaSection />
       <ShopSection />
       <BlogSection />
       <CTABanner />

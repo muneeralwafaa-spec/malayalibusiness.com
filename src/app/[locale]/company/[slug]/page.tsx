@@ -14,10 +14,12 @@ import {
 } from '@/lib/listings'
 import type { ServiceRow, ReviewRow, TeamMemberRow, ShopListingRow } from '@/lib/supabase'
 import {
-  MapPin, Phone, Globe, Clock, BadgeCheck, MessageCircle, Share2, Heart,
+  MapPin, Phone, Globe, Clock, BadgeCheck, MessageCircle, Share2,
   Mail, Camera, Users, Calendar, CheckCircle, Building2,
   Languages, Star, ShoppingCart, X, Send, Plus, Zap, FileText, Loader2
 } from 'lucide-react'
+import FavouriteButton from '@/components/ui/FavouriteButton'
+import ReviewsBlock from '@/components/ui/ReviewsBlock'
 
 type Tab = 'home' | 'about' | 'services' | 'shop' | 'gallery' | 'reviews' | 'contact'
 
@@ -42,7 +44,6 @@ export default function CompanyPage() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [cartItems, setCartItems] = useState<{id:string; qty:number}[]>([])
   const [lightbox, setLightbox] = useState<string|null>(null)
-  const [saved, setSaved] = useState(false)
   const [reviewForm, setReviewForm] = useState({ name:'', rating:5, text:'' })
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
   const [enquiryForm, setEnquiryForm] = useState({ name:'', email:'', phone:'', message:'' })
@@ -158,9 +159,7 @@ export default function CompanyPage() {
           </span>
         </div>
         <div className="absolute top-4 right-4 flex gap-2">
-          <button onClick={()=>setSaved(!saved)} className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur ${saved?'bg-red-500 text-white':'bg-white/20 text-white'} transition-all`}>
-            <Heart size={16} className={saved?'fill-current':''}/>
-          </button>
+          {business && <FavouriteButton itemType="listing" itemId={business.id} size="md" />}
           <button className="w-9 h-9 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center"><Share2 size={16}/></button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end gap-4">
@@ -548,122 +547,13 @@ export default function CompanyPage() {
 
         {/* REVIEWS */}
         {activeTab==='reviews' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
-            <div className="lg:col-span-2 space-y-5">
-              {reviews.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
-                  <Star size={36} className="mx-auto mb-3 text-gray-300"/>
-                  <p className="font-semibold text-kerala-deep">{isMl?'ഇനിയും റിവ്യൂ ഇല്ല':'No reviews yet'}</p>
-                  <p className="text-sm text-gray-400 mt-1">{isMl?'ആദ്യ റിവ്യൂ എഴുതൂ':'Be the first to leave a review'}</p>
-                </div>
-              )}
-              {reviews.map(review=>(
-                <div key={review.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-kerala-green/10 flex items-center justify-center flex-shrink-0 font-bold text-kerala-green text-sm">
-                      {review.reviewer_name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-kerala-deep text-sm">{review.reviewer_name}</span>
-                        {review.is_verified && <BadgeCheck size={13} className="text-kerala-green"/>}
-                        <span className="text-gray-400 text-xs">· {new Date(review.created_at).toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</span>
-                      </div>
-                      <StarRow rating={review.rating} size={13}/>
-                      {review.body && <p className="text-gray-600 text-sm mt-2 leading-relaxed">{review.body}</p>}
-                      <div className="flex items-center gap-4 mt-3">
-                        <button
-                          onClick={async ()=>{
-                            const fp = Math.random().toString(36).slice(2)
-                            const ok = await voteHelpful(review.id, fp)
-                            if (ok) setReviews(prev=>prev.map(r=>r.id===review.id?{...r,helpful_count:r.helpful_count+1}:r))
-                          }}
-                          className="text-xs flex items-center gap-1 text-gray-400 hover:text-kerala-green transition-colors">
-                          <CheckCircle size={12}/>{isMl?'സഹായകരം':'Helpful'} ({review.helpful_count})
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {/* Write a Review */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h3 className="font-serif font-bold text-kerala-deep text-lg mb-4">{isMl?'റിവ്യൂ എഴുതൂ':'Write a Review'}</h3>
-                {reviewSubmitted ? (
-                  <div className="text-center py-6">
-                    <CheckCircle size={36} className="text-kerala-green mx-auto mb-2"/>
-                    <p className="font-semibold text-kerala-deep">{isMl?'നന്ദി! റിവ്യൂ ലഭിച്ചു.':'Thank you! Review submitted.'}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <input value={reviewForm.name} onChange={e=>setReviewForm(f=>({...f,name:e.target.value}))}
-                      placeholder={isMl?'നിങ്ങളുടെ പേര്':'Your name'}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green"/>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{isMl?'റേറ്റിംഗ്:':'Rating:'}</span>
-                      <div className="flex gap-1">
-                        {[1,2,3,4,5].map(s=>(
-                          <button key={s} onClick={()=>setReviewForm(f=>({...f,rating:s}))}>
-                            <svg width={20} height={20} viewBox="0 0 24 24" className={s<=reviewForm.rating?'fill-kerala-gold text-kerala-gold':'fill-gray-200 text-gray-200'}>
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <textarea value={reviewForm.text} onChange={e=>setReviewForm(f=>({...f,text:e.target.value}))}
-                      rows={3} placeholder={isMl?'നിങ്ങളുടെ അനുഭവം...':'Share your experience...'}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green resize-none"/>
-                    <button
-                      onClick={async ()=>{
-                        if (!reviewForm.name.trim() || !reviewForm.text.trim()) return
-                        const { ok } = await submitReview({
-                          listingId:    business.id,
-                          reviewerName: reviewForm.name,
-                          rating:       reviewForm.rating,
-                          body:         reviewForm.text,
-                        })
-                        if (ok) {
-                          setReviewSubmitted(true)
-                          // Reload reviews
-                          getReviews(business.id).then(setReviews)
-                        }
-                      }}
-                      className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl text-sm hover:bg-kerala-green-light transition-all">
-                      {isMl?'സമർപ്പിക്കൂ':'Submit Review'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Rating Summary */}
-            <div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-28">
-                <div className="text-center mb-5">
-                  <div className="font-serif text-6xl font-bold text-kerala-deep">{business.rating.toFixed(1)}</div>
-                  <div className="flex justify-center mt-2"><StarRow rating={business.rating} size={20}/></div>
-                  <p className="text-gray-500 text-sm mt-1">{business.reviewCount} {isMl?'റിവ്യൂ':'reviews'}</p>
-                </div>
-                {/* Live breakdown from real reviews */}
-                {[5,4,3,2,1].map(stars=>{
-                  const count = reviews.filter(r=>r.rating===stars).length
-                  const pct = reviews.length > 0 ? Math.round((count/reviews.length)*100) : 0
-                  return (
-                    <div key={stars} className="flex items-center gap-2 text-xs mb-2">
-                      <span className="w-3">{stars}</span>
-                      <svg width={10} height={10} viewBox="0 0 24 24" className="fill-kerala-gold">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                      <div className="flex-1 bg-gray-100 rounded-full h-2">
-                        <div className="bg-kerala-gold h-2 rounded-full transition-all" style={{width:`${pct}%`}}/>
-                      </div>
-                      <span className="w-7 text-right text-gray-500">{pct}%</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+          <ReviewsBlock
+            reviews={reviews}
+            avgRating={business.rating}
+            isMl={isMl}
+            listingId={business.id}
+            onReviewAdded={r => setReviews(prev => [r, ...prev])}
+          />
         )}
 
         {/* CONTACT */}

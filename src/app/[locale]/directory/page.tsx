@@ -147,6 +147,8 @@ function DirectoryContent() {
       <DirectorySearchBar
         filters={filters}
         onSearch={(q) => patchFilters({ query: q })}
+        onCategoryChange={(slug) => patchFilters({ category: slug })}
+        onLocationChange={(slug) => patchFilters({ emirate: slug })}
         onOpenMobileFilters={() => setMobileSidebarOpen(true)}
         activeFilterCount={activeFilterCount}
       />

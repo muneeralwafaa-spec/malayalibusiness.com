@@ -24,7 +24,7 @@ export type ListingsResult = {
   error?:   string
 }
 
-// ── Shared select fields (query listings table directly — bypasses view perms) ─
+// ── Shared select fields (no JOIN — avoids FK requirement) ───────────────────
 
 const LISTING_SELECT = `
   id, slug, name, name_ml, tagline, tagline_ml,
@@ -35,6 +35,19 @@ const LISTING_SELECT = `
   gallery_urls, services, languages,
   category_id
 ` as const
+
+// ── Resolve category slug → ID (cached per session, never caches null) ────────
+
+const _catIdCache: Record<string, string> = {}
+
+async function resolveCategoryId(slug: string): Promise<string | null> {
+  if (_catIdCache[slug]) return _catIdCache[slug]
+  const { data, error } = await supabase.from('categories').select('id').eq('slug', slug).maybeSingle()
+  console.log('[resolveCategoryId]', slug, '→', data?.id ?? null, error?.message ?? 'ok')
+  if (error) console.error('[resolveCategoryId] ERROR', slug, error.message)
+  if (data?.id) _catIdCache[slug] = data.id  // only cache on success
+  return data?.id ?? null
+}
 
 // ── Fetch listings (paginated + filtered) ─────────────────────────────────────
 
@@ -51,16 +64,16 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
     perPage  = 9,
   } = filters
 
-  // Resolve category slug → ID (one cheap lookup)
+  // Resolve category slug → ID before building query
   let categoryId: string | null = null
   if (category) {
-    const { data: cat } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', category)
-      .single()
-    if (!cat) return { listings: [], total: 0, page, perPage, pages: 0 }
-    categoryId = cat.id as string
+    categoryId = await resolveCategoryId(category)
+    console.log('[getListings] category filter:', category, '→ categoryId:', categoryId)
+    if (!categoryId) {
+      // Unknown category slug — return empty gracefully
+      console.warn('[getListings] category not found in DB:', category)
+      return { listings: [], total: 0, page, perPage, pages: 0 }
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,7 +84,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
 
   if (query)      q = q.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
   if (categoryId) q = q.eq('category_id', categoryId)
-  if (emirate)    q = q.eq('emirate', emirate)
+  if (emirate)    q = q.ilike('emirate', emirate)
   if (verified)   q = q.eq('is_verified', true)
   if (featured)   q = q.eq('is_featured', true)
   if (plan)       q = q.eq('plan', plan)
@@ -85,16 +98,18 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
   q = q.range(from, from + perPage - 1)
 
   const { data, error, count } = await q
-  if (error) { console.error('[getListings]', error.message); return { listings: [], total: 0, page, perPage, pages: 0, error: error.message } }
+  console.log('[getListings] result: count=', count, 'rows=', data?.length, 'error=', error?.message)
+  if (error) {
+    console.error('[getListings]', error.message)
+    return { listings: [], total: 0, page, perPage, pages: 0, error: error.message }
+  }
 
-  const total = count ?? 0
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listings: (data ?? []) as any[],
-    total,
+    listings: (data ?? []) as unknown as ListingRow[],
+    total:    count ?? 0,
     page,
     perPage,
-    pages: Math.ceil(total / perPage),
+    pages:    Math.ceil((count ?? 0) / perPage),
   }
 }
 
@@ -194,6 +209,40 @@ export async function submitReview(params: {
   return { ok: true }
 }
 
+// ── Submit a review (updated — supports reviewer_id for logged-in users) ─────
+
+export async function submitReviewAuthenticated(params: {
+  listingId?:      string
+  professionalId?: string
+  reviewerName:    string
+  reviewerId?:     string
+  rating:          number
+  body:            string
+}): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.from('reviews').insert({
+    listing_id:      params.listingId      ?? null,
+    professional_id: params.professionalId ?? null,
+    reviewer_name:   params.reviewerName,
+    reviewer_id:     params.reviewerId     ?? null,
+    rating:          params.rating,
+    body:            params.body,
+  })
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}
+
+// ── Fetch reviews for a professional ─────────────────────────────────────────
+
+export async function getProfessionalReviews(professionalId: string): Promise<ReviewRow[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('professional_id', professionalId)
+    .order('created_at', { ascending: false })
+  if (error) { console.error('[getProfessionalReviews]', error.message); return [] }
+  return (data ?? []) as ReviewRow[]
+}
+
 // ── Vote a review helpful ─────────────────────────────────────────────────────
 
 export async function voteHelpful(reviewId: string, voterFp: string): Promise<boolean> {
@@ -240,12 +289,19 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
 
   if (catErr) { console.error('[getCategoryCounts cats]', catErr.message); return {} }
 
+  console.log('[getCategoryCounts] categories in DB:', cats?.map((c: any) => c.slug))
+
   const { data, error } = await supabase
     .from('listings')
-    .select('category_id')
-    .eq('status', 'active')
+    .select('category_id, status')
 
   if (error) { console.error('[getCategoryCounts]', error.message); return {} }
+
+  const statusBreakdown = (data ?? []).reduce((acc: Record<string, number>, row: any) => {
+    acc[row.status ?? 'null'] = (acc[row.status ?? 'null'] || 0) + 1
+    return acc
+  }, {})
+  console.log('[getCategoryCounts] status breakdown:', statusBreakdown)
 
   // Build id→slug map
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,8 +309,12 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
     acc[c.id] = c.slug; return acc
   }, {})
 
+  // Only count active listings; log breakdown for debugging
+  const activeData = (data ?? []).filter((r: any) => r.status === 'active')
+  console.log('[getCategoryCounts] active listings:', activeData.length, '/ total:', data?.length)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).reduce((acc: Record<string, number>, row: any) => {
+  return activeData.reduce((acc: Record<string, number>, row: any) => {
     const slug = idToSlug[row.category_id]
     if (slug) acc[slug] = (acc[slug] || 0) + 1
     return acc
@@ -308,8 +368,8 @@ export function adaptListing(row: ListingRow | any, categoryMap?: Record<string,
     rating:       Number(row.rating_avg)  || 0,
     reviewCount:  row.review_count   || 0,
     priceRange:   row.plan === 'elite' ? 4 : row.plan === 'premium' ? 3 : row.plan === 'basic' ? 2 : 1,
-    image:        row.cover_url      ?? row.logo_url ?? '',
-    logo:         row.logo_url       ?? '',
+    image:        row.cover_url       || row.logo_url || '',
+    logo:         row.logo_url        || '',
     photos:       row.gallery_urls   ?? [],
     description:  row.description    ?? '',
     descriptionMl:row.description    ?? '',

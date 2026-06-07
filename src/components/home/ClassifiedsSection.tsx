@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -29,7 +28,36 @@ function timeAgo(iso: string, isMl: boolean) {
   return isMl ? `${d} ദിവസം മുൻപ്` : `${d}d ago`
 }
 
-const FALLBACK = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80'
+const CATEGORY_FALLBACKS: Record<string, string> = {
+  vehicles:    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80',
+  property:    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80',
+  electronics: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80',
+  furniture:   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
+  fashion:     'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80',
+  jobs:        'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80',
+  services:    'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
+  food:        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+}
+const FALLBACK = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&q=80'
+
+function classifiedFallback(category?: string) {
+  if (!category) return FALLBACK
+  const key = category.toLowerCase()
+  for (const [k, url] of Object.entries(CATEGORY_FALLBACKS)) {
+    if (key.includes(k)) return url
+  }
+  return FALLBACK
+}
+
+const BASE = { description: null, description_ml: null, category_ml: null, subcategory: null, price_numeric: null, negotiable: true, condition: null as null, location: 'UAE', location_ml: null, views: 0, featured: false, phone: null, whatsapp: null, seller_name: null, seller_name_ml: null, seller_avatar: null, owner_id: null, status: 'active' as const, expires_at: null }
+const PLACEHOLDER_CLASSIFIEDS: Classified[] = [
+  { ...BASE, id: 1, title: 'Toyota Camry 2021 — Excellent Condition', title_ml: 'ടൊയോറ്റ കാംറി 2021', type: 'sale', category: 'vehicles', price: 'AED 52,000', emirate: 'Dubai', images: ['https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'], urgent: false, created_at: new Date(Date.now() - 3600000).toISOString() },
+  { ...BASE, id: 2, title: '2BHK Apartment for Rent — Dubai Marina', title_ml: 'ദുബായ് മറീനയിൽ 2BHK ഫ്ലാറ്റ്', type: 'rent', category: 'property', price: 'AED 6,500/mo', emirate: 'Dubai', images: ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80'], urgent: false, created_at: new Date(Date.now() - 7200000).toISOString() },
+  { ...BASE, id: 3, title: 'iPhone 15 Pro Max 256GB — Like New', title_ml: 'iPhone 15 Pro Max', type: 'sale', category: 'electronics', price: 'AED 3,800', emirate: 'Sharjah', images: ['https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80'], urgent: true, created_at: new Date(Date.now() - 10800000).toISOString() },
+  { ...BASE, id: 4, title: 'Kerala Home Cook — Available for Events', title_ml: 'കേരള ഹോം കുക്ക്', type: 'service', category: 'services', price: 'AED 150/event', emirate: 'Abu Dhabi', images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80'], urgent: false, created_at: new Date(Date.now() - 86400000).toISOString() },
+  { ...BASE, id: 5, title: 'Sofa Set 5-Seater — Good Condition', title_ml: 'സോഫ സെറ്റ്', type: 'sale', category: 'furniture', price: 'AED 1,200', emirate: 'Ajman', images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'], urgent: false, created_at: new Date(Date.now() - 172800000).toISOString() },
+  { ...BASE, id: 6, title: 'Looking for Malayalam Speaking Driver', title_ml: 'ഡ്രൈവർ ആവശ്യം', type: 'wanted', category: 'jobs', price: 'AED 2,500/mo', emirate: 'Dubai', images: ['https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80'], urgent: true, created_at: new Date(Date.now() - 259200000).toISOString() },
+]
 
 export default function ClassifiedsSection() {
   const locale = useLocale()
@@ -39,7 +67,7 @@ export default function ClassifiedsSection() {
 
   useEffect(() => {
     getClassifieds({ limit: 6 }).then(data => {
-      setItems(data)
+      setItems(data.length > 0 ? data : PLACEHOLDER_CLASSIFIEDS)
       setLoading(false)
     })
   }, [])
@@ -99,13 +127,12 @@ export default function ClassifiedsSection() {
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg card-hover border border-gray-100"
             >
               <div className="relative h-44 overflow-hidden">
-                <Image
-                  src={item.images?.[0] || FALLBACK}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.images?.[0] || classifiedFallback(item.category)}
                   alt={isMl ? (item.title_ml ?? item.title) : item.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = classifiedFallback(item.category) }}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-3 left-3">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeColors[item.type] ?? 'bg-gray-100 text-gray-700'}`}>

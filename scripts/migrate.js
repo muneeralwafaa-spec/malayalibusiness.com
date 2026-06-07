@@ -31,6 +31,7 @@ const { createClient } = require('@supabase/supabase-js');
 // ─── CLI flags ────────────────────────────────────────────────────────────────
 const TEST_SCRAPE  = process.argv.includes('--test-scrape');
 const DEEP_SCRAPE  = process.argv.includes('--deep-scrape');
+const EXPORT_SQL   = process.argv.includes('--export-sql');   // NEW: generate SQL file
 const IMPORT_LIMIT = parseInt(process.env.IMPORT_LIMIT || '0', 10) || null;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -175,9 +176,13 @@ function cleanUrl(raw) {
   if (!raw) return null;
   const t = String(raw).trim();
   if (!t || t === '#' || t.startsWith('tel:') || t.startsWith('mailto:')) return null;
+  // Reject obviously invalid values (single words with no dot, "No", "N/A", "none", etc.)
+  const lower = t.toLowerCase().replace(/^https?:\/\//, '');
+  if (/^(no|none|n\/a|na|null|undefined|yes|-)$/i.test(lower)) return null;
+  // Must contain a dot in the domain part to be a valid URL
+  if (!lower.includes('.')) return null;
   if (t.startsWith('http://') || t.startsWith('https://')) return t;
-  if (t.includes('.')) return 'https://' + t;
-  return null;
+  return 'https://' + t;
 }
 
 function stripTags(html) {
@@ -205,7 +210,9 @@ function detectEmirate(text) {
   for (const entry of EMIRATE_MAP) {
     if (entry.patterns.some(p => lower.includes(p))) return entry.value;
   }
-  return 'dubai';
+  // Return null if no UAE emirate detected — transform() will default to 'dubai'
+  // This avoids tagging non-UAE listings (e.g. Oman, Saudi) as dubai
+  return null;
 }
 
 function detectCategorySlug(text) {
@@ -552,8 +559,10 @@ async function deepScrapePage(url) {
     '.gd-post-images img, .listing-gallery img'
   ).first().attr('src') || '';
 
-  result.logoUrl  = firstVal(schemaLogo, classLogo, ogImage) || null;
-  result.coverUrl = firstVal(ogImage, heroImg, schemaLogo, classLogo) || null;
+  // Filter out empty/placeholder SVG data URIs (0×0 viewBox = no real image)
+  const cleanLogo = (u) => (!u || u.startsWith('data:') ? null : u);
+  result.logoUrl  = cleanLogo(firstVal(schemaLogo, classLogo, ogImage)) || null;
+  result.coverUrl = cleanLogo(firstVal(ogImage, heroImg, schemaLogo, classLogo)) || null;
 
   // ── Emirate detection ─────────────────────────────────────────────────────
   const emirateText = [result.address, result.rawPageText.slice(0, 500)].join(' ');
@@ -722,7 +731,7 @@ async function scrapeDetailPageFallback(url) {
 // =============================================================================
 
 function transform(raw, categoryIdMap, ownerId) {
-  const emirate    = raw.emirate || detectEmirate(raw.address + ' ' + raw.rawText);
+  const emirate    = raw.emirate || detectEmirate(raw.address + ' ' + raw.rawText) || 'dubai';
   const catSlug    = detectCategorySlug(raw.category + ' ' + raw.rawText);
   const categoryId = catSlug ? categoryIdMap[catSlug] : null;
   const slug       = makeSlug(raw.name);
@@ -749,6 +758,153 @@ function transform(raw, categoryIdMap, ownerId) {
     languages:    ['English', 'Malayalam'],
     services:     raw.sourceUrl ? [`source:${raw.sourceUrl}`] : [],
   };
+}
+
+// =============================================================================
+// PHASE 2b — SQL EXPORT  (--export-sql flag)
+// Generates a ready-to-run migration.sql file.
+// Paste it into Supabase → SQL Editor → Run.  No API keys needed.
+// =============================================================================
+
+function esc(v) {
+  // Escape a value for a SQL string literal
+  if (v === null || v === undefined) return 'NULL';
+  return "'" + String(v).replace(/'/g, "''") + "'";
+}
+
+function escArr(arr) {
+  // Escape a text[] array literal
+  if (!arr || !arr.length) return "'{}'";
+  return "ARRAY[" + arr.map(esc).join(', ') + "]";
+}
+
+async function exportToSql(cleanItems) {
+  const MIGRATION_BOT_ID = '00000000-0000-0000-0000-000000000099';
+  const MIGRATION_EMAIL  = 'migration-bot@malayalibusiness.com';
+
+  const lines = [];
+
+  lines.push('-- =========================================================');
+  lines.push('-- MalayaliBusiness.com — WordPress data import');
+  lines.push(`-- Generated : ${new Date().toISOString()}`);
+  lines.push(`-- Listings  : ${cleanItems.length}`);
+  lines.push('-- Run this in: Supabase → SQL Editor → Run');
+  lines.push('-- =========================================================');
+  lines.push('');
+
+  // 1. Migration bot user
+  lines.push('-- STEP 1: Create migration-bot auth user');
+  lines.push(`INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password,`);
+  lines.push(`  email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at,`);
+  lines.push(`  confirmation_token, recovery_token, email_change, email_change_token_new, is_super_admin)`);
+  lines.push(`VALUES (`);
+  lines.push(`  '${MIGRATION_BOT_ID}', '00000000-0000-0000-0000-000000000000',`);
+  lines.push(`  'authenticated', 'authenticated',`);
+  lines.push(`  '${MIGRATION_EMAIL}',`);
+  lines.push(`  '$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012',`);
+  lines.push(`  now(), '{"provider":"email","providers":["email"]}',`);
+  lines.push(`  '{"full_name":"Migration Bot"}',`);
+  lines.push(`  now(), now(), '', '', '', '', false`);
+  lines.push(`) ON CONFLICT (id) DO NOTHING;`);
+  lines.push('');
+
+  // 2. Migration bot profile
+  lines.push('-- STEP 2: Create migration-bot profile');
+  lines.push(`INSERT INTO profiles (id, email, full_name, username)`);
+  lines.push(`VALUES ('${MIGRATION_BOT_ID}', '${MIGRATION_EMAIL}', 'Migration Bot', 'migration-bot')`);
+  lines.push(`ON CONFLICT (id) DO NOTHING;`);
+  lines.push('');
+
+  // 3. Category slug → id lookup via a temp variable block
+  lines.push('-- STEP 3: Insert listings');
+  lines.push('DO $$');
+  lines.push('DECLARE');
+  lines.push(`  _owner uuid := '${MIGRATION_BOT_ID}';`);
+  // Category vars
+  const CATEGORY_SLUGS = [
+    'restaurants-food', 'grocery-supermarket', 'real-estate', 'healthcare-medical',
+    'education-training', 'beauty-wellness', 'technology-it', 'construction-interiors',
+    'retail-fashion', 'legal-finance', 'travel-tourism', 'automotive',
+  ];
+  for (const slug of CATEGORY_SLUGS) {
+    const varName = 'cat_' + slug.replace(/-/g, '_');
+    lines.push(`  ${varName} uuid;`);
+  }
+  lines.push('BEGIN');
+  for (const slug of CATEGORY_SLUGS) {
+    const varName = 'cat_' + slug.replace(/-/g, '_');
+    lines.push(`  SELECT id INTO ${varName} FROM categories WHERE slug = '${slug}';`);
+  }
+  lines.push('');
+
+  // CATEGORY_MAP mirrors the one in migrate.js — map each listing to a category var
+  const CATEGORY_MAP_SQL = [
+    { slug: 'restaurants-food',      keywords: ['restaurant','food','cafe','coffee','catering','kitchen','bakery','pizza','burger','biryani','meal','dining','eatery','snack','juice','grill','bbq','seafood','kerala food'] },
+    { slug: 'grocery-supermarket',   keywords: ['grocery','supermarket','hypermarket','market','provisions','wholesale','fruits','vegetables'] },
+    { slug: 'real-estate',           keywords: ['real estate','property','realty','apartment','villa','rental','lease','mortgage','brokerage','housing','land','plot'] },
+    { slug: 'healthcare-medical',    keywords: ['health','medical','clinic','hospital','doctor','pharmacy','dental','dentist','physiotherapy','optician','laboratory','diagnostic','nursing','wellness center','ayurved'] },
+    { slug: 'education-training',    keywords: ['education','school','college','university','tutor','coaching','training','institute','academy','language','computer class','driving school'] },
+    { slug: 'beauty-wellness',       keywords: ['beauty','salon','spa','hair','skin','facial','massage','nail','waxing','mehendi','bridal','makeup','barber','wellness','gym','fitness','yoga','pilates'] },
+    { slug: 'technology-it',         keywords: ['technology','tech','it ','software','app','web','digital','computer','laptop','phone repair','networking','cloud','cyber','ai ','startup','ecommerce','pos','billing'] },
+    { slug: 'construction-interiors',keywords: ['construction','interior','renovation','contracting','building','architecture','plumbing','electrical','painting','flooring','landscaping','fit-out','aluminium','glass','ac installation','hvac'] },
+    { slug: 'retail-fashion',        keywords: ['retail','fashion','clothing','apparel','textile','shoes','footwear','jewellery','jewelry','accessories','boutique','garment','uniform','gift','printing'] },
+    { slug: 'legal-finance',         keywords: ['legal','law','finance','accounting','audit','tax','chartered','financial','insurance','investment','bank','money','forex','consulting','advisory','business setup','visa','typing'] },
+    { slug: 'travel-tourism',        keywords: ['travel','tourism','airline','hotel','holiday','tour','holiday','vacation','ticketing','hajj','umrah','cargo','logistics','shipping','freight','movers','transport'] },
+    { slug: 'automotive',            keywords: ['auto','car','vehicle','garage','workshop','tyre','spare','motor','rent a car','driving'] },
+  ];
+
+  function detectCatVar(raw) {
+    const lower = (raw || '').toLowerCase();
+    for (const entry of CATEGORY_MAP_SQL) {
+      if (entry.keywords.some(kw => lower.includes(kw))) {
+        return 'cat_' + entry.slug.replace(/-/g, '_');
+      }
+    }
+    return 'NULL'; // no category matched
+  }
+
+  for (const item of cleanItems) {
+    const emirate   = item.emirate || detectEmirate((item.address || '') + ' ' + (item.rawText || '')) || 'dubai';
+    const slug      = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100);
+    const name      = (item.name || '').slice(0, 255);
+    const desc      = (item.description || '').slice(0, 5000);
+    const catVar    = detectCatVar((item.category || '') + ' ' + (item.rawText || ''));
+    const catExpr   = catVar === 'NULL' ? 'NULL' : catVar;
+    const services  = item.sourceUrl ? [`source:${item.sourceUrl}`] : (item.listingPageUrl ? [`source:${item.listingPageUrl}`] : []);
+
+    lines.push(`  INSERT INTO listings (`);
+    lines.push(`    owner_id, category_id, slug, name, description,`);
+    lines.push(`    phone, email, website, logo_url, cover_url,`);
+    lines.push(`    address, emirate, plan, status, is_featured, is_verified,`);
+    lines.push(`    rating_avg, review_count, languages, services, gallery_urls`);
+    lines.push(`  ) VALUES (`);
+    lines.push(`    _owner, ${catExpr}, ${esc(slug)}, ${esc(name)}, ${esc(desc || null)},`);
+    lines.push(`    ${esc(item.phone || null)}, ${esc(item.email || null)}, ${esc(item.website || null)},`);
+    lines.push(`    ${esc(item.logoUrl || null)}, ${esc(item.coverUrl || null)},`);
+    lines.push(`    ${esc(item.address || null)}, '${emirate}', 'basic', 'pending', false, false,`);
+    lines.push(`    ${item.rating || 0}, 0,`);
+    lines.push(`    ${escArr(['English', 'Malayalam'])},`);
+    lines.push(`    ${escArr(services)},`);
+    lines.push(`    '{}'`);
+    lines.push(`  ) ON CONFLICT (slug) DO NOTHING;`);
+    lines.push('');
+  }
+
+  lines.push('END;');
+  lines.push('$$;');
+  lines.push('');
+  lines.push(`-- Done. ${cleanItems.length} listings inserted (duplicates skipped via ON CONFLICT).`);
+
+  const outPath = path.join(__dirname, 'migration.sql');
+  fs.writeFileSync(outPath, lines.join('\n'), 'utf8');
+
+  const kb = Math.round(fs.statSync(outPath).size / 1024);
+  console.log(`\n✅  SQL file written: scripts/migration.sql  (${kb} KB)`);
+  console.log(`\n   Next steps:`);
+  console.log(`   1. Go to: https://supabase.com/dashboard/project/huhtrnmdnypljrsjhzty/sql/new`);
+  console.log(`   2. Open scripts/migration.sql in any text editor`);
+  console.log(`   3. Select All → Copy → Paste into SQL Editor → Click RUN`);
+  console.log(`   4. Done! Check Table Editor → listings\n`);
 }
 
 // =============================================================================
@@ -1016,6 +1172,15 @@ async function main() {
       console.log(`   Desc    : ${withDesc}/${cleanItems.length} (${Math.round(withDesc/cleanItems.length*100)||0}%)`);
       console.log('\n  ✅  Remove --test-scrape to import into Supabase.\n');
     }
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EXPORT-SQL exit — write migration.sql, no DB connection needed
+  // ─────────────────────────────────────────────────────────────────────────
+  if (EXPORT_SQL) {
+    console.log('\n━━━  Step 4: Export SQL file  ━━━━━━━━━━━━━━━━━━━━\n');
+    await exportToSql(cleanItems);
     return;
   }
 

@@ -1,12 +1,23 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
 
+export const dynamic = 'force-dynamic'
+
 const BASE_URL = 'https://www.malayalibusiness.com'
 
-const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Return static-only sitemap if env vars are missing at build time
+  if (!supabaseUrl || !supabaseAnon) {
+    return [
+      { url: `${BASE_URL}/en`,           lastModified: new Date(), changeFrequency: 'daily',   priority: 1 },
+      { url: `${BASE_URL}/en/directory`, lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+      { url: `${BASE_URL}/en/events`,    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
+      { url: `${BASE_URL}/en/jobs`,      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
+    ]
+  }
   const supabase = createClient(supabaseUrl, supabaseAnon)
 
   // ── Static pages ──────────────────────────────────────────────

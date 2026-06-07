@@ -12,11 +12,14 @@ import {
   BarChart2, Briefcase, CreditCard, Settings, Plus, Bell,
   Eye, TrendingUp, Star, ArrowUpRight, ArrowDownRight, Edit3, Trash2,
   CheckCircle, MapPin, Menu, X, LogOut, Users,
-  Zap, Download, Mail, Tag, AlertTriangle, Loader2
+  Zap, Download, Mail, Tag, AlertTriangle, Loader2,
+  Stethoscope, Tv, ArrowRight, Heart
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getMyListings } from '@/lib/auth'
 import { getShopListings } from '@/lib/listings'
+import { getFavourites, toggleFavourite } from '@/lib/favourites'
+import type { Favourite } from '@/lib/favourites'
 import { supabase } from '@/lib/supabase'
 import type { ShopListingRow } from '@/lib/supabase'
 import type { Job } from '@/lib/jobs'
@@ -30,6 +33,10 @@ type NavSection =
   | 'enquiries'
   | 'analytics'
   | 'jobs'
+  | 'professional'
+  | 'media'
+  | 'favourites'
+  | 'reviews'
   | 'billing'
   | 'settings'
 
@@ -1029,22 +1036,357 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
   )
 }
 
+function ProfessionalDashSection({ isMl, locale }: { isMl: boolean; locale: string }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title={isMl ? 'എന്റെ പ്രൊഫഷണൽ പ്രൊഫൈൽ' : 'My Professional Profile'}
+        subtitle={isMl ? 'UAE മലയാളി കമ്മ്യൂണിറ്റിക്ക് നിങ്ങളുടെ സേവനം കാണിക്കൂ' : 'Show your services to the UAE Malayali community'}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Stethoscope size={24} className="text-kerala-green mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'പ്രൊഫൈൽ കാഴ്ചകൾ' : 'Profile Views'}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Star size={24} className="text-kerala-gold mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'റേറ്റിംഗ്' : 'Rating'}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Users size={24} className="text-blue-500 mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'ഫോളോവേഴ്‌സ്' : 'Followers'}</div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
+        <Stethoscope size={40} className="mx-auto mb-4 text-gray-200" />
+        <p className="font-semibold text-kerala-deep mb-2">
+          {isMl ? 'പ്രൊഫഷണൽ പ്രൊഫൈൽ ഉണ്ടാക്കൂ' : 'Create your Professional Profile'}
+        </p>
+        <p className="text-sm text-gray-400 max-w-sm mx-auto mb-5">
+          {isMl
+            ? 'ഡോക്ടർ, അഡ്വക്കേറ്റ്, CA, ഫിറ്റ്നസ് കോച്ച്, ആർട്ടിസ്റ്റ്... — ആയിരങ്ങൾ നിങ്ങളെ കണ്ടെത്തും'
+            : 'Doctor, Advocate, CA, Coach, Artist... — thousands of Malayalis will find you'}
+        </p>
+        <Link href={`/${locale}/professionals/register`}
+          className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">
+          <Plus size={15} />
+          {isMl ? 'പ്രൊഫൈൽ ഉണ്ടാക്കൂ' : 'Create Profile'}
+        </Link>
+      </div>
+
+      <div className="bg-kerala-cream rounded-2xl p-5 flex items-start gap-4">
+        <ArrowRight size={20} className="text-kerala-green mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="font-semibold text-kerala-deep text-sm">{isMl ? 'പ്രൊഫഷണൽ ഡയറക്ടറി' : 'Browse Professionals Directory'}</p>
+          <p className="text-xs text-gray-500 mt-1">{isMl ? 'UAE-ലെ മലയാളി പ്രൊഫഷണലുകളെ കണ്ടെത്തൂ' : 'Find other Malayali professionals in UAE'}</p>
+          <Link href={`/${locale}/professionals`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
+            {isMl ? 'ഡയറക്ടറി കാണൂ →' : 'View Directory →'}
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MediaDashSection({ isMl, locale }: { isMl: boolean; locale: string }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title={isMl ? 'എന്റെ മീഡിയ ലിസ്റ്റിംഗ്' : 'My Media Listing'}
+        subtitle={isMl ? 'TV, റേഡിയോ, ഡിജിറ്റൽ — UAE മലയാളി കമ്മ്യൂണിറ്റിക്ക് കാണിക്കൂ' : 'TV, Radio, Digital — reach 500K+ UAE Malayalis'}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Tv size={24} className="text-purple-500 mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'പ്രൊഫൈൽ കാഴ്ചകൾ' : 'Profile Views'}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <Users size={24} className="text-blue-500 mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'റീച്ച്' : 'Reach'}</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+          <CheckCircle size={24} className="text-kerala-green mx-auto mb-2" />
+          <div className="font-serif font-bold text-2xl text-kerala-deep">—</div>
+          <div className="text-xs text-gray-500 mt-1">{isMl ? 'സ്റ്റാറ്റസ്' : 'Status'}</div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
+        <Tv size={40} className="mx-auto mb-4 text-gray-200" />
+        <p className="font-semibold text-kerala-deep mb-2">
+          {isMl ? 'മീഡിയ ഔട്ട്‌ലെറ്റ് ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Media Outlet'}
+        </p>
+        <p className="text-sm text-gray-400 max-w-sm mx-auto mb-5">
+          {isMl
+            ? 'TV, റേഡിയോ, ഡിജിറ്റൽ, ന്യൂസ്‌പേപ്പർ — UAE മലയാളി ഡയറക്ടറിയിൽ ഇടം നേടൂ'
+            : 'TV, Radio, Digital, Newspaper — get discovered in the UAE Malayali directory'}
+        </p>
+        <Link href={`/${locale}/media/register`}
+          className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">
+          <Plus size={15} />
+          {isMl ? 'ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Media'}
+        </Link>
+      </div>
+
+      <div className="bg-kerala-cream rounded-2xl p-5 flex items-start gap-4">
+        <ArrowRight size={20} className="text-kerala-green mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="font-semibold text-kerala-deep text-sm">{isMl ? 'മീഡിയ ഡയറക്ടറി' : 'Browse Media Directory'}</p>
+          <p className="text-xs text-gray-500 mt-1">{isMl ? 'UAE-ലെ മലയാളി മീഡിയ ഹൗസുകൾ' : 'All Malayali media houses in UAE'}</p>
+          <Link href={`/${locale}/media`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
+            {isMl ? 'ഡയറക്ടറി കാണൂ →' : 'View Directory →'}
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReviewsDashSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
+  const [reviews, setReviews] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | '5' | '4' | '3' | '1-2'>('all')
+
+  useEffect(() => {
+    if (!listings.length) { setLoading(false); return }
+    const ids = listings.map(l => l.id)
+    supabase
+      .from('reviews')
+      .select('*')
+      .in('listing_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(100)
+      .then(({ data }) => { setReviews(data ?? []); setLoading(false) })
+  }, [listings.length])
+
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : '—'
+
+  const filtered = filter === 'all' ? reviews
+    : filter === '1-2' ? reviews.filter(r => r.rating <= 2)
+    : reviews.filter(r => r.rating === Number(filter))
+
+  function timeAgo(d: string) {
+    const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
+    if (s < 3600)  return `${Math.floor(s / 60)}m ago`
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+    return `${Math.floor(s / 86400)}d ago`
+  }
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title={isMl ? 'റിവ്യൂകൾ' : 'Reviews Received'}
+        subtitle={isMl ? 'നിങ്ങളുടെ ബിസിനസുകൾക്ക് ലഭിച്ച അഭിപ്രായങ്ങൾ' : 'All reviews across your listings'}
+      />
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard icon={Star}     label={isMl ? 'ആകെ റിവ്യൂ' : 'Total Reviews'} value={String(reviews.length)} accent />
+        <StatCard icon={TrendingUp} label={isMl ? 'ശരാശരി' : 'Avg Rating'}    value={`${avgRating}/5`} />
+        <StatCard icon={Users}    label={isMl ? '5 ★ റിവ്യൂ' : '5★ Reviews'}  value={String(reviews.filter(r => r.rating === 5).length)} />
+        <StatCard icon={AlertTriangle} label={isMl ? '1-2 ★ നെഗറ്റീവ്' : 'Negative'} value={String(reviews.filter(r => r.rating <= 2).length)} />
+      </div>
+
+      {/* Filter tabs */}
+      {reviews.length > 0 && (
+        <div className="flex gap-1 flex-wrap">
+          {([['all', isMl ? 'എല്ലാം' : 'All'], ['5', '★★★★★'], ['4', '★★★★'], ['3', '★★★'], ['1-2', isMl ? 'നെഗറ്റീവ്' : 'Negative']] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setFilter(k)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${filter === k ? 'bg-kerala-deep text-white border-kerala-deep' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green" /></div>
+      ) : reviews.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+          <Star size={36} className="mx-auto mb-3 text-gray-200" />
+          <p className="font-semibold text-kerala-deep">{isMl ? 'ഇതുവരെ റിവ്യൂ ഇല്ല' : 'No reviews yet'}</p>
+          <p className="text-sm text-gray-400 mt-1">{isMl ? 'ഉപഭോക്താക്കൾ ഒരു റിവ്യൂ ഇടുമ്പോൾ ഇവിടെ കാണാം' : 'Customer reviews will appear here once received'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(r => (
+            <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-kerala-green/10 text-kerala-green font-bold flex items-center justify-center flex-shrink-0 font-serif text-lg">
+                {(r.reviewer_name || 'A')[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="font-semibold text-kerala-deep text-sm">{r.reviewer_name || 'Anonymous'}</span>
+                  <span className="text-kerala-gold text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                  <span className="text-gray-400 text-xs ml-auto">{timeAgo(r.created_at)}</span>
+                </div>
+                {r.body && <p className="text-gray-500 text-sm line-clamp-2">{r.body}</p>}
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-center text-sm text-gray-400 py-8">{isMl ? 'ഈ ഫിൽട്ടറിൽ റിവ്യൂ ഇല്ല' : 'No reviews match this filter'}</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FavouritesSection({ isMl, userId, locale }: { isMl: boolean; userId: string; locale: string }) {
+  const [favs, setFavs] = useState<Favourite[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeType, setActiveType] = useState<'all' | Favourite['item_type']>('all')
+
+  useEffect(() => {
+    if (!userId) return
+    setLoading(true)
+    getFavourites(userId).then(data => { setFavs(data); setLoading(false) })
+  }, [userId])
+
+  const handleRemove = async (fav: Favourite) => {
+    await toggleFavourite(userId, fav.item_type, fav.item_id)
+    setFavs(prev => prev.filter(f => f.id !== fav.id))
+  }
+
+  const typeLabels: Record<string, string> = {
+    all:          isMl ? 'എല്ലാം'        : 'All',
+    listing:      isMl ? 'ബിസിനസ്'      : 'Businesses',
+    professional: isMl ? 'പ്രൊഫഷണൽ'    : 'Professionals',
+    media:        isMl ? 'മീഡിയ'         : 'Media',
+    job:          isMl ? 'ജോലി'          : 'Jobs',
+    event:        isMl ? 'ഇവന്റ്'         : 'Events',
+    classified:   isMl ? 'ക്ലാസിഫൈഡ്'   : 'Classifieds',
+  }
+
+  const linkFor = (fav: Favourite) => {
+    if (fav.item_type === 'listing')      return `/${locale}/company/${fav.item_id}`
+    if (fav.item_type === 'professional') return `/${locale}/professionals/${fav.item_id}`
+    if (fav.item_type === 'media')        return `/${locale}/media/${fav.item_id}`
+    if (fav.item_type === 'job')          return `/${locale}/jobs/${fav.item_id}`
+    if (fav.item_type === 'event')        return `/${locale}/events/${fav.item_id}`
+    return '#'
+  }
+
+  const typeEmoji: Record<string, string> = {
+    listing: '🏢', professional: '👨‍⚕️', media: '📺', job: '💼', event: '🎉', classified: '📋',
+  }
+
+  const types = ['all', ...Array.from(new Set(favs.map(f => f.item_type)))] as const
+  const filtered = activeType === 'all' ? favs : favs.filter(f => f.item_type === activeType)
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title={isMl ? 'എന്റെ വിഷ്‌ലിസ്റ്റ്' : 'My Wishlist'}
+        subtitle={isMl ? 'നിങ്ങൾ സേവ് ചെയ്ത ബിസിനസ്, പ്രൊഫഷണലുകൾ, മീഡിയ' : 'Businesses, professionals, and media you saved'}
+      />
+
+      {/* Type filter tabs */}
+      {favs.length > 0 && (
+        <div className="flex gap-1 flex-wrap">
+          {types.map(t => (
+            <button
+              key={t}
+              onClick={() => setActiveType(t as typeof activeType)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                activeType === t
+                  ? 'bg-kerala-deep text-white border-kerala-deep'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {typeLabels[t]} {t !== 'all' && `(${favs.filter(f => f.item_type === t).length})`}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green" /></div>
+      ) : favs.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-14 text-center">
+          <Heart size={40} className="mx-auto mb-4 text-gray-200" />
+          <p className="font-semibold text-kerala-deep mb-2">
+            {isMl ? 'വിഷ്‌ലിസ്റ്റ് ഒഴിഞ്ഞിരിക്കുന്നു' : 'Your wishlist is empty'}
+          </p>
+          <p className="text-sm text-gray-400 max-w-sm mx-auto mb-5">
+            {isMl
+              ? 'ഡയറക്ടറിയിൽ ❤️ ബട്ടൺ ക്ലിക്ക് ചെയ്ത് ബിസിനസ്, പ്രൊഫഷണലുകൾ, മീഡിയ ഇവ സേവ് ചെയ്യൂ'
+              : 'Tap the ❤️ button on any business, professional, or media to save it here'}
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Link href={`/${locale}/directory`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
+              {isMl ? 'ഡയറക്ടറി' : 'Browse Directory'}
+            </Link>
+            <Link href={`/${locale}/professionals`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
+              {isMl ? 'പ്രൊഫഷണൽസ്' : 'Browse Professionals'}
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(fav => (
+            <div key={fav.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-3 group">
+              {/* Type icon */}
+              <div className="w-11 h-11 rounded-xl bg-kerala-cream flex items-center justify-center flex-shrink-0 text-xl">
+                {typeEmoji[fav.item_type] ?? '⭐'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                  {typeLabels[fav.item_type]}
+                </p>
+                <p className="font-semibold text-kerala-deep text-sm truncate mb-1">
+                  {fav.item_id.replace(/-/g, ' ')}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {isMl ? 'സേവ് ചെയ്ത്:' : 'Saved'} {new Date(fav.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5 flex-shrink-0">
+                <Link href={linkFor(fav)}
+                  className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-2.5 py-1 rounded-lg hover:bg-kerala-green/5 text-center">
+                  {isMl ? 'കാണൂ' : 'View'}
+                </Link>
+                <button
+                  onClick={() => handleRemove(fav)}
+                  className="text-xs text-red-400 border border-red-100 px-2.5 py-1 rounded-lg hover:bg-red-50 text-center"
+                >
+                  {isMl ? 'നീക്കൂ' : 'Remove'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Nav config ──────────────────────────────────────────────────────────────
-const navItems: {
-  key: NavSection
-  icon: React.ElementType
-  label: string
-  labelMl: string
-}[] = [
-  { key: 'overview', icon: LayoutDashboard, label: 'Overview', labelMl: 'ഓവർവ്യൂ' },
-  { key: 'listings', icon: Building2, label: 'My Listings', labelMl: 'ലിസ്റ്റിംഗ്' },
-  { key: 'shop', icon: ShoppingBag, label: 'Shop Manager', labelMl: 'ഷോപ്പ്' },
-  { key: 'orders', icon: ShoppingCart, label: 'Orders', labelMl: 'ഓർഡർ' },
-  { key: 'enquiries', icon: MessageSquare, label: 'Enquiries', labelMl: 'അന്വേഷണം' },
-  { key: 'analytics', icon: BarChart2, label: 'Analytics', labelMl: 'അനലിറ്റിക്സ്' },
-  { key: 'jobs', icon: Briefcase, label: 'Jobs Posted', labelMl: 'ജോലി' },
-  { key: 'billing', icon: CreditCard, label: 'Billing', labelMl: 'ബില്ലിംഗ്' },
-  { key: 'settings', icon: Settings, label: 'Settings', labelMl: 'ക്രമീകരണം' },
+const BASE_NAV_ITEMS: { key: NavSection; icon: React.ElementType; label: string; labelMl: string; roleGate?: string }[] = [
+  { key: 'overview',     icon: LayoutDashboard, label: 'Overview',       labelMl: 'ഓവർവ്യൂ' },
+  { key: 'listings',     icon: Building2,       label: 'My Listings',    labelMl: 'ലിസ്റ്റിംഗ്' },
+  { key: 'shop',         icon: ShoppingBag,     label: 'Shop Manager',   labelMl: 'ഷോപ്പ്' },
+  { key: 'orders',       icon: ShoppingCart,    label: 'Orders',         labelMl: 'ഓർഡർ' },
+  { key: 'enquiries',    icon: MessageSquare,   label: 'Enquiries',      labelMl: 'അന്വേഷണം' },
+  { key: 'analytics',    icon: BarChart2,       label: 'Analytics',      labelMl: 'അനലിറ്റിക്സ്' },
+  { key: 'jobs',         icon: Briefcase,       label: 'Jobs Posted',    labelMl: 'ജോലി' },
+  { key: 'professional', icon: Stethoscope,     label: 'My Profile',     labelMl: 'പ്രൊഫൈൽ',    roleGate: 'is_professional' },
+  { key: 'media',        icon: Tv,              label: 'My Media',       labelMl: 'മീഡിയ',       roleGate: 'is_media' },
+  { key: 'reviews',      icon: Star,            label: 'Reviews',        labelMl: 'റിവ്യൂ' },
+  { key: 'favourites',   icon: Heart,           label: 'Wishlist',       labelMl: 'വിഷ്‌ലിസ്റ്റ്' },
+  { key: 'billing',      icon: CreditCard,      label: 'Billing',        labelMl: 'ബില്ലിംഗ്' },
+  { key: 'settings',     icon: Settings,        label: 'Settings',       labelMl: 'ക്രമീകരണം' },
 ]
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -1057,6 +1399,14 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [myListings, setMyListings] = useState<Awaited<ReturnType<typeof getMyListings>>>([])
   const [listingsLoading, setListingsLoading] = useState(true)
+
+  // Filter nav items based on profile roles — professional/media shown only if user has that role
+  const navItems = BASE_NAV_ITEMS.filter(item => {
+    if (!item.roleGate) return true
+    if (item.roleGate === 'is_professional') return profile?.is_professional ?? false
+    if (item.roleGate === 'is_media') return profile?.is_media ?? false
+    return true
+  })
 
   // Auth guard
   useEffect(() => {
@@ -1111,7 +1461,15 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-white text-sm truncate">{profile?.full_name || user.email}</p>
-            <p className="text-xs text-white/50 truncate">{isMl ? 'ബിസിനസ് ഉടമ' : 'Business Owner'}</p>
+            <p className="text-xs text-white/50 truncate">
+              {profile?.is_professional && profile?.is_media
+                ? (isMl ? 'ബിസിനസ് • പ്രൊഫഷണൽ • മീഡിയ' : 'Business · Professional · Media')
+                : profile?.is_professional
+                ? (isMl ? 'ബിസിനസ് • പ്രൊഫഷണൽ' : 'Business · Professional')
+                : profile?.is_media
+                ? (isMl ? 'ബിസിനസ് • മീഡിയ' : 'Business · Media')
+                : (isMl ? 'ബിസിനസ് ഉടമ' : 'Business Owner')}
+            </p>
           </div>
         </div>
       </div>
@@ -1216,15 +1574,19 @@ export default function DashboardPage() {
 
           {/* Section content */}
           <div className="p-4 sm:p-6 lg:p-8">
-            {activeSection === 'overview'  && <OverviewSection isMl={isMl} listings={myListings} />}
-            {activeSection === 'listings'  && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} />}
-            {activeSection === 'shop'      && <ShopManagerSection isMl={isMl} listings={myListings} />}
-            {activeSection === 'orders'    && <OrdersSection isMl={isMl} />}
-            {activeSection === 'enquiries' && <EnquiriesSection isMl={isMl} />}
-            {activeSection === 'analytics' && <AnalyticsSection isMl={isMl} listings={myListings} />}
-            {activeSection === 'jobs'      && <JobsSection isMl={isMl} userId={user.id} locale={locale} />}
-            {activeSection === 'billing'   && <BillingSection isMl={isMl} listings={myListings} locale={locale} />}
-            {activeSection === 'settings'  && <SettingsSection isMl={isMl} user={user} profile={profile} listings={myListings} />}
+            {activeSection === 'overview'      && <OverviewSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'listings'      && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} />}
+            {activeSection === 'shop'          && <ShopManagerSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'orders'        && <OrdersSection isMl={isMl} />}
+            {activeSection === 'enquiries'     && <EnquiriesSection isMl={isMl} />}
+            {activeSection === 'analytics'     && <AnalyticsSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'jobs'          && <JobsSection isMl={isMl} userId={user.id} locale={locale} />}
+            {activeSection === 'professional'  && <ProfessionalDashSection isMl={isMl} locale={locale} />}
+            {activeSection === 'media'         && <MediaDashSection isMl={isMl} locale={locale} />}
+            {activeSection === 'reviews'        && <ReviewsDashSection isMl={isMl} listings={myListings} />}
+            {activeSection === 'favourites'    && <FavouritesSection isMl={isMl} userId={user.id} locale={locale} />}
+            {activeSection === 'billing'       && <BillingSection isMl={isMl} listings={myListings} locale={locale} />}
+            {activeSection === 'settings'      && <SettingsSection isMl={isMl} user={user} profile={profile} listings={myListings} />}
           </div>
         </main>
       </div>

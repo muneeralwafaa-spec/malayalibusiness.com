@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocale } from 'next-intl'
 import { Search, MapPin, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { categories, emirates } from '@/lib/directory-constants'
@@ -9,18 +9,29 @@ import type { FilterState } from '@/types/business'
 type Props = {
   filters: FilterState
   onSearch: (q: string) => void
+  onCategoryChange: (slug: string) => void
+  onLocationChange: (slug: string) => void
   onOpenMobileFilters: () => void
   activeFilterCount: number
 }
 
-export default function DirectorySearchBar({ filters, onSearch, onOpenMobileFilters, activeFilterCount }: Props) {
+export default function DirectorySearchBar({ filters, onSearch, onCategoryChange, onLocationChange, onOpenMobileFilters, activeFilterCount }: Props) {
   const locale = useLocale()
   const isMl = locale === 'ml'
   const [query, setQuery] = useState(filters.query)
   const [catOpen, setCatOpen] = useState(false)
   const [locOpen, setLocOpen] = useState(false)
-  const [selectedCat, setSelectedCat] = useState('')
-  const [selectedLoc, setSelectedLoc] = useState('')
+  const selectedCat = filters.category
+  const selectedLoc = filters.emirate
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced search — fires 400ms after user stops typing
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => onSearch(query), 400)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query])
 
   return (
     <div className="bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
@@ -53,7 +64,7 @@ export default function DirectorySearchBar({ filters, onSearch, onOpenMobileFilt
             {catOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-50 w-56 py-1 max-h-64 overflow-y-auto">
                 <button
-                  onClick={() => { setSelectedCat(''); setCatOpen(false) }}
+                  onClick={() => { onCategoryChange(''); setCatOpen(false) }}
                   className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-kerala-cream hover:text-kerala-green"
                 >
                   {isMl ? 'എല്ലാ വിഭാഗങ്ങളും' : 'All Categories'}
@@ -61,7 +72,7 @@ export default function DirectorySearchBar({ filters, onSearch, onOpenMobileFilt
                 {categories.map((c) => (
                   <button
                     key={c.slug}
-                    onClick={() => { setSelectedCat(c.slug); setCatOpen(false) }}
+                    onClick={() => { onCategoryChange(c.slug); setCatOpen(false) }}
                     className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-kerala-cream hover:text-kerala-green ${selectedCat === c.slug ? 'text-kerala-green font-semibold' : 'text-gray-700'}`}
                   >
                     {isMl ? c.nameMl : c.name}
@@ -79,14 +90,14 @@ export default function DirectorySearchBar({ filters, onSearch, onOpenMobileFilt
             >
               <MapPin size={14} className="flex-shrink-0" />
               <span className="max-w-[100px] truncate">
-                {selectedLoc ? emirates.find(e => e.slug === selectedLoc)?.[isMl ? 'nameMl' : 'name'] : (isMl ? 'สถानান്' : 'Location')}
+                {selectedLoc ? emirates.find(e => e.slug === selectedLoc)?.[isMl ? 'nameMl' : 'name'] : (isMl ? 'സ്ഥാനം' : 'Location')}
               </span>
               <ChevronDown size={14} className={`flex-shrink-0 transition-transform ${locOpen ? 'rotate-180' : ''}`} />
             </button>
             {locOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-50 w-44 py-1">
                 <button
-                  onClick={() => { setSelectedLoc(''); setLocOpen(false) }}
+                  onClick={() => { onLocationChange(''); setLocOpen(false) }}
                   className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-kerala-cream hover:text-kerala-green"
                 >
                   {isMl ? 'എല്ലാ അമിരേറ്റ്' : 'All Emirates'}
@@ -94,7 +105,7 @@ export default function DirectorySearchBar({ filters, onSearch, onOpenMobileFilt
                 {emirates.map((e) => (
                   <button
                     key={e.slug}
-                    onClick={() => { setSelectedLoc(e.slug); setLocOpen(false) }}
+                    onClick={() => { onLocationChange(e.slug); setLocOpen(false) }}
                     className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-kerala-cream hover:text-kerala-green ${selectedLoc === e.slug ? 'text-kerala-green font-semibold' : 'text-gray-700'}`}
                   >
                     {isMl ? e.nameMl : e.name}

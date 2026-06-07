@@ -41,3 +41,5 @@ scripts/.env.migration
 scripts/migration-report.json
 scripts/error-log.json
 scripts/node_modules
+
+.vercel

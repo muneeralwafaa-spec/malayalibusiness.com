@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -34,6 +33,16 @@ function timeAgo(iso: string, isMl: boolean) {
 
 const LOGO_FALLBACK = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=80&q=80'
 
+const JBASE = { title_ml: null, company_ml: null, logo_url: null, emirate_ml: null, location: null, location_ml: null, salary_min: null, salary_max: null, category_ml: null, description: null, description_ml: null, requirements: [], requirements_ml: [], deadline: null, applicants: 0, featured: false, urgent: false, verified: true, poster_id: null, status: 'active' as const }
+const PLACEHOLDER_JOBS: Job[] = [
+  { ...JBASE, id: 'pj1', title: 'Restaurant Manager — Kerala Cuisine', company: 'Kerala Kitchen Dubai', logo_url: 'https://images.unsplash.com/photo-1514190051997-0f6f39ca5cde?w=80&q=80', emirate: 'Dubai', job_type: 'full-time', experience: 'mid', salary_min: 5000, salary_max: 7000, category: 'Hospitality', urgent: true, created_at: new Date(Date.now() - 3600000).toISOString() },
+  { ...JBASE, id: 'pj2', title: 'Accountant / Finance Executive', company: 'Gulf Finance Group', logo_url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=80&q=80', emirate: 'Abu Dhabi', job_type: 'full-time', experience: 'mid', salary_min: 6000, salary_max: 9000, category: 'Finance', created_at: new Date(Date.now() - 7200000).toISOString() },
+  { ...JBASE, id: 'pj3', title: 'Real Estate Sales Executive', company: 'Emaar Properties', logo_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=80&q=80', emirate: 'Dubai', job_type: 'full-time', experience: 'entry', salary_min: 4000, salary_max: 6000, category: 'Real Estate', created_at: new Date(Date.now() - 86400000).toISOString() },
+  { ...JBASE, id: 'pj4', title: 'Nurse / Healthcare Professional', company: 'Aster DM Healthcare', logo_url: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=80&q=80', emirate: 'Dubai', job_type: 'full-time', experience: 'mid', salary_min: 5500, salary_max: 8000, category: 'Healthcare', urgent: true, created_at: new Date(Date.now() - 172800000).toISOString() },
+  { ...JBASE, id: 'pj5', title: 'Software Developer — React / Node.js', company: 'TechHub MENA', logo_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=80&q=80', emirate: 'Sharjah', job_type: 'full-time', experience: 'mid', salary_min: 8000, salary_max: 12000, category: 'Technology', created_at: new Date(Date.now() - 259200000).toISOString() },
+  { ...JBASE, id: 'pj6', title: 'Marketing Manager — Digital Media', company: 'Sharjah Media Corp', logo_url: 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=80&q=80', emirate: 'Sharjah', job_type: 'full-time', experience: 'senior', salary_min: 9000, salary_max: 14000, category: 'Marketing', created_at: new Date(Date.now() - 345600000).toISOString() },
+]
+
 export default function JobsSection() {
   const locale = useLocale()
   const isMl = locale === 'ml'
@@ -42,7 +51,7 @@ export default function JobsSection() {
 
   useEffect(() => {
     getJobs({ limit: 6 }).then(data => {
-      setJobs(data)
+      setJobs(data.length > 0 ? data : PLACEHOLDER_JOBS)
       setLoading(false)
     })
   }, [])
@@ -93,13 +102,12 @@ export default function JobsSection() {
               className="group bg-kerala-cream hover:bg-white border border-transparent hover:border-gray-200 rounded-2xl p-5 card-hover flex items-start gap-4"
             >
               <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 bg-white">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={job.logo_url || LOGO_FALLBACK}
                   alt={job.company}
-                  fill
-                  className="object-cover"
-                  sizes="56px"
                   onError={(e) => { (e.target as HTMLImageElement).src = LOGO_FALLBACK }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
@@ -36,12 +36,12 @@ function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
   return (
     <Link href={`/en/community/${article.slug}`} className="group block">
       <div className="relative rounded-2xl overflow-hidden h-72 mb-4">
-        <Image
-          src={article.image_url ?? ""}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={article.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80'}
           alt={article.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, 50vw"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80' }}
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
@@ -62,8 +62,10 @@ function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
       <p className="text-gray-600 text-sm line-clamp-2 mb-3">{isMl ? article.excerpt_ml : article.excerpt}</p>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="relative w-7 h-7 rounded-full overflow-hidden">
-            <Image src={article.author_avatar ?? ""} alt={article.author_name} fill className="object-cover" sizes="28px" />
+          <div className="w-7 h-7 rounded-full overflow-hidden bg-kerala-green flex items-center justify-center flex-shrink-0">
+            {article.author_avatar
+              ? <img src={article.author_avatar} alt={article.author_name} className="w-full h-full object-cover" onError={(e)=>{(e.target as HTMLImageElement).style.display='none'}} />
+              : <span className="text-white text-xs font-bold">{article.author_name[0]}</span>}
           </div>
           <div>
             <p className="text-xs font-semibold text-kerala-deep">{isMl ? article.author_name_ml : article.author_name}</p>
@@ -86,7 +88,8 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
     return (
       <Link href={`/en/community/${article.slug}`} className="group flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
         <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
-          <Image src={article.image_url ?? ""} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="96px" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={article.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80'} alt={article.title} onError={(e)=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80'}} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
         <div className="flex-1 min-w-0">
           <span className="text-xs font-semibold text-kerala-green">{isMl ? article.category_ml : article.category}</span>
@@ -107,13 +110,8 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
       <Link href={`/en/community/${article.slug}`} className="block">
         <div className="relative h-44 overflow-hidden">
-          <Image
-            src={article.image_url ?? ""}
-            alt={article.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={article.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80'} alt={article.title} onError={(e)=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80'}} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           <div className="absolute top-3 left-3">
             <span className="bg-white/90 backdrop-blur-sm text-kerala-deep text-xs font-semibold px-2.5 py-1 rounded-full">
               {isMl ? article.category_ml : article.category}
@@ -144,8 +142,10 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
 
         <div className="flex items-center justify-between pt-3 border-t border-gray-50">
           <div className="flex items-center gap-2">
-            <div className="relative w-6 h-6 rounded-full overflow-hidden">
-              <Image src={article.author_avatar ?? ""} alt={article.author_name} fill className="object-cover" sizes="24px" />
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-kerala-green flex items-center justify-center flex-shrink-0">
+              {article.author_avatar
+                ? <img src={article.author_avatar} alt={article.author_name} className="w-full h-full object-cover" onError={(e)=>{(e.target as HTMLImageElement).style.display='none'}} />
+                : <span className="text-white text-xs font-bold">{article.author_name[0]}</span>}
             </div>
             <span className="text-xs text-gray-600 font-medium truncate max-w-[100px]">{isMl ? article.author_name_ml : article.author_name}</span>
           </div>

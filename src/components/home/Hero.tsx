@@ -1,36 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, MapPin, ChevronDown, Star, Building2, Users, Globe } from 'lucide-react'
+import { Search, MapPin, ChevronDown, Star, Building2, LayoutGrid, Globe, Tag } from 'lucide-react'
 import { useLocale } from 'next-intl'
+import { supabase } from '@/lib/supabase'
 
-const categories = [
-  'All Categories', 'Restaurants', 'Real Estate', 'Healthcare', 'Education',
-  'Finance', 'Retail', 'Travel', 'Beauty', 'Technology', 'Legal', 'Construction',
+const categories: { label: string; slug: string }[] = [
+  { label: 'All Categories', slug: '' },
+  { label: 'Restaurants',    slug: 'restaurants' },
+  { label: 'Real Estate',    slug: 'real-estate' },
+  { label: 'Healthcare',     slug: 'healthcare' },
+  { label: 'Education',      slug: 'education' },
+  { label: 'Finance',        slug: 'finance' },
+  { label: 'Retail',         slug: 'retail' },
+  { label: 'Travel',         slug: 'travel' },
+  { label: 'Beauty',         slug: 'beauty' },
+  { label: 'Technology',     slug: 'technology' },
+  { label: 'Legal',          slug: 'legal' },
+  { label: 'Construction',   slug: 'construction' },
 ]
 
-const stats = [
-  { icon: Building2, value: '15,000+', label: 'Businesses', labelMl: 'ബിസിനസുകൾ' },
-  { icon: Users, value: '3.5M', label: 'Members', labelMl: 'അംഗങ്ങൾ' },
-  { icon: Globe, value: '7', label: 'Emirates', labelMl: 'എമിറേറ്റുകൾ' },
-  { icon: Star, value: '50K+', label: 'Reviews', labelMl: 'റിവ്യൂകൾ' },
-]
+type StatItem = { icon: React.ElementType; value: string; label: string; labelMl: string }
+
+function formatCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K+`
+  return n > 0 ? `${n}+` : '0'
+}
 
 export default function Hero() {
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('All Categories')
+  const [selectedCat, setSelectedCat] = useState(categories[0])
   const [catOpen, setCatOpen] = useState(false)
+  const [stats, setStats] = useState<StatItem[]>([
+    { icon: Building2,   value: '…', label: 'Businesses',  labelMl: 'ബിസിനസുകൾ' },
+    { icon: LayoutGrid,  value: '12', label: 'Categories', labelMl: 'വിഭാഗങ്ങൾ'  },
+    { icon: Globe,       value: '7',  label: 'Emirates',   labelMl: 'എമിറേറ്റുകൾ' },
+    { icon: Tag,         value: '…', label: 'Classifieds', labelMl: 'ക്ലാസിഫൈഡ്സ്'},
+  ])
   const locale = useLocale()
   const router = useRouter()
   const isMl = locale === 'ml'
 
+  useEffect(() => {
+    async function fetchStats() {
+      // Count active listings
+      const { count: bizCount } = await supabase
+        .from('listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'active')
+
+      // Count active classifieds
+      const { count: classifiedCount } = await supabase
+        .from('classifieds')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'active')
+
+      setStats([
+        { icon: Building2,  value: formatCount(bizCount ?? 0),        label: 'Businesses',  labelMl: 'ബിസിനസുകൾ'  },
+        { icon: LayoutGrid, value: '12',                               label: 'Categories',  labelMl: 'വിഭാഗങ്ങൾ'   },
+        { icon: Globe,      value: '7',                                label: 'Emirates',    labelMl: 'എമിറേറ്റുകൾ' },
+        { icon: Tag,        value: formatCount(classifiedCount ?? 0),  label: 'Classifieds', labelMl: 'ക്ലാസിഫൈഡ്സ്' },
+      ])
+    }
+    fetchStats()
+  }, [])
+
   function handleSearch() {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
-    if (category && category !== 'All Categories') params.set('cat', category)
+    if (selectedCat.slug) params.set('category', selectedCat.slug)
     router.push(`/${locale}/directory?${params.toString()}`)
   }
 
@@ -78,8 +119,8 @@ export default function Hero() {
 
         <p className="text-white/75 text-lg md:text-xl text-center max-w-2xl mb-10 font-light">
           {isMl
-            ? 'ദുബായ്, അബുദാബി, ഷാർജ, മറ്റ് എമിറേറ്റുകളിലെ 35 ലക്ഷം മലയാളികളെ ബന്ധിപ്പിക്കുന്നു'
-            : 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all seven emirates'}
+            ? 'ദുബായ്, അബുദാബി, ഷാർജ, മറ്റ് 7 എമിറേറ്റുകളിലെ മലയാളി ബിസിനസ്സുകൾ കണ്ടെത്തൂ'
+            : 'Discover and connect with Malayali businesses across all 7 Emirates of the UAE'}
         </p>
 
         {/* Search Box */}
@@ -91,18 +132,18 @@ export default function Hero() {
                 onClick={() => setCatOpen(!catOpen)}
                 className="w-full flex items-center justify-between gap-2 px-4 py-3 text-gray-700 text-sm font-medium border-b sm:border-b-0 sm:border-r border-gray-200 hover:text-kerala-green transition-colors"
               >
-                <span className="truncate">{category}</span>
+                <span className="truncate">{selectedCat.label}</span>
                 <ChevronDown size={16} className={`flex-shrink-0 transition-transform ${catOpen ? 'rotate-180' : ''}`} />
               </button>
               {catOpen && (
                 <div className="absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-50 min-w-[200px] py-1 max-h-64 overflow-y-auto">
                   {categories.map((cat) => (
                     <button
-                      key={cat}
-                      onClick={() => { setCategory(cat); setCatOpen(false) }}
+                      key={cat.slug}
+                      onClick={() => { setSelectedCat(cat); setCatOpen(false) }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-kerala-cream hover:text-kerala-green transition-colors"
                     >
-                      {cat}
+                      {cat.label}
                     </button>
                   ))}
                 </div>

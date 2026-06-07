@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
@@ -12,6 +11,27 @@ import {
   Search, Plus, MapPin, Clock, Eye, Heart, SlidersHorizontal,
   X, MessageCircle, Phone, Tag, AlertCircle
 } from 'lucide-react'
+
+const CATEGORY_FALLBACKS: Record<string, string> = {
+  vehicles:    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80',
+  property:    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80',
+  electronics: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80',
+  furniture:   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
+  fashion:     'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80',
+  jobs:        'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80',
+  services:    'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
+  food:        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+}
+const CLASSIFIED_FALLBACK = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&q=80'
+
+function classifiedFallback(category?: string) {
+  if (!category) return CLASSIFIED_FALLBACK
+  const key = category.toLowerCase()
+  for (const [k, url] of Object.entries(CATEGORY_FALLBACKS)) {
+    if (key.includes(k)) return url
+  }
+  return CLASSIFIED_FALLBACK
+}
 
 const typeColors = {
   sale: 'bg-blue-100 text-blue-700',
@@ -40,19 +60,13 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
     <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-kerala-green/20 transition-all duration-300 flex flex-col">
       {/* Image */}
       <div className="relative h-44 overflow-hidden bg-gray-50">
-        {item.images[0] ? (
-          <Image
-            src={item.images[0]}
-            alt={item.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full bg-kerala-cream flex items-center justify-center">
-            <Tag size={32} className="text-gray-300" />
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.images[0] || classifiedFallback(item.category)}
+          alt={item.title}
+          onError={(e) => { (e.target as HTMLImageElement).src = classifiedFallback(item.category) }}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
         {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
           {item.featured && (
@@ -118,13 +132,17 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
 
         {/* Seller */}
         <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-auto">
-          <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+          <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-kerala-cream flex items-center justify-center">
             {item.seller_avatar ? (
-              <Image src={item.seller_avatar} alt={item.seller_name ?? ''} fill className="object-cover" sizes="28px" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.seller_avatar}
+                alt={item.seller_name ?? ''}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-full h-full bg-kerala-cream flex items-center justify-center text-xs text-kerala-green font-bold">
-                {(item.seller_name ?? 'A')[0]}
-              </div>
+              <span className="text-xs text-kerala-green font-bold">{(item.seller_name ?? 'A')[0]}</span>
             )}
           </div>
           <span className="text-xs text-gray-600 flex-1 truncate">
