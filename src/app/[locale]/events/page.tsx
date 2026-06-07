@@ -140,7 +140,7 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
                   : (isMl ? 'ടിക്കറ്റ് വാങ്ങൂ' : 'Get Tickets')}
             </button>
             <Link
-              href={`/en/events/${event.id}`}
+              href={`/${locale}/events/${event.id}`}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-kerala-green hover:text-kerala-green transition-all"
             >
               {isMl ? 'വിവരം' : 'Details'}

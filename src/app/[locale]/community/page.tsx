@@ -34,7 +34,7 @@ function timeAgo(dateStr: string, isMl: boolean) {
 
 function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
   return (
-    <Link href={`/en/community/${article.slug}`} className="group block">
+    <Link href={`/${locale}/community/${article.slug}`} className="group block">
       <div className="relative rounded-2xl overflow-hidden h-72 mb-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -86,7 +86,7 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
 
   if (horizontal) {
     return (
-      <Link href={`/en/community/${article.slug}`} className="group flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
+      <Link href={`/${locale}/community/${article.slug}`} className="group flex gap-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
         <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={article.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80'} alt={article.title} onError={(e)=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80'}} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -108,7 +108,7 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
-      <Link href={`/en/community/${article.slug}`} className="block">
+      <Link href={`/${locale}/community/${article.slug}`} className="block">
         <div className="relative h-44 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={article.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80'} alt={article.title} onError={(e)=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80'}} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -127,7 +127,7 @@ function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: bo
       </Link>
 
       <div className="p-4">
-        <Link href={`/en/community/${article.slug}`}>
+        <Link href={`/${locale}/community/${article.slug}`}>
           <h3 className="font-serif font-semibold text-kerala-deep text-base leading-snug mb-2 line-clamp-2 group-hover:text-kerala-green transition-colors">
             {isMl ? article.title_ml : article.title}
           </h3>
@@ -339,7 +339,7 @@ export default function CommunityPage() {
               </div>
               <div className="space-y-4">
                 {trending.map((a, i) => (
-                  <Link key={a.id} href={`/en/community/${a.id}`} className="flex gap-3 group">
+                  <Link key={a.id} href={`/${locale}/community/${a.id}`} className="flex gap-3 group">
                     <span className="font-serif font-bold text-2xl text-gray-200 leading-none w-6 flex-shrink-0">{i + 1}</span>
                     <div>
                       <p className="text-xs font-semibold text-kerala-green mb-0.5">{isMl ? (a.category_ml ?? a.category) : a.category}</p>
