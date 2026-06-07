@@ -811,7 +811,7 @@ export default function HelpPage() {
             <BookOpen size={13} />
             {isMl ? 'ഉപഭോക്തൃ മാർഗ്ഗനിർദ്ദേശം' : 'User Manual'}
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">
             {isMl ? 'MalayaliBusiness സഹായ കേന്ദ്രം' : 'MalayaliBusiness Help Centre'}
           </h1>
           <p className="text-white/60 text-base max-w-2xl mx-auto">

@@ -63,7 +63,7 @@ export default function ProfessionalsPage() {
           <p className="text-kerala-gold text-sm font-semibold uppercase tracking-widest mb-2">
             {isMl ? 'പ്രൊഫഷണൽ ഡയറക്ടറി' : 'Professional Directory'}
           </p>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">
             {isMl ? 'മലയാളി വിദഗ്ദ്ധർ' : 'Malayali Professionals'}
           </h1>
           <p className="text-white/70 text-lg mb-8 max-w-2xl">

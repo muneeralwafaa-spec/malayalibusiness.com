@@ -176,7 +176,7 @@ export default function BusinessmenPage() {
               {isMl ? 'കമ്മ്യൂണിറ്റി' : 'COMMUNITY'}
             </span>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white max-w-2xl leading-tight mb-3">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white max-w-2xl leading-tight mb-3">
             {isMl ? (
               <>UAE-യിലെ <span className="text-kerala-gold-light">പ്രമുഖ</span> മലയാളി ബിസിനസ്മാൻ</>
             ) : (

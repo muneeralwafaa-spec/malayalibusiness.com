@@ -162,7 +162,7 @@ export default function AboutPage() {
             <span className="inline-block bg-kerala-gold/20 text-kerala-gold-light text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase mb-5">
               {isMl ? 'ഞങ്ങളെ കുറിച്ച്' : 'About Us'}
             </span>
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
               {isMl
                 ? 'UAE-ൽ #1 Malayali ബിസിനസ് നെറ്റ്‌വർക്കിന്റെ കഥ'
                 : "The Story Behind UAE's #1 Malayali Business Network"}

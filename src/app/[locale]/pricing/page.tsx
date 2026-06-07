@@ -170,7 +170,7 @@ export default function PricingPage() {
           <span className="inline-block bg-kerala-gold/20 text-kerala-gold-light text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase mb-5">
             {isMl ? 'പ്ലാനുകളും വിലനിർണ്ണയവും' : 'Plans & Pricing'}
           </span>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3 leading-tight">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
             {isMl
               ? 'ശരിയായ പ്ലാൻ ഉപയോഗിച്ച് നിങ്ങളുടെ ബിസിനസ് വളർത്തൂ'
               : 'Grow Your Business with the Right Plan'}

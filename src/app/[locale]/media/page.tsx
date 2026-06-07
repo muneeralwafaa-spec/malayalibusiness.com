@@ -64,17 +64,17 @@ export default function MediaPage() {
           <p className="text-kerala-gold text-sm font-semibold uppercase tracking-widest mb-2">
             {isMl ? 'മലയാളി മീഡിയ' : 'Malayali Media'}
           </p>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">
             {isMl ? 'UAE മലയാളി മീഡിയ' : 'UAE Malayali Media'}
           </h1>
-          <p className="text-white/70 text-lg max-w-2xl">
+          <p className="text-white/70 text-sm sm:text-base lg:text-lg max-w-2xl">
             {isMl
               ? 'TV, റേഡിയോ, ഡിജിറ്റൽ, പത്രം — UAE-ൽ മലയാളം സംസാരിക്കുന്ന എല്ലാ മാധ്യമങ്ങളും'
               : 'TV channels, radio stations, digital media, newspapers & podcasts serving the UAE Malayali community'}
           </p>
 
           {/* Stats */}
-          <div className="flex gap-8 mt-8">
+          <div className="flex flex-wrap gap-6 mt-8">
             {[
               { value: '3+',  label: 'TV Channels',    labelMl: 'ടിവി ചാനലുകൾ' },
               { value: '2+',  label: 'Radio Stations', labelMl: 'റേഡിയോ സ്റ്റേഷൻ' },

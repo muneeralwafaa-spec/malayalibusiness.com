@@ -158,7 +158,7 @@ function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: bool
 
   return (
     <div className="relative rounded-3xl overflow-hidden shadow-2xl mb-8">
-      <div className="relative h-[420px] md:h-[480px]">
+      <div className="relative h-[280px] sm:h-[360px] md:h-[420px]">
         {event.image_url && (
           <Image
             src={event.image_url}
@@ -173,13 +173,13 @@ function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: bool
       </div>
 
       <div className="absolute inset-0 flex items-center">
-        <div className="px-8 md:px-12 max-w-2xl">
+        <div className="px-4 sm:px-8 md:px-12 max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-kerala-gold text-white text-xs font-bold px-3 py-1.5 rounded-full mb-4">
             <Star size={12} fill="white" />
             {isMl ? 'ഫീച്ചേഡ് ഇവന്റ്' : 'Featured Event'}
           </div>
 
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-3 leading-tight">
+          <h2 className="font-serif text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
             {isMl ? (event.title_ml ?? event.title) : event.title}
           </h2>
           <p className="text-white/75 text-sm md:text-base leading-relaxed mb-5 max-w-lg line-clamp-2">
@@ -282,7 +282,7 @@ export default function EventsPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-2">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
                 {isMl ? 'ഇവന്റുകൾ' : 'Events'}
               </h1>
               <p className="text-white/60 text-base">

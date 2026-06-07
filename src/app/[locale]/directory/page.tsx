@@ -117,7 +117,7 @@ function DirectoryContent() {
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-2">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
                 {isMl ? 'ബിസിനസ് ഡയറക്ടറി' : 'Business Directory'}
               </h1>
               <p className="text-white/60 text-base">

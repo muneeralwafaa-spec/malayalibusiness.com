@@ -236,7 +236,7 @@ export default function ClassifiedsPage() {
                 <span>{isMl ? 'ഹോം' : 'Home'}</span><span>/</span>
                 <span className="text-kerala-gold-light">{isMl ? 'ക്ലാസിഫൈഡ്സ്' : 'Classifieds'}</span>
               </div>
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-2">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
                 {isMl ? 'ക്ലാസിഫൈഡ്സ്' : 'Classifieds'}
               </h1>
               <p className="text-white/60">
