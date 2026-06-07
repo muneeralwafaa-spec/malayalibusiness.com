@@ -57,6 +57,7 @@ function SeatsBar({ registered, capacity }: { registered: number; capacity: numb
 }
 
 function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
+  const locale = useLocale()
   const daysUntil = getDaysUntil(event.event_date)
   const isFull = event.registered >= (event.capacity ?? 9999)
 
@@ -153,6 +154,7 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
 }
 
 function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
+  const locale = useLocale()
   const daysUntil = getDaysUntil(event.event_date)
   const spotsLeft = (event.capacity ?? 0) - event.registered
 

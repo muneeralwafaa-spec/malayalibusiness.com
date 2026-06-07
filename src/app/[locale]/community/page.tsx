@@ -33,6 +33,7 @@ function timeAgo(dateStr: string, isMl: boolean) {
 }
 
 function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
+  const locale = useLocale()
   return (
     <Link href={`/${locale}/community/${article.slug}`} className="group block">
       <div className="relative rounded-2xl overflow-hidden h-72 mb-4">
@@ -82,6 +83,7 @@ function FeaturedCard({ article, isMl }: { article: Article; isMl: boolean }) {
 }
 
 function ArticleCard({ article, isMl, horizontal }: { article: Article; isMl: boolean; horizontal?: boolean }) {
+  const locale = useLocale()
   const [liked, setLiked] = useState(false)
 
   if (horizontal) {
