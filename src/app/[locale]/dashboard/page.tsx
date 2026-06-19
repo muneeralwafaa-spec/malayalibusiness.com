@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Building2, ShoppingBag, ShoppingCart, MessageSquare,
   BarChart2, Briefcase, CreditCard, Settings, Plus, Bell,
   Eye, TrendingUp, Star, ArrowUpRight, ArrowDownRight, Edit3, Trash2,
-  CheckCircle, MapPin, Menu, X, LogOut, Users,
+  CheckCircle, CheckCircle2, MapPin, Menu, X, LogOut, Users,
   Zap, Download, Mail, Tag, AlertTriangle, Loader2,
   Stethoscope, Tv, ArrowRight, Heart
 } from 'lucide-react'
@@ -147,7 +147,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 // ── Section Components ──────────────────────────────────────────────────────
 
-function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] }) {
+function OverviewSection({ isMl, listings, onAddListing, onSection }: { isMl: boolean; listings: any[]; onAddListing: () => void; onSection: (s: string) => void }) {
   const totalViews   = listings.reduce((s, l) => s + (l.views_count   || 0), 0)
   const totalReviews = listings.reduce((s, l) => s + (l.review_count  || 0), 0)
   const avgRating    = listings.length
@@ -190,17 +190,22 @@ function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] })
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { icon: Plus, label: isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add Listing', color: 'bg-kerala-green text-white' },
-          { icon: Briefcase, label: isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post Job', color: 'bg-kerala-deep text-white' },
-          { icon: BarChart2, label: isMl ? 'അനലിറ്റിക്സ്' : 'View Analytics', color: 'bg-kerala-gold text-white' },
-          { icon: Zap, label: isMl ? 'പ്ലാൻ അപ്‌ഗ്രേഡ്' : 'Upgrade Plan', color: 'bg-purple-600 text-white' },
-        ].map(a => (
-          <button key={a.label} className={`${a.color} rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity`}>
-            <a.icon size={20} />
-            <span className="font-semibold text-sm text-left leading-tight">{a.label}</span>
-          </button>
-        ))}
+        <button onClick={onAddListing} className="bg-kerala-green text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
+          <Plus size={20} />
+          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add Listing'}</span>
+        </button>
+        <button onClick={() => onSection('jobs')} className="bg-kerala-deep text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
+          <Briefcase size={20} />
+          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post Job'}</span>
+        </button>
+        <button onClick={() => onSection('analytics')} className="bg-kerala-gold text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
+          <BarChart2 size={20} />
+          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'അനലിറ്റിക്സ്' : 'View Analytics'}</span>
+        </button>
+        <button onClick={() => onSection('shop')} className="bg-kerala-deep text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
+          <ShoppingBag size={20} />
+          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ഷോപ്പ് മാനേജർ' : 'Shop Manager'}</span>
+        </button>
       </div>
 
       {/* Bar chart + activity */}
@@ -261,9 +266,183 @@ function OverviewSection({ isMl, listings }: { isMl: boolean; listings: any[] })
   )
 }
 
-function ListingsSection({ isMl, listings, loading }: { isMl: boolean; listings: any[]; loading: boolean }) {
+const LISTING_CATEGORIES = [
+  'Restaurants & Food', 'Real Estate', 'Healthcare', 'Education', 'Finance & Banking',
+  'Beauty & Wellness', 'Travel & Tourism', 'Technology & IT', 'Legal & PRO Services',
+  'Construction & Engineering', 'Retail & Trading', 'Logistics & Transport',
+  'Media & Marketing', 'Automotive', 'Grocery & Supermarket', 'Other',
+]
+const EMIRATES_LIST = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain']
+
+function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: () => void; userId: string }) {
+  const [saving, setSaving] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [form, setForm] = useState({
+    name: '', category: '', emirate: '', area: '', address: '',
+    phone: '', whatsapp: '', email: '', website: '',
+    description: '', tagline: '',
+  })
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleSave() {
+    if (!form.name || !form.category || !form.emirate || !form.phone) return
+    setSaving(true)
+    const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now()
+    const { error } = await supabase.from('listings').insert([{
+      owner_id: userId,
+      slug,
+      name: form.name,
+      tagline: form.tagline || null,
+      description: form.description || null,
+      emirate: form.emirate,
+      area: form.area || null,
+      address: form.address || null,
+      phone: form.phone,
+      whatsapp: form.whatsapp || form.phone,
+      email: form.email || null,
+      website: form.website || null,
+      plan: 'free',
+      status: 'pending',
+      is_featured: false,
+      is_verified: false,
+    }])
+    setSaving(false)
+    if (!error) setSuccess(true)
+  }
+
+  if (success) return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+        <div className="w-16 h-16 bg-kerala-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 size={32} className="text-kerala-green" />
+        </div>
+        <h3 className="font-serif text-xl font-bold text-kerala-deep mb-2">Listing Submitted!</h3>
+        <p className="text-gray-500 text-sm mb-6">Your listing is under review and will go live within 24 hours.</p>
+        <button onClick={onClose} className="w-full bg-kerala-green text-white py-3 rounded-xl font-semibold">Done</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div>
+            <h2 className="font-serif font-bold text-kerala-deep text-lg">Add New Listing</h2>
+            <p className="text-gray-400 text-xs mt-0.5">Your listing will be reviewed before going live</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <X size={18} className="text-gray-400" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Business name + tagline */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Business Name <span className="text-red-500">*</span></label>
+              <input value={form.name} onChange={set('name')} placeholder="e.g. Kerala Kitchen Dubai"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Tagline <span className="text-gray-400 font-normal">(optional)</span></label>
+              <input value={form.tagline} onChange={set('tagline')} placeholder="e.g. Authentic Kerala food in the heart of Dubai"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+          </div>
+
+          {/* Category + Emirate */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Category <span className="text-red-500">*</span></label>
+              <select value={form.category} onChange={set('category')}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all text-gray-700 bg-white">
+                <option value="">Select category</option>
+                {LISTING_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Emirate <span className="text-red-500">*</span></label>
+              <select value={form.emirate} onChange={set('emirate')}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all text-gray-700 bg-white">
+                <option value="">Select emirate</option>
+                {EMIRATES_LIST.map(e => <option key={e} value={e}>{e}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Area + Address */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Area / Neighbourhood</label>
+              <input value={form.area} onChange={set('area')} placeholder="e.g. Deira, JLT, Al Nahda"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Full Address</label>
+              <input value={form.address} onChange={set('address')} placeholder="Building, street, area"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Phone <span className="text-red-500">*</span></label>
+              <input value={form.phone} onChange={set('phone')} placeholder="+971 50 000 0000" type="tel"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">WhatsApp</label>
+              <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="Same as phone if same" type="tel"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
+              <input value={form.email} onChange={set('email')} placeholder="business@email.com" type="email"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Website</label>
+              <input value={form.website} onChange={set('website')} placeholder="https://yourwebsite.com"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Business Description</label>
+            <textarea value={form.description} onChange={set('description')} rows={4}
+              placeholder="Tell customers about your business, what you offer, your specialities..."
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300 resize-none" />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.name || !form.category || !form.emirate || !form.phone}
+            className="flex-2 flex-1 bg-kerala-green text-white py-3 rounded-xl font-semibold text-sm hover:bg-kerala-green-light disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          >
+            {saving ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : 'Submit Listing'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ListingsSection({ isMl, listings, loading, userId }: { isMl: boolean; listings: any[]; loading: boolean; userId: string }) {
   const locale = isMl ? 'ml' : 'en'
   const [filter, setFilter] = useState<'all' | 'active' | 'pending'>('all')
+  const [showModal, setShowModal] = useState(false)
   const statuses = ['all', 'active', 'pending'] as const
   const statusLabels: Record<typeof statuses[number], string> = {
     all: isMl ? 'എല്ലാം' : 'All',
@@ -275,6 +454,7 @@ function ListingsSection({ isMl, listings, loading }: { isMl: boolean; listings:
 
   return (
     <div className="space-y-5">
+      {showModal && <AddListingModal isMl={isMl} onClose={() => setShowModal(false)} userId={userId} />}
       <SectionHeader title={isMl ? 'എന്റെ ലിസ്റ്റിംഗ്' : 'My Listings'} />
 
       <div className="flex flex-wrap items-center gap-3 justify-between">
@@ -292,7 +472,7 @@ function ListingsSection({ isMl, listings, loading }: { isMl: boolean; listings:
             </button>
           ))}
         </div>
-        <button className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
           <Plus size={15} />
           {isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add New Listing'}
         </button>
@@ -1494,15 +1674,12 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      {/* Upgrade card */}
+      {/* Bottom bar */}
       <div className="p-4">
-        <div className="bg-kerala-gold/10 border border-kerala-gold/20 rounded-2xl p-4">
-          <Zap size={16} className="text-kerala-gold mb-2" />
-          <p className="font-semibold text-white text-sm mb-0.5">{isMl ? 'പ്രീമിയം ആക്കൂ' : 'Go Premium'}</p>
-          <p className="text-white/50 text-xs mb-3">{isMl ? 'കൂടുതൽ ലീഡ്സ്, ഫീച്ചർഡ്' : 'More leads, featured listing'}</p>
-          <button className="w-full bg-kerala-gold text-white text-xs font-bold py-2 rounded-lg hover:opacity-90 transition-opacity">
-            {isMl ? 'AED 499/മാസം' : 'AED 499/month'}
-          </button>
+        <div className="bg-kerala-green/10 border border-kerala-green/20 rounded-2xl p-4">
+          <Building2 size={16} className="text-kerala-green mb-2" />
+          <p className="font-semibold text-white text-sm mb-0.5">{isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'All Features Free'}</p>
+          <p className="text-white/50 text-xs">{isMl ? 'എല്ലാ സേവനങ്ങളും സൗജന്യം' : 'List your business at no cost'}</p>
         </div>
         {/* Sign out */}
         <button onClick={handleSignOut}
@@ -1574,8 +1751,8 @@ export default function DashboardPage() {
 
           {/* Section content */}
           <div className="p-4 sm:p-6 lg:p-8">
-            {activeSection === 'overview'      && <OverviewSection isMl={isMl} listings={myListings} />}
-            {activeSection === 'listings'      && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} />}
+            {activeSection === 'overview'      && <OverviewSection isMl={isMl} listings={myListings} onAddListing={() => setActiveSection('listings')} onSection={(s) => setActiveSection(s as NavSection)} />}
+            {activeSection === 'listings'      && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} userId={user.id} />}
             {activeSection === 'shop'          && <ShopManagerSection isMl={isMl} listings={myListings} />}
             {activeSection === 'orders'        && <OrdersSection isMl={isMl} />}
             {activeSection === 'enquiries'     && <EnquiriesSection isMl={isMl} />}
