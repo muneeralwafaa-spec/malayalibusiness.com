@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { Heart, Loader2 } from 'lucide-react'
@@ -54,7 +54,7 @@ export default function FavouriteButton({
 
     if (!user) {
       // Redirect to auth, come back after login
-      router.push(`/${locale}/auth?tab=login&next=${encodeURIComponent(pathname)}`)
+      router.push(`/auth?tab=login&next=${encodeURIComponent(pathname)}`)
       return
     }
 

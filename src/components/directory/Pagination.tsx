@@ -44,21 +44,21 @@ export default function Pagination({ page, total, perPage, onChange }: Props) {
         <button
           onClick={() => onChange(page - 1)}
           disabled={page === 1}
-          className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
 
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`e-${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm">
+            <span key={`e-${i}`} className="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">
               …
             </span>
           ) : (
             <button
               key={p}
               onClick={() => onChange(p as number)}
-              className={`w-9 h-9 rounded-xl text-sm font-semibold transition-all ${
+              className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
                 p === page
                   ? 'bg-kerala-green text-white shadow-md'
                   : 'border border-gray-200 text-gray-600 hover:border-kerala-green hover:text-kerala-green'
@@ -72,7 +72,7 @@ export default function Pagination({ page, total, perPage, onChange }: Props) {
         <button
           onClick={() => onChange(page + 1)}
           disabled={page === totalPages}
-          className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRight size={16} />
         </button>

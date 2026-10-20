@@ -42,6 +42,17 @@ function DirectoryContent() {
     emirate:  searchParams.get('location') ?? '',
   }))
 
+  // Re-sync when URL searchParams change (e.g. navbar category click)
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      query:    searchParams.get('q')        ?? '',
+      category: searchParams.get('category') ?? '',
+      emirate:  searchParams.get('location') ?? '',
+      page: 1,
+    }))
+  }, [searchParams])
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [rawListings,    setRawListings]    = useState<any[]>([])

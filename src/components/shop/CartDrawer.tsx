@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCart } from '@/context/CartContext'
 import { useLocale } from 'next-intl'
@@ -220,7 +220,7 @@ export default function CartDrawer() {
 
             {/* Checkout button */}
             <Link
-              href={`/${locale}/checkout`}
+              href={`/checkout`}
               onClick={closeCart}
               className="block w-full py-3 bg-kerala-green text-white text-center font-bold rounded-xl hover:bg-kerala-deep transition-colors"
             >

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -205,7 +205,7 @@ export default function PricingPage() {
           </div>
 
           {/* Trust logos */}
-          <div className="flex items-center justify-center gap-6 mt-2">
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-2">
             <span className="text-white/40 text-xs">{isMl ? 'വിശ്വസിക്കുന്നവർ:' : 'Trusted by:'}</span>
             {['Al Baraka Trading', 'Dubai Spice House', 'Malabar Gold Centre'].map(name => (
               <span key={name} className="text-white/60 text-xs font-semibold">{name}</span>
@@ -217,7 +217,7 @@ export default function PricingPage() {
       {/* ── SECTION 2: LISTING PLANS ────────────────────────────────────────── */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 -mt-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start">
             {/* Basic */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-7">
@@ -232,7 +232,7 @@ export default function PricingPage() {
                   {isMl ? 'ആരംഭിക്കുന്നവർക്ക് അനുയോജ്യം' : 'Perfect to get started'}
                 </p>
                 <Link
-                  href={`/${locale}/auth`}
+                  href={`/auth`}
                   className="block text-center border-2 border-kerala-green text-kerala-green font-semibold py-3 rounded-xl hover:bg-kerala-green hover:text-white transition-all text-sm"
                 >
                   {isMl ? 'സൗജന്യമായി ആരംഭിക്കൂ' : 'Get Started Free'}
@@ -272,7 +272,7 @@ export default function PricingPage() {
                   {isMl ? 'വളരുന്ന ബിസിനസുകൾക്ക്' : 'For growing businesses'}
                 </p>
                 <Link
-                  href={`/${locale}/auth`}
+                  href={`/auth`}
                   className="block text-center bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold py-3 rounded-xl transition-all text-sm"
                 >
                   {isMl ? 'ഇപ്പോൾ ആരംഭിക്കൂ' : 'Start Now'}
@@ -316,7 +316,7 @@ export default function PricingPage() {
                   {isMl ? 'എസ്റ്റാബ്ലിഷ്ഡ് ബിസിനസുകൾക്ക്' : 'For established businesses'}
                 </p>
                 <Link
-                  href={`/${locale}/auth`}
+                  href={`/auth`}
                   className="block text-center bg-kerala-green hover:bg-kerala-green-light text-white font-bold py-3 rounded-xl transition-all text-sm"
                 >
                   {isMl ? 'പ്രീമിയം ആരംഭിക്കൂ' : 'Start Premium'}
@@ -404,7 +404,7 @@ export default function PricingPage() {
                   </li>
                 </ul>
                 <Link
-                  href={`/${locale}/auth`}
+                  href={`/auth`}
                   className="block text-center bg-kerala-green hover:bg-kerala-green-light text-white font-semibold py-2.5 rounded-xl transition-all text-sm"
                 >
                   {isMl ? 'ഇപ്പോൾ ബുക്ക് ചെയ്യൂ' : 'Book Now'}
@@ -427,6 +427,7 @@ export default function PricingPage() {
             </p>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-kerala-deep text-white">
                 <tr>
@@ -458,9 +459,10 @@ export default function PricingPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="px-6 py-4 border-t border-gray-100 text-center">
               <Link
-                href={`/${locale}/jobs`}
+                href={`/jobs`}
                 className="inline-flex items-center gap-2 bg-kerala-green hover:bg-kerala-green-light text-white font-semibold px-6 py-2.5 rounded-xl transition-all text-sm"
               >
                 <Briefcase size={15} />
@@ -509,14 +511,14 @@ export default function PricingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={`/${locale}/auth`}
+              href={`/auth`}
               className="inline-flex items-center justify-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg text-base"
             >
               <BadgeCheck size={18} />
               {isMl ? 'ഇപ്പോൾ രജിസ്റ്റർ ചെയ്യൂ' : 'Register Now — Free'}
             </Link>
             <Link
-              href={`/${locale}/directory`}
+              href={`/directory`}
               className="inline-flex items-center justify-center gap-2 border border-white/30 text-white hover:border-white/60 font-semibold px-8 py-4 rounded-xl transition-all text-base"
             >
               <Globe size={18} />

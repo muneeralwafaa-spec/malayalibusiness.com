@@ -246,7 +246,7 @@ export default function FiltersSidebar({ filters, onChange, onReset, mobileOpen,
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/40" onClick={onMobileClose} />
-          <div className="relative ml-auto w-80 max-w-full h-full bg-white overflow-y-auto p-4 shadow-2xl">
+          <div className="relative ml-auto w-[85vw] max-w-xs h-full bg-white overflow-y-auto p-4 shadow-2xl">
             {content}
           </div>
         </div>

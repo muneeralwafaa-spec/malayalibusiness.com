@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
@@ -67,7 +67,7 @@ export default function MediaSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/media`}
+            href={`/media`}
             className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:border-kerala-red hover:text-kerala-red font-semibold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാ മീഡിയ' : 'View All Media'}
@@ -76,7 +76,7 @@ export default function MediaSection() {
         </div>
 
         {/* Type filter tabs */}
-        <div className="flex items-center gap-2 flex-wrap mb-8">
+        <div className="flex items-center gap-2 flex-wrap mb-8 overflow-x-auto">
           {typeTabs.map(tab => (
             <button
               key={tab.key}
@@ -103,7 +103,7 @@ export default function MediaSection() {
               return (
                 <Link
                   key={house.id}
-                  href={`/${locale}/media/${house.slug}`}
+                  href={`/media/${house.slug}`}
                   className="group bg-white hover:bg-kerala-cream border border-gray-100 hover:border-gray-200 rounded-2xl p-4 card-hover flex flex-col transition-all"
                 >
                   {/* Logo */}
@@ -125,7 +125,7 @@ export default function MediaSection() {
                     </div>
                   </div>
 
-                  <span className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-full mb-2 ${meta.color}`}>
+                  <span className={`self-start text-xs font-bold px-2 py-0.5 rounded-full mb-2 ${meta.color}`}>
                     {meta.emoji} {isMl ? meta.labelMl : meta.label}
                   </span>
 

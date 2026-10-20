@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
@@ -82,7 +82,7 @@ export default function LocationStrip() {
             </p>
           </div>
           <Link
-            href={`/${locale}/directory`}
+            href={`/directory`}
             className="text-kerala-green hover:text-kerala-green-light text-sm font-semibold flex items-center gap-1"
           >
             {isMl ? 'എല്ലാം കാണൂ' : 'View All'} →
@@ -94,8 +94,8 @@ export default function LocationStrip() {
           {emirates.map((emirate) => (
             <Link
               key={emirate.slug}
-              href={`/${locale}/directory?location=${emirate.slug}`}
-              className="group relative overflow-hidden rounded-xl aspect-[3/4] sm:aspect-square card-hover"
+              href={`/directory?location=${emirate.slug}`}
+              className="group relative overflow-hidden rounded-xl aspect-square sm:aspect-[3/4] card-hover"
             >
               <Image
                 src={emirate.image}
@@ -113,7 +113,6 @@ export default function LocationStrip() {
                     {isMl ? emirate.nameMl : emirate.name}
                   </span>
                 </div>
-                <span className="text-white/70 text-xs">{emirate.count}</span>
               </div>
             </Link>
           ))}

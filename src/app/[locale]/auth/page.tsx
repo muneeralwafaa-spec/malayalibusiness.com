@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 import { signIn, signUp, signInWithGoogle, USER_ROLES } from '@/lib/auth'
 
 type Tab = 'login' | 'register'
@@ -56,10 +57,17 @@ export default function AuthPage() {
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) { setError(isMl ? 'എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കൂ' : 'Please fill in all fields'); return }
     setError(''); setSubmitting(true)
-    const { error: err } = await signIn(loginEmail, loginPassword)
+    const { error: err, user } = await signIn(loginEmail, loginPassword)
     setSubmitting(false)
     if (err) { setError(err.message); return }
-    router.push(`/${locale}/dashboard`)
+    // Check if admin and redirect accordingly
+    const { supabase: sb } = await import('@/lib/supabase')
+    const { data: profileData } = await sb.from('profiles').select('is_admin').eq('id', user?.id ?? '').single()
+    if (profileData?.is_admin) {
+      router.push(`/admin`)
+    } else {
+      router.push(`/dashboard`)
+    }
   }
 
   const handleRegister = async () => {
@@ -223,9 +231,9 @@ export default function AuthPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-sm font-medium text-gray-700">{isMl ? 'പാസ്‌വേഡ്' : 'Password'}</label>
-                    <button className="text-kerala-green text-xs font-medium hover:underline">
+                    <Link href={`/auth/forgot-password`} className="text-kerala-green text-xs font-medium hover:underline">
                       {isMl ? 'മറന്നോ?' : 'Forgot password?'}
-                    </button>
+                    </Link>
                   </div>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -239,7 +247,7 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-2"
                     >
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
@@ -361,16 +369,7 @@ export default function AuthPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {isMl ? 'ഫോൺ' : 'Phone number'}
                   </label>
-                  <div className="relative">
-                    <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={regPhone}
-                      onChange={e => setRegPhone(e.target.value)}
-                      placeholder="+971 50 000 0000"
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
-                    />
-                  </div>
+                  <UAEPhoneInput value={regPhone} onChange={setRegPhone} />
                 </div>
 
                 <div>
@@ -386,7 +385,7 @@ export default function AuthPage() {
                       placeholder="Min. 8 characters"
                       className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-2">
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
@@ -405,7 +404,7 @@ export default function AuthPage() {
                       placeholder="Repeat password"
                       className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"
                     />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-2">
                       {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>

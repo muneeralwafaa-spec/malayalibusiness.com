@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -132,7 +132,7 @@ export default function NewEventPage() {
                 : 'Your event has been successfully submitted and will appear in the listing shortly.'}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={`/${locale}/events`}
+              <Link href={`/events`}
                 className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors">
                 {isMl ? 'എല്ലാ ഇവൻ്റുകളും' : 'View All Events'}
               </Link>
@@ -159,7 +159,7 @@ export default function NewEventPage() {
           <nav className="flex items-center gap-2 text-sm text-gray-400 mb-4">
             <Link href={`/${locale}`} className="hover:text-gray-700 transition-colors">Home</Link>
             <ChevronRight size={14} />
-            <Link href={`/${locale}/events`} className="hover:text-gray-700 transition-colors">Events</Link>
+            <Link href={`/events`} className="hover:text-gray-700 transition-colors">Events</Link>
             <ChevronRight size={14} />
             <span className="text-gray-700">{isMl ? 'പുതിയ ഇവൻ്റ്' : 'Post Event'}</span>
           </nav>
@@ -443,7 +443,7 @@ export default function NewEventPage() {
               )}
             </button>
             <Link
-              href={`/${locale}/events`}
+              href={`/events`}
               className="px-6 py-4 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors text-center"
             >
               {isMl ? 'റദ്ദ് ചെയ്യൂ' : 'Cancel'}

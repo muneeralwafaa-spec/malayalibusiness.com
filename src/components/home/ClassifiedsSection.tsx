@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -102,15 +103,15 @@ export default function ClassifiedsSection() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href={`/${locale}/classifieds/new`}
-              className="flex items-center gap-2 bg-kerala-orange text-white font-semibold text-sm px-4 py-2.5 rounded-lg hover:opacity-90 transition-all whitespace-nowrap"
+              href={`/classifieds/new`}
+              className="flex items-center gap-2 bg-kerala-orange text-white font-semibold text-sm px-4 py-3 rounded-lg hover:opacity-90 transition-all whitespace-nowrap"
             >
               <Plus size={16} />
               {isMl ? 'പരസ്യം ഇടൂ' : 'Post Ad'}
             </Link>
             <Link
-              href={`/${locale}/classifieds`}
-              className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:border-kerala-green hover:text-kerala-green font-semibold text-sm px-4 py-2.5 rounded-lg transition-all whitespace-nowrap"
+              href={`/classifieds`}
+              className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:border-kerala-green hover:text-kerala-green font-semibold text-sm px-4 py-3 rounded-lg transition-all whitespace-nowrap"
             >
               {isMl ? 'എല്ലാം കാണൂ' : 'View All'}
               <ArrowRight size={16} />
@@ -123,16 +124,16 @@ export default function ClassifiedsSection() {
           {items.map((item) => (
             <Link
               key={item.id}
-              href={`/${locale}/classifieds/${item.id}`}
+              href={`/classifieds/${item.id}`}
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg card-hover border border-gray-100"
             >
               <div className="relative h-44 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={item.images?.[0] || classifiedFallback(item.category)}
                   alt={isMl ? (item.title_ml ?? item.title) : item.title}
-                  onError={(e) => { (e.target as HTMLImageElement).src = classifiedFallback(item.category) }}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 200px"
                 />
                 <div className="absolute top-3 left-3">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeColors[item.type] ?? 'bg-gray-100 text-gray-700'}`}>

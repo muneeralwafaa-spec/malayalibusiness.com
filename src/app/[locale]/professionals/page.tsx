@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -137,7 +137,7 @@ export default function ProfessionalsPage() {
               <p className="text-sm text-gray-500">
                 {display.length} {isMl ? 'പ്രൊഫഷണൽസ്' : 'professionals found'}
               </p>
-              <Link href={`/${locale}/professionals/register`} className="flex items-center gap-2 bg-kerala-gold text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-all">
+              <Link href={`/professionals/register`} className="flex items-center gap-2 bg-kerala-gold text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-all">
                 + {isMl ? 'പ്രൊഫൈൽ ചേർക്കൂ' : 'Add Profile'}
               </Link>
             </div>
@@ -157,7 +157,7 @@ export default function ProfessionalsPage() {
                   return (
                     <Link
                       key={pro.id}
-                      href={`/${locale}/professionals/${pro.slug}`}
+                      href={`/professionals/${pro.slug}`}
                       className="group bg-white hover:shadow-lg border border-gray-100 rounded-2xl p-4 card-hover flex flex-col items-center text-center transition-all"
                     >
                       <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 shadow mb-3">

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -91,7 +91,7 @@ export default function ProfessionalDetailPage() {
       <div className="max-w-2xl mx-auto px-4 py-40 text-center">
         <p className="text-4xl mb-4">😕</p>
         <h1 className="font-serif text-2xl font-bold text-kerala-deep mb-2">{isMl ? 'കണ്ടെത്തിയില്ല' : 'Profile Not Found'}</h1>
-        <Link href={`/${locale}/professionals`} className="text-kerala-green hover:underline">{isMl ? 'തിരിച്ചു പോകൂ' : '← Back to Professionals'}</Link>
+        <Link href={`/professionals`} className="text-kerala-green hover:underline">{isMl ? 'തിരിച്ചു പോകൂ' : '← Back to Professionals'}</Link>
       </div>
       <Footer />
     </main>
@@ -110,7 +110,7 @@ export default function ProfessionalDetailPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 pb-16 relative z-10">
 
         {/* Back */}
-        <Link href={`/${locale}/professionals`} className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-6 transition-colors">
+        <Link href={`/professionals`} className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-6 transition-colors">
           <ArrowLeft size={15} /> {isMl ? 'തിരിച്ചു' : 'Back to Professionals'}
         </Link>
 
@@ -343,7 +343,7 @@ export default function ProfessionalDetailPage() {
                 <p className="text-white font-semibold">{isMl ? 'കൂടുതൽ പ്രൊഫഷണൽസ്' : 'Discover More Professionals'}</p>
                 <p className="text-white/60 text-xs mt-0.5">{isMl ? 'UAE-ലെ മലയാളി വിദഗ്ദ്ധർ' : 'Browse all Malayali experts across UAE'}</p>
               </div>
-              <Link href={`/${locale}/professionals`} className="bg-kerala-gold text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-colors whitespace-nowrap">
+              <Link href={`/professionals`} className="bg-kerala-gold text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-colors whitespace-nowrap">
                 {isMl ? 'കാണൂ' : 'Browse All'}
               </Link>
             </div>

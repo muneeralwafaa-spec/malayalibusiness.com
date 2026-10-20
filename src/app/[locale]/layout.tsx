@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { routing } from '@/routing'
 import { CartProvider } from '@/context/CartContext'
 import { AuthProvider } from '@/context/AuthContext'
+import AIChatWidget from '@/components/ai/AIChatWidget'
 
 export default async function LocaleLayout({
   children,
@@ -22,6 +23,7 @@ export default async function LocaleLayout({
       <AuthProvider>
         <CartProvider>
           {children}
+          <AIChatWidget />
         </CartProvider>
       </AuthProvider>
     </NextIntlClientProvider>

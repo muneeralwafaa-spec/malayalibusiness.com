@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -91,7 +91,7 @@ export default function ClassifiedDetailPage() {
           <div className="text-6xl mb-4">🔍</div>
           <h1 className="font-serif text-2xl font-bold text-kerala-deep mb-2">Ad Not Found</h1>
           <p className="text-gray-500 mb-6">This classified may have been removed or expired.</p>
-          <Link href={`/${locale}/classifieds`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-green-light transition-colors">
+          <Link href={`/classifieds`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-green-light transition-colors">
             Browse Classifieds
           </Link>
         </div>
@@ -116,9 +116,9 @@ export default function ClassifiedDetailPage() {
         <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
           <Link href={`/${locale}`} className="hover:text-kerala-green">Home</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/classifieds`} className="hover:text-kerala-green">Classifieds</Link>
+          <Link href={`/classifieds`} className="hover:text-kerala-green">Classifieds</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/classifieds?cat=${item.category}`} className="hover:text-kerala-green">{item.category}</Link>
+          <Link href={`/classifieds?cat=${item.category}`} className="hover:text-kerala-green">{item.category}</Link>
           <ChevronRight size={12} />
           <span className="text-kerala-deep font-medium truncate max-w-[180px]">
             {isMl ? (item.title_ml ?? item.title) : item.title}
@@ -139,6 +139,7 @@ export default function ClassifiedDetailPage() {
                       src={item.images[activeImg]}
                       alt={item.title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 66vw"
                       className="object-cover"
                     />
                   ) : (
@@ -160,7 +161,7 @@ export default function ClassifiedDetailPage() {
 
                 {/* Thumbnails */}
                 {item.images.length > 1 && (
-                  <div className="flex gap-2 p-3 border-t border-gray-100 bg-gray-50">
+                  <div className="flex gap-2 p-3 border-t border-gray-100 bg-gray-50 overflow-x-auto">
                     {item.images.map((img, i) => (
                       <button
                         key={i}
@@ -243,7 +244,7 @@ export default function ClassifiedDetailPage() {
               <h2 className="font-serif text-lg font-bold text-kerala-deep mb-4">
                 {isMl ? 'വിശദാംശങ്ങൾ' : 'Ad Details'}
               </h2>
-              <div className="grid grid-cols-2 gap-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 {[
                   { label: isMl ? 'വിഭാഗം' : 'Category',   value: isMl ? (item.category_ml ?? item.category) : item.category },
                   { label: isMl ? 'തരം' : 'Type',           value: isMl ? typeInfo.ml : typeInfo.en },
@@ -268,7 +269,7 @@ export default function ClassifiedDetailPage() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {related.map(r => (
-                    <Link key={r.id} href={`/${locale}/classifieds/${r.id}`}
+                    <Link key={r.id} href={`/classifieds/${r.id}`}
                       className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md hover:border-kerala-green/30 transition-all group">
                       <div className="relative h-36 bg-gray-100">
                         {r.images[0] && (
@@ -291,7 +292,7 @@ export default function ClassifiedDetailPage() {
           <div className="space-y-4">
 
             {/* Contact card */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 sticky top-4">
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 lg:sticky lg:top-4">
               <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                 <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-kerala-cream">
                   {item.seller_avatar ? (
@@ -373,7 +374,7 @@ export default function ClassifiedDetailPage() {
             </button>
 
             {/* Back link */}
-            <Link href={`/${locale}/classifieds`}
+            <Link href={`/classifieds`}
               className="flex items-center gap-2 text-sm text-kerala-green hover:text-kerala-green-light font-semibold transition-colors">
               <ArrowLeft size={14} />
               {isMl ? 'എല്ലാ പരസ്യങ്ങളിലേക്ക്' : 'Back to Classifieds'}

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -6,14 +6,84 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/context/CartContext'
 import { getMarketplaceListing, getRelatedListings, LISTING_TYPE_META, type MarketplaceListing } from '@/lib/shop'
 import {
   Star, MapPin, BadgeCheck, Clock, ChevronRight, MessageCircle,
   Phone, ShoppingCart, Calendar, FileText, Zap, ArrowLeft,
-  CheckCircle, Shield, Truck, Share2, Heart, ChevronLeft,
+  CheckCircle, Shield, Truck, Share2, Heart, ChevronLeft, Mail, Send,
 } from 'lucide-react'
+
+function EnquiryBlock({ listing, isMl }: { listing: MarketplaceListing; isMl: boolean }) {
+  const [name, setName]   = useState('')
+  const [phone, setPhone] = useState('')
+  const [msg, setMsg]     = useState('')
+  const [sent, setSent]   = useState(false)
+  const [sending, setSending] = useState(false)
+  const [tab, setTab]     = useState<'whatsapp' | 'email'>('whatsapp')
+
+  const waNumber = (listing.vendor_whatsapp ?? '').replace(/\D/g, '')
+
+  const sendWA = () => {
+    if (!name || !phone) return
+    const text = encodeURIComponent(
+      `Hi, I'm enquiring about "${listing.name}".\nName: ${name}\nPhone: ${phone}${msg ? `\n\n${msg}` : ''}`
+    )
+    window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank')
+    setSent(true)
+  }
+
+  const sendEmail = async () => {
+    if (!name || !phone) return
+    setSending(true)
+    await fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'enquiry',
+        to: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        subject: `Product Enquiry: ${listing.name}`,
+        ownerName: listing.vendor_name,
+        message: `Name: ${name}\nPhone: ${phone}\nProduct: ${listing.name}\n\n${msg || 'Please contact me with more details.'}`,
+      }),
+    }).catch(() => {})
+    setSending(false)
+    setSent(true)
+  }
+
+  if (sent) {
+    return (
+      <div className="text-center py-6">
+        <CheckCircle size={40} className="text-kerala-green mx-auto mb-2" />
+        <p className="font-bold text-kerala-deep">{isMl ? 'അന്വേഷണം അയച്ചു!' : 'Enquiry Sent!'}</p>
+        <p className="text-sm text-gray-500 mt-1">{isMl ? 'വെണ്ടർ ഉടൻ ബന്ധപ്പെടും.' : 'The vendor will contact you shortly.'}</p>
+        <button onClick={() => setSent(false)} className="mt-3 text-xs text-kerala-green underline">{isMl ? 'മറ്റൊരു അന്വേഷണം' : 'Send another'}</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <button onClick={() => setTab('whatsapp')} className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${tab === 'whatsapp' ? 'bg-[#25D366] text-white border-[#25D366]' : 'border-gray-200 text-gray-600 hover:border-[#25D366]'}`}>
+          <MessageCircle size={14} className="inline mr-1.5" />WhatsApp
+        </button>
+        <button onClick={() => setTab('email')} className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${tab === 'email' ? 'bg-kerala-green text-white border-kerala-green' : 'border-gray-200 text-gray-600 hover:border-kerala-green'}`}>
+          <Mail size={14} className="inline mr-1.5" />{isMl ? 'ഇ-മെയിൽ' : 'Email'}
+        </button>
+      </div>
+      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={isMl ? 'നിങ്ങളുടെ പേര്' : 'Your Name'} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green" />
+      <UAEPhoneInput value={phone} onChange={setPhone} />
+      <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={2} placeholder={isMl ? 'സന്ദേശം (ഐച്ഛികം)' : 'Message (optional)'} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green resize-none" />
+      <button onClick={tab === 'whatsapp' ? sendWA : sendEmail} disabled={!name || !phone || sending} className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all disabled:opacity-50 ${tab === 'whatsapp' ? 'bg-[#25D366] hover:bg-[#20bd5a] text-white' : 'bg-kerala-green hover:bg-kerala-deep text-white'}`}>
+        {tab === 'whatsapp' ? <MessageCircle size={16} /> : <Send size={16} />}
+        {sending ? (isMl ? 'അയക്കുന്നു...' : 'Sending...') : tab === 'whatsapp' ? (isMl ? 'WhatsApp-ൽ അന്വേഷിക്കൂ' : 'Enquire on WhatsApp') : (isMl ? 'ഇ-മെയിൽ അന്വേഷണം' : 'Send Email Enquiry')}
+      </button>
+    </div>
+  )
+}
 
 export default function ProductDetailPage() {
   const locale = useLocale()
@@ -80,7 +150,7 @@ export default function ProductDetailPage() {
           <h1 className="font-serif text-2xl font-bold text-kerala-deep">
             {isMl ? 'ഉൽപ്പന്നം കണ്ടെത്തിയില്ല' : 'Listing not found'}
           </h1>
-          <Link href={`/${locale}/shop`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-kerala-deep transition-colors">
+          <Link href={`/shop`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-kerala-deep transition-colors">
             {isMl ? 'ഷോപ്പിലേക്ക്' : 'Back to Shop'}
           </Link>
         </div>
@@ -137,9 +207,9 @@ export default function ProductDetailPage() {
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
           <Link href={`/${locale}`} className="hover:text-kerala-green">{isMl ? 'ഹോം' : 'Home'}</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/shop`} className="hover:text-kerala-green">{isMl ? 'ഷോപ്പ്' : 'Shop'}</Link>
+          <Link href={`/shop`} className="hover:text-kerala-green">{isMl ? 'ഷോപ്പ്' : 'Shop'}</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/company/${listing.vendor_slug}`} className="hover:text-kerala-green">{listing.vendor_name}</Link>
+          <Link href={`/company/${listing.vendor_slug}`} className="hover:text-kerala-green">{listing.vendor_name}</Link>
           <ChevronRight size={12} />
           <span className="text-kerala-deep font-medium truncate max-w-[120px]">{isMl ? (listing.name_ml ?? listing.name) : listing.name}</span>
         </div>
@@ -204,7 +274,7 @@ export default function ProductDetailPage() {
           {/* ── RIGHT: Details + Action ── */}
           <div className="space-y-5">
             {/* Vendor pill */}
-            <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-2.5 group w-fit">
+            <Link href={`/company/${listing.vendor_slug}`} className="flex items-center gap-2.5 group w-fit">
               <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-kerala-green/20 flex-shrink-0 bg-gray-100">
                 {listing.vendor_logo_url && (
                   <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
@@ -278,64 +348,9 @@ export default function ProductDetailPage() {
             {/* ── ACTION BLOCK by listing type ── */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
 
-              {/* PRODUCT — qty + add to cart */}
-              {listing.listing_type === 'product' && (
-                <>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-semibold text-gray-500">{isMl ? 'അളവ്' : 'Quantity'}</span>
-                    <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
-                      <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 rounded-lg hover:bg-white flex items-center justify-center transition-colors font-bold text-gray-600 text-lg">−</button>
-                      <span className="w-8 text-center font-bold text-kerala-deep">{qty}</span>
-                      <button onClick={() => setQty(q => q + 1)} className="w-8 h-8 rounded-lg hover:bg-white flex items-center justify-center transition-colors font-bold text-gray-600 text-lg">+</button>
-                    </div>
-                    <span className="text-sm text-gray-500">= <span className="font-bold text-kerala-deep">AED {(listing.price * qty).toFixed(2)}</span></span>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleAddToCart}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all ${added ? 'bg-kerala-green/20 text-kerala-green' : 'bg-kerala-green text-white hover:bg-kerala-deep'}`}
-                    >
-                      <ShoppingCart size={16} />
-                      {added ? (isMl ? '✓ ചേർത്തു!' : '✓ Added!') : (isMl ? 'കാർട്ടിൽ ചേർക്കൂ' : 'Add to Cart')}
-                    </button>
-                    <a
-                      href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="px-4 py-3.5 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors flex items-center justify-center"
-                    >
-                      <MessageCircle size={18} />
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Truck size={12} className="text-kerala-green" />{isMl ? 'ഡെലിവറി ലഭ്യം' : 'Delivery available'}</span>
-                    <span className="flex items-center gap-1"><Shield size={12} className="text-kerala-green" />{isMl ? 'വെരിഫൈഡ് വെണ്ടർ' : 'Verified vendor'}</span>
-                  </div>
-                </>
-              )}
-
-              {/* DIRECT SERVICE — buy now */}
-              {listing.listing_type === 'direct_service' && (
-                <>
-                  <p className="text-sm text-gray-500">
-                    {isMl ? 'ഈ സേവനം ഉടൻ ബുക്ക് ചെയ്യൂ. 24 മണിക്കൂറിനുള്ളിൽ സ്ഥിരീകരിക്കും.' : "Book this service instantly. We'll confirm within 24 hours."}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleAddToCart}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all ${added ? 'bg-purple-100 text-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
-                    >
-                      <Zap size={16} />
-                      {added ? (isMl ? '✓ ബുക്ക് ചെയ്തു!' : '✓ Booked!') : (isMl ? 'ഇപ്പോൾ ബുക്ക് ചെയ്യൂ' : 'Book Now')}
-                    </button>
-                    <a
-                      href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="px-4 py-3.5 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors flex items-center justify-center"
-                    >
-                      <MessageCircle size={18} />
-                    </a>
-                  </div>
-                </>
+              {/* PRODUCT / DIRECT SERVICE — enquiry only */}
+              {(listing.listing_type === 'product' || listing.listing_type === 'direct_service') && (
+                <EnquiryBlock listing={listing} isMl={isMl} />
               )}
 
               {/* APPOINTMENT — date + slot picker */}
@@ -420,11 +435,7 @@ export default function ProductDetailPage() {
                         placeholder={isMl ? 'നിങ്ങളുടെ പേര്' : 'Your Name'}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green"
                       />
-                      <input
-                        type="tel" value={quotePhone} onChange={e => setQuotePhone(e.target.value)}
-                        placeholder={isMl ? 'WhatsApp നമ്പർ' : 'Phone / WhatsApp'}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green"
-                      />
+                      <UAEPhoneInput value={quotePhone} onChange={setQuotePhone} />
                       <textarea
                         value={quoteMsg} onChange={e => setQuoteMsg(e.target.value)} rows={2}
                         placeholder={isMl ? 'ആവശ്യകതകൾ വിവരിക്കൂ...' : 'Describe your requirements...'}
@@ -516,7 +527,7 @@ export default function ProductDetailPage() {
               <h2 className="font-serif text-2xl font-bold text-kerala-deep">
                 {isMl ? 'സമാന ഉൽപ്പന്നങ്ങൾ' : 'You May Also Like'}
               </h2>
-              <Link href={`/${locale}/shop`} className="text-sm text-kerala-green font-semibold hover:underline flex items-center gap-1">
+              <Link href={`/shop`} className="text-sm text-kerala-green font-semibold hover:underline flex items-center gap-1">
                 {isMl ? 'എല്ലാം കാണൂ' : 'View All'} <ChevronRight size={14} />
               </Link>
             </div>
@@ -526,7 +537,7 @@ export default function ProductDetailPage() {
                 return (
                   <Link
                     key={rel.id}
-                    href={`/${locale}/company/${rel.vendor_slug}/shop/${rel.id}`}
+                    href={`/company/${rel.vendor_slug}/shop/${rel.id}`}
                     className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg hover:border-kerala-green/20 transition-all"
                   >
                     <div className="relative h-36 overflow-hidden bg-gray-100">
@@ -554,7 +565,7 @@ export default function ProductDetailPage() {
 
         {/* Back to shop */}
         <div className="mt-8">
-          <Link href={`/${locale}/shop`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-kerala-green transition-colors font-medium w-fit">
+          <Link href={`/shop`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-kerala-green transition-colors font-medium w-fit">
             <ArrowLeft size={16} /> {isMl ? 'ഷോപ്പിലേക്ക് മടങ്ങൂ' : 'Back to Shop'}
           </Link>
         </div>

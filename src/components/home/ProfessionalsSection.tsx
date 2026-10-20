@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -63,7 +64,7 @@ export default function ProfessionalsSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/professionals`}
+            href={`/professionals`}
             className="flex items-center gap-2 border border-kerala-green text-kerala-green hover:bg-kerala-green hover:text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാ പ്രൊഫഷണൽസ്' : 'View All Professionals'}
@@ -72,12 +73,12 @@ export default function ProfessionalsSection() {
         </div>
 
         {/* Category filter tabs */}
-        <div className="flex items-center gap-2 flex-wrap mb-8">
+        <div className="flex items-center gap-2 flex-wrap mb-8 overflow-x-auto">
           {categoryTabs.map(cat => (
             <button
               key={cat.slug}
               onClick={() => setActiveCategory(cat.slug)}
-              className={`text-xs font-semibold px-4 py-2 rounded-full border transition-all ${
+              className={`text-xs font-semibold px-4 py-3 rounded-full border transition-all ${
                 activeCategory === cat.slug
                   ? 'bg-kerala-green text-white border-kerala-green'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-kerala-green hover:text-kerala-green'
@@ -99,17 +100,17 @@ export default function ProfessionalsSection() {
               return (
                 <Link
                   key={pro.id}
-                  href={`/${locale}/professionals/${pro.slug}`}
+                  href={`/professionals/${pro.slug}`}
                   className="group bg-kerala-cream hover:bg-white border border-transparent hover:border-gray-200 rounded-2xl p-4 card-hover flex flex-col items-center text-center transition-all"
                 >
                   {/* Avatar */}
                   <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={pro.photo_url || AVATAR_FALLBACK}
                       alt={pro.name}
-                      onError={(e) => { (e.target as HTMLImageElement).src = AVATAR_FALLBACK }}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      width={56}
+                      height={56}
+                      className="object-cover w-full h-full"
                     />
                     {pro.verified && (
                       <div className="absolute bottom-0 right-0 bg-white rounded-full p-0.5">
@@ -119,7 +120,7 @@ export default function ProfessionalsSection() {
                   </div>
 
                   {/* Category badge */}
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-kerala-green/10 text-kerala-green mb-1.5">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-kerala-green/10 text-kerala-green mb-1.5">
                     {catMeta?.emoji} {isMl ? catMeta?.nameMl : catMeta?.name.split(' ')[0]}
                   </span>
 
@@ -162,7 +163,7 @@ export default function ProfessionalsSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/professionals/register`}
+            href={`/professionals/register`}
             className="flex-shrink-0 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-6 py-3 rounded-xl transition-all"
           >
             {isMl ? 'പ്രൊഫൈൽ ചേർക്കൂ' : 'Add Your Profile'}

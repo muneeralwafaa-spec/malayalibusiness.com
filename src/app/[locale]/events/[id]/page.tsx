@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 import Footer from '@/components/layout/Footer'
 import {
   MapPin, Calendar, Clock, Users, Tag, Copy,
@@ -27,7 +28,9 @@ interface TimeLeft {
 
 function useCountdown(targetDate: string): TimeLeft {
   const calculate = (): TimeLeft => {
-    const diff = new Date(targetDate).getTime() - Date.now()
+    const ts = new Date(targetDate).getTime()
+    if (isNaN(ts)) return { days: 0, hours: 0, minutes: 0, seconds: 0, started: true }
+    const diff = ts - Date.now()
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, started: true }
     return {
       days: Math.floor(diff / 86400000),
@@ -91,9 +94,10 @@ export default function EventDetailPage() {
     })
   }, [id])
 
-  // Derived: combine event_date + event_time for countdown
-  const countdownTarget = event
-    ? `${event.event_date}T${event.event_time ?? '09:00'}`
+  // Derived: strip any time portion from event_date before combining
+  const rawDateStr = event?.event_date?.split('T')[0] ?? ''
+  const countdownTarget = rawDateStr
+    ? `${rawDateStr}T${(event?.event_time ?? '09:00').split('+')[0].split('.')[0]}`
     : new Date(Date.now() + 86400000).toISOString()
 
   const countdown = useCountdown(countdownTarget)
@@ -121,7 +125,7 @@ export default function EventDetailPage() {
           <p className="text-gray-500 mb-8">
             {isMl ? 'ഈ ഇവന്റ് നിലവിലില്ല.' : 'This event does not exist or has been removed.'}
           </p>
-          <Link href={`/${locale}/events`} className="inline-flex items-center gap-2 bg-kerala-green text-white px-6 py-3 rounded-xl font-semibold hover:bg-kerala-green/90 transition-colors">
+          <Link href={`/events`} className="inline-flex items-center gap-2 bg-kerala-green text-white px-6 py-3 rounded-xl font-semibold hover:bg-kerala-green/90 transition-colors">
             <ArrowLeft size={16} /> {isMl ? 'ഇവന്റുകൾ' : 'All Events'}
           </Link>
         </div>
@@ -139,13 +143,15 @@ export default function EventDetailPage() {
   const venue      = isMl ? (event.venue_ml ?? event.venue) : event.venue
   const emirate    = isMl ? (event.emirate_ml ?? event.emirate) : event.emirate
   const location   = `${emirate}, UAE`
-  const dateObj    = new Date(`${event.event_date}T${event.event_time ?? '00:00'}`)
-  const formattedDate = dateObj.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
-  const formattedTime = event.event_time
-    ? new Date(`2000-01-01T${event.event_time}`).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-    : null
+  const dateObj    = rawDateStr ? new Date(`${rawDateStr}T${(event.event_time ?? '00:00').split('+')[0].split('.')[0]}`) : null
+  const formattedDate = dateObj && !isNaN(dateObj.getTime())
+    ? dateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    : 'Date TBC'
+  const formattedTime = (() => {
+    if (!event.event_time) return null
+    const t = new Date(`2000-01-01T${event.event_time}`)
+    return isNaN(t.getTime()) ? null : t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  })()
 
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -204,7 +210,7 @@ export default function EventDetailPage() {
 
         {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <Link href={`/${locale}/events`} className="inline-flex items-center gap-1 text-white/70 hover:text-white text-sm mb-3 transition-colors">
+          <Link href={`/events`} className="inline-flex items-center gap-1 text-white/70 hover:text-white text-sm mb-3 transition-colors">
             <ArrowLeft size={14} /> {isMl ? 'ഇവന്റുകൾ' : 'All Events'}
           </Link>
           <h1 className="font-serif text-3xl md:text-4xl text-white font-bold leading-tight mb-2">
@@ -222,7 +228,7 @@ export default function EventDetailPage() {
 
       {/* ── Countdown ── */}
       <section className="bg-kerala-deep py-6">
-        {countdown.started ? (
+        {!rawDateStr ? null : countdown.started ? (
           <div className="text-center text-kerala-gold font-serif text-xl md:text-2xl py-2">
             {isMl ? 'ഇവന്റ് ആരംഭിച്ചു!' : 'Event has started!'}
           </div>
@@ -409,14 +415,7 @@ export default function EventDetailPage() {
                       <label className="text-xs text-gray-600 font-semibold block mb-1">
                         {isMl ? 'ഫോൺ' : 'Phone'} *
                       </label>
-                      <input
-                        type="tel"
-                        required
-                        value={regForm.phone}
-                        onChange={(e) => setRegForm((f) => ({ ...f, phone: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-kerala-green"
-                        placeholder="+971 50 000 0000"
-                      />
+                      <UAEPhoneInput value={regForm.phone} onChange={v => setRegForm(f => ({ ...f, phone: v }))} required />
                     </div>
                     {!isFree && (
                       <div>
@@ -486,7 +485,7 @@ export default function EventDetailPage() {
                   {relatedEvents.map((e) => (
                     <Link
                       key={e.id}
-                      href={`/${locale}/events/${e.id}`}
+                      href={`/events/${e.id}`}
                       className="flex gap-3 group"
                     >
                       <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">

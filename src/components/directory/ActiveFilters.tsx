@@ -98,7 +98,7 @@ export default function ActiveFilters({ filters, totalResults, onChange, onReset
         <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden">
           <button
             onClick={() => onChange({ view: 'grid' })}
-            className={`flex items-center justify-center w-9 h-9 transition-colors ${
+            className={`flex items-center justify-center w-10 h-10 transition-colors ${
               filters.view === 'grid'
                 ? 'bg-kerala-green text-white'
                 : 'text-gray-400 hover:text-kerala-green'
@@ -109,7 +109,7 @@ export default function ActiveFilters({ filters, totalResults, onChange, onReset
           </button>
           <button
             onClick={() => onChange({ view: 'list' })}
-            className={`flex items-center justify-center w-9 h-9 transition-colors ${
+            className={`flex items-center justify-center w-10 h-10 transition-colors ${
               filters.view === 'list'
                 ? 'bg-kerala-green text-white'
                 : 'text-gray-400 hover:text-kerala-green'

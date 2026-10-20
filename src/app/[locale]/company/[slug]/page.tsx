@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -103,7 +103,7 @@ export default function CompanyPage() {
     { key:'home', label:'Home', labelMl:'ഹോം' },
     { key:'about', label:'About', labelMl:'ഞങ്ങൾ' },
     { key:'services', label:'Services', labelMl:'സർവ്വീസ്' },
-    { key:'shop', label:'Shop', labelMl:'ഷോപ്പ്' },
+    // Phase 2: { key:'shop', label:'Shop', labelMl:'ഷോപ്പ്' },
     { key:'gallery', label:'Gallery', labelMl:'ഗാലറി' },
     { key:'reviews', label:'Reviews', labelMl:'റിവ്യൂ' },
     { key:'contact', label:'Contact', labelMl:'ബന്ധം' },
@@ -133,7 +133,7 @@ export default function CompanyPage() {
           <p className="text-gray-500 mb-6">
             {isMl ? 'ഈ ബിസിനസ് ലഭ്യമല്ല അല്ലെങ്കിൽ നീക്കം ചെയ്തു.' : 'This business is not available or has been removed.'}
           </p>
-          <Link href={`/${locale}/directory`} className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green-light transition-all text-sm">
+          <Link href={`/directory`} className="bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green-light transition-all text-sm">
             {isMl ? 'ഡയറക്ടറിയിലേക്ക്' : 'Back to Directory'}
           </Link>
         </div>
@@ -147,7 +147,7 @@ export default function CompanyPage() {
       <Navbar />
 
       {/* Cover Banner */}
-      <div className="relative w-full h-72 md:h-96 mt-16">
+      <div className="relative w-full h-48 sm:h-72 md:h-96 mt-16">
         <Image src={business.image || 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80&auto=format&fit=crop'} alt={business.name} fill className="object-cover" priority sizes="100vw" onError={(e)=>{ (e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80&auto=format&fit=crop' }} />
         <div className="absolute inset-0 bg-gradient-to-t from-kerala-deep/85 via-kerala-deep/30 to-transparent" />
         <div className="absolute top-4 left-4 flex gap-2">
@@ -180,7 +180,7 @@ export default function CompanyPage() {
       </div>
 
       {/* Sticky Tabs */}
-      <div className="sticky top-16 z-30 bg-white border-b border-gray-100 shadow-sm">
+      <div className="sticky top-[56px] lg:top-16 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 overflow-x-auto">
           <div className="flex min-w-max">
             {tabs.map(tab=>(
@@ -224,18 +224,25 @@ export default function CompanyPage() {
             </div>
             <div className="space-y-5">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-3"><Clock size={16} className="text-kerala-green"/><h3 className="font-semibold text-kerala-deep text-sm">{isMl?'സമയം':'Hours'}</h3></div>
-                <div className="space-y-1.5">
-                  {[['Mon–Fri','Mon–Fri'],['Saturday','ശനി'],['Sunday','ഞായർ']].map(([en,ml],i)=>(
-                    <div key={en} className="flex justify-between text-xs">
-                      <span className="text-gray-500">{isMl?ml:en}</span>
-                      <span className="font-medium text-kerala-deep">{i<2?business.hours:(isMl?'അടഞ്ഞ്':'Closed')}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className={`mt-3 text-center text-xs font-bold py-1.5 rounded-lg ${business.open?'bg-kerala-green/10 text-kerala-green':'bg-red-50 text-red-600'}`}>
-                  {business.open?(isMl?'ഇപ്പോൾ തുറന്ന്':'Open Now'):(isMl?'ഇപ്പോൾ അടഞ്ഞ്':'Closed Now')}
-                </div>
+                <div className="flex items-center gap-2 mb-3"><Clock size={16} className="text-kerala-green"/><h3 className="font-semibold text-kerala-deep text-sm">{isMl?'സമയം':'Working Hours'}</h3></div>
+                {business.working_hours && Object.keys(business.working_hours).length > 0 ? (
+                  <div className="space-y-1.5">
+                    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(day => {
+                      const h = business.working_hours[day]
+                      if (!h) return null
+                      return (
+                        <div key={day} className="flex justify-between text-xs">
+                          <span className="text-gray-500">{day.slice(0,3)}</span>
+                          <span className={`font-medium ${h.closed ? 'text-red-500' : 'text-kerala-deep'}`}>
+                            {h.closed ? (isMl?'അടഞ്ഞ്':'Closed') : `${h.open} – ${h.close}`}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">{isMl?'സമയം ലഭ്യമല്ല':'Hours not specified'}</p>
+                )}
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
                 {[
@@ -536,7 +543,7 @@ export default function CompanyPage() {
             )}
             {lightbox && (
               <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={()=>setLightbox(null)}>
-                <button className="absolute top-4 right-4 text-white bg-white/20 rounded-full p-2"><X size={20}/></button>
+                <button className="absolute top-4 right-4 text-white bg-white/20 rounded-full p-3"><X size={20}/></button>
                 <div className="relative w-full max-w-3xl aspect-video" onClick={e=>e.stopPropagation()}>
                   <Image src={lightbox} alt="Gallery" fill className="object-contain" sizes="900px"/>
                 </div>
@@ -575,8 +582,22 @@ export default function CompanyPage() {
                 ))}
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                  <div className="text-center px-4"><MapPin size={32} className="text-kerala-green mx-auto mb-2"/><p className="text-xs text-gray-600 font-medium">{business.address}</p><a href={`https://maps.google.com/?q=${encodeURIComponent(business.address)}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 bg-kerala-green text-white text-xs font-bold px-4 py-2 rounded-full"><MapPin size={12}/>Google Maps</a></div>
+                {business.address ? (
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(business.address)}&output=embed`}
+                    width="100%" height="220" style={{border:0}} allowFullScreen loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade" className="w-full"
+                  />
+                ) : (
+                  <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <div className="text-center px-4"><MapPin size={32} className="text-kerala-green mx-auto mb-2"/><p className="text-xs text-gray-400 text-sm">No address added</p></div>
+                  </div>
+                )}
+                <div className="p-3">
+                  <a href={business.google_map_url || `https://maps.google.com/?q=${encodeURIComponent(business.address || business.name)}`} target="_blank" rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 bg-kerala-green text-white text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
+                    <MapPin size={12}/> Open in Google Maps
+                  </a>
                 </div>
               </div>
             </div>
@@ -594,7 +615,25 @@ export default function CompanyPage() {
                     <div key={k}><label className="text-xs text-gray-500 font-medium mb-1 block capitalize">{k}</label><input value={enquiryForm[k]} onChange={e=>setEnquiryForm(prev=>({...prev,[k]:e.target.value}))} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green"/></div>
                   ))}
                   <div><label className="text-xs text-gray-500 font-medium mb-1 block">{isMl?'സന്ദേശം':'Message'}</label><textarea value={enquiryForm.message} onChange={e=>setEnquiryForm(f=>({...f,message:e.target.value}))} rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-kerala-green resize-none"/></div>
-                  <button onClick={()=>setEnquirySubmitted(true)} className="w-full bg-kerala-green hover:bg-kerala-green-light text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition-all"><Send size={16}/>{isMl?'അയക്കൂ':'Send Message'}</button>
+                  <button onClick={async () => {
+                    if (!enquiryForm.name || !enquiryForm.message) return
+                    setEnquirySubmitted(true)
+                    if (business.email) {
+                      fetch('/api/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          type: 'new_enquiry',
+                          to: business.email,
+                          businessName: business.name,
+                          senderName: enquiryForm.name,
+                          senderEmail: enquiryForm.email,
+                          senderPhone: enquiryForm.phone,
+                          message: enquiryForm.message,
+                        }),
+                      }).catch(console.error)
+                    }
+                  }} className="w-full bg-kerala-green hover:bg-kerala-green-light text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition-all"><Send size={16}/>{isMl?'അയക്കൂ':'Send Message'}</button>
                   <a href={`https://wa.me/${(business.whatsapp||business.phone).replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition-all block text-center"><MessageCircle size={16}/> WhatsApp</a>
                 </div>
               )}

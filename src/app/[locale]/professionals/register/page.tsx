@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -49,10 +49,10 @@ export default function ProfessionalRegisterPage() {
               : 'Our team will review your profile within 24–48 hours. You\'ll receive a confirmation email once it goes live.'}
           </p>
           <div className="flex flex-col gap-3">
-            <Link href={`/${locale}/professionals`} className="w-full bg-kerala-green text-white font-semibold py-3 rounded-xl hover:bg-kerala-deep transition-colors text-center">
+            <Link href={`/professionals`} className="w-full bg-kerala-green text-white font-semibold py-3 rounded-xl hover:bg-kerala-deep transition-colors text-center">
               {isMl ? 'ഡയറക്ടറി കാണൂ' : 'Browse Directory'}
             </Link>
-            <Link href={`/${locale}/dashboard`} className="w-full border border-gray-200 text-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-center text-sm">
+            <Link href={`/dashboard`} className="w-full border border-gray-200 text-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-center text-sm">
               {isMl ? 'ഡാഷ്ബോർഡ്' : 'Go to Dashboard'}
             </Link>
           </div>
@@ -69,7 +69,7 @@ export default function ProfessionalRegisterPage() {
       {/* Header */}
       <div className="bg-kerala-deep pt-24 pb-10 px-4">
         <div className="max-w-3xl mx-auto">
-          <Link href={`/${locale}/professionals`} className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4">
+          <Link href={`/professionals`} className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4">
             <ArrowLeft size={14} /> {isMl ? 'തിരിച്ചു' : 'Back'}
           </Link>
           <h1 className="font-serif text-3xl font-bold text-white mb-2">

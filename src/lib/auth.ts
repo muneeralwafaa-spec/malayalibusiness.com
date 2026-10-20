@@ -109,11 +109,11 @@ export async function getMyListings(ownerId: string) {
   const { data, error } = await supabase
     .from('listings')
     .select(`
-      id, slug, name, name_ml, description, logo_url, cover_url,
-      emirate, area, phone, whatsapp, website, email,
+      id, slug, name, name_ml, tagline, description, logo_url, cover_url,
+      emirate, area, address, phone, whatsapp, website, email,
       plan, status, is_featured, is_verified,
       rating_avg, review_count, views_count,
-      category_id, created_at,
+      category_id, created_at, services, google_map_url,
       categories ( name, name_ml, slug )
     `)
     .eq('owner_id', ownerId)
@@ -125,15 +125,10 @@ export async function getMyListings(ownerId: string) {
 
 // ── Admin helpers ─────────────────────────────────────────────────────────────
 
-export async function adminGetListings(status?: string, limit = 50) {
+export async function adminGetListings(status?: string, limit = 500) {
   let q = supabase
     .from('listings')
-    .select(`
-      id, slug, name, plan, status, is_featured, is_verified,
-      rating_avg, review_count, views_count, emirate, created_at,
-      profiles ( full_name, email ),
-      categories ( name )
-    `)
+    .select('id, slug, name, plan, status, is_featured, is_verified, rating_avg, review_count, views_count, emirate, owner_id, created_at')
     .order('created_at', { ascending: false })
     .limit(limit)
 
@@ -169,7 +164,7 @@ export async function adminGetStats() {
   }
 }
 
-export async function adminGetUsers(limit = 50) {
+export async function adminGetUsers(limit = 500) {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email, full_name, avatar_url, is_admin, is_business_owner, is_verified, created_at, preferred_locale')

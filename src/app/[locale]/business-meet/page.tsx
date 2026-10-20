@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@supabase/supabase-js'
 import {
@@ -458,12 +459,7 @@ export default function BusinessMeetPage() {
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="tel" value={form.phone} onChange={set('phone')}
-                      placeholder="+971 50 000 0000"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300"
-                      required
-                    />
+                    <UAEPhoneInput value={form.phone} onChange={v => { const e = { target: { value: v } } as any; set('phone')(e) }} required />
                   </div>
 
                   <div>
@@ -471,11 +467,7 @@ export default function BusinessMeetPage() {
                       WhatsApp Number
                       <span className="text-gray-400 font-normal ml-1">(if different)</span>
                     </label>
-                    <input
-                      type="tel" value={form.whatsapp} onChange={set('whatsapp')}
-                      placeholder="Leave blank if same as phone"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300"
-                    />
+                    <UAEPhoneInput value={form.whatsapp} onChange={v => { const e = { target: { value: v } } as any; set('whatsapp')(e) }} />
                   </div>
 
                   <div className="sm:col-span-2">

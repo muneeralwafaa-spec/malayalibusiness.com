@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -88,7 +88,7 @@ export default function ArticlePage() {
           <div className="text-6xl mb-4">📰</div>
           <h1 className="font-serif text-2xl font-bold text-kerala-deep mb-2">Article Not Found</h1>
           <p className="text-gray-500 mb-6">This article may have been removed or is unavailable.</p>
-          <Link href={`/${locale}/community`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm">
+          <Link href={`/community`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm">
             Back to Community
           </Link>
         </div>
@@ -134,7 +134,7 @@ export default function ArticlePage() {
           <nav className="flex items-center gap-1.5 text-xs text-gray-400 py-4 flex-wrap">
             <Link href={`/${locale}`} className="hover:text-kerala-green">{isMl ? 'ഹോം' : 'Home'}</Link>
             <ChevronRight size={12} />
-            <Link href={`/${locale}/community`} className="hover:text-kerala-green">{isMl ? 'കമ്മ്യൂണിറ്റി' : 'Community'}</Link>
+            <Link href={`/community`} className="hover:text-kerala-green">{isMl ? 'കമ്മ്യൂണിറ്റി' : 'Community'}</Link>
             <ChevronRight size={12} />
             <span className="text-kerala-deep font-medium line-clamp-1">{isMl ? (post.title_ml ?? post.title) : post.title}</span>
           </nav>
@@ -194,7 +194,7 @@ export default function ArticlePage() {
                 {post.tags.map(tag => (
                   <Link
                     key={tag}
-                    href={`/${locale}/community?tag=${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/community?tag=${tag.toLowerCase().replace(/\s+/g, '-')}`}
                     className="text-sm px-3 py-1 bg-kerala-cream text-gray-600 rounded-full hover:bg-kerala-green hover:text-white transition-colors"
                   >
                     {tag}
@@ -339,7 +339,7 @@ export default function ArticlePage() {
                     {related.map(ra => (
                       <Link
                         key={ra.slug}
-                        href={`/${locale}/community/${ra.slug}`}
+                        href={`/community/${ra.slug}`}
                         className="flex gap-3 group"
                       >
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
@@ -361,7 +361,7 @@ export default function ArticlePage() {
 
               {/* Back to community */}
               <Link
-                href={`/${locale}/community`}
+                href={`/community`}
                 className="flex items-center gap-2 text-kerala-green hover:text-kerala-green-light font-semibold text-sm"
               >
                 <ArrowLeft size={16} />

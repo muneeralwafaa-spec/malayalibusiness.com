@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -80,7 +81,7 @@ export default function EventsSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/events`}
+            href={`/events`}
             className="flex items-center gap-2 border border-kerala-green text-kerala-green hover:bg-kerala-green hover:text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാ ഇവന്റുകളും' : 'View All Events'}
@@ -88,18 +89,18 @@ export default function EventsSection() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {/* Featured big card */}
           <Link
-            href={`/${locale}/events/${main.id}`}
+            href={`/events/${main.id}`}
             className="group lg:col-span-3 relative overflow-hidden rounded-3xl h-72 lg:h-auto card-hover"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={main.image_url || FALLBACK}
               alt={isMl ? (main.title_ml ?? main.title) : main.title}
-              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 300px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             <div className="absolute top-4 left-4 flex gap-2">
@@ -151,16 +152,16 @@ export default function EventsSection() {
             {rest.slice(0, 4).map((event) => (
               <Link
                 key={event.id}
-                href={`/${locale}/events/${event.id}`}
+                href={`/events/${event.id}`}
                 className="group flex gap-4 bg-kerala-cream hover:bg-white rounded-2xl overflow-hidden p-3 card-hover border border-transparent hover:border-gray-100"
               >
                 <div className="relative w-24 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={event.image_url || FALLBACK}
                     alt={isMl ? (event.title_ml ?? event.title) : event.title}
-                    onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 300px"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

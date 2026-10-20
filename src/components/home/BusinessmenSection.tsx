@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -40,12 +41,14 @@ function Avatar({ name, avatarUrl, size = 192 }: { name: string; avatarUrl: stri
     )
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={avatarUrl}
       alt={name}
+      width={56}
+      height={56}
       onError={() => setFailed(true)}
-      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+      className="object-cover w-full h-full"
+      style={{ objectPosition: 'top' }}
     />
   )
 }
@@ -103,7 +106,7 @@ export default function BusinessmenSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/businessmen`}
+            href={`/businessmen`}
             className="flex items-center gap-2 text-kerala-green hover:text-kerala-green-light font-semibold text-sm transition-colors group"
           >
             {isMl ? 'എല്ലാവരെയും കാണൂ' : 'View All Leaders'}
@@ -116,7 +119,7 @@ export default function BusinessmenSection() {
           {profiles.map((person) => (
             <Link
               key={person.id}
-              href={person.id.startsWith('p') ? `/${locale}/businessmen` : `/${locale}/owner/${person.id}`}
+              href={person.id.startsWith('p') ? `/businessmen` : `/owner/${person.id}`}
               className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-kerala-green/20 transition-all duration-300"
             >
               <div className="relative h-48 overflow-hidden">
@@ -165,10 +168,10 @@ export default function BusinessmenSection() {
             </div>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href={`/${locale}/businessmen`} className="bg-kerala-green text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-kerala-green-light transition-colors">
+            <Link href={`/businessmen`} className="bg-kerala-green text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-kerala-green-light transition-colors">
               {isMl ? 'എല്ലാ ലീഡർമാർ' : 'Browse All Leaders'}
             </Link>
-            <Link href={`/${locale}/auth`} className="border border-kerala-green text-kerala-green px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-kerala-green/5 transition-colors">
+            <Link href={`/auth`} className="border border-kerala-green text-kerala-green px-5 py-3 rounded-xl text-sm font-bold hover:bg-kerala-green/5 transition-colors">
               {isMl ? 'നിങ്ങളുടെ പ്രൊഫൈൽ ചേർക്കൂ' : 'Add Your Profile'}
             </Link>
           </div>

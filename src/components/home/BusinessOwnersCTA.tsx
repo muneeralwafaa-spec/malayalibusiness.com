@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -57,7 +57,7 @@ export default function BusinessOwnersCTA() {
               {isMl ? 'ബിസിനസ് ഉടമകൾക്ക്' : 'For Business Owners'}
             </div>
 
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">
               {isMl ? (
                 <>ഞങ്ങളോടൊപ്പം നിങ്ങളുടെ <span className="text-kerala-gold-light">ബിസിനസ്</span> വളർത്തൂ</>
               ) : (
@@ -88,14 +88,14 @@ export default function BusinessOwnersCTA() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href={`/${locale}/dashboard`}
+                href={`/dashboard`}
                 className="flex items-center justify-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-8 py-4 rounded-xl transition-all duration-200 text-base"
               >
                 {isMl ? 'സൗജന്യമായി ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Business Free'}
                 <ArrowRight size={18} />
               </Link>
               <Link
-                href={`/${locale}/auth`}
+                href={`/auth`}
                 className="flex items-center justify-center gap-2 border border-white/30 hover:border-white/60 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-200 text-base"
               >
                 {isMl ? 'ബിസിനസ് ഓണർ ലോഗിൻ' : 'Business Owner Login'}
@@ -136,12 +136,12 @@ export default function BusinessOwnersCTA() {
             </div>
 
             {/* Floating stat cards */}
-            <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 min-w-[160px]">
+            <div className="hidden sm:block absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 min-w-[160px]">
               <div className="text-kerala-green font-bold text-2xl font-serif">+342%</div>
               <div className="text-gray-500 text-xs mt-1">Avg. monthly views increase</div>
             </div>
 
-            <div className="absolute -bottom-4 -left-4 bg-kerala-gold rounded-2xl shadow-xl p-4 min-w-[160px]">
+            <div className="hidden sm:block absolute -bottom-4 -left-4 bg-kerala-gold rounded-2xl shadow-xl p-4 min-w-[160px]">
               <div className="text-white font-bold text-2xl font-serif">AED 0</div>
               <div className="text-white/80 text-xs mt-1">To list your business</div>
             </div>

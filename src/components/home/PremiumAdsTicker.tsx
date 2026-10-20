@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
@@ -81,7 +81,7 @@ export default function PremiumAdsTicker() {
         </div>
         <div className="h-px bg-white/10 flex-1" />
         <Link
-          href={`/${locale}/dashboard`}
+          href={`/dashboard`}
           className="text-kerala-gold-light hover:text-kerala-gold text-xs font-medium flex-shrink-0 transition-colors"
         >
           {isMl ? 'ഇവിടെ പരസ്യം ചെയ്യൂ →' : 'Advertise Here →'}

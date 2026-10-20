@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
@@ -8,9 +8,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { getEvents } from '@/lib/events'
 import type { MalayaliEvent } from '@/lib/events'
+import { supabase } from '@/lib/supabase'
 import {
   Search, MapPin, Calendar, Clock, Users, Filter, ChevronDown,
-  Star, Ticket, ArrowRight, X, Tag
+  Star, Ticket, ArrowRight, X, Tag, CheckCircle, Loader2
 } from 'lucide-react'
 
 // ─── Mock events removed — data now comes from Supabase via useEffect ───────
@@ -141,7 +142,7 @@ function EventCard({ event, isMl }: { event: MalayaliEvent; isMl: boolean }) {
                   : (isMl ? 'ടിക്കറ്റ് വാങ്ങൂ' : 'Get Tickets')}
             </button>
             <Link
-              href={`/${locale}/events/${event.id}`}
+              href={`/events/${event.id}`}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-kerala-green hover:text-kerala-green transition-all"
             >
               {isMl ? 'വിവരം' : 'Details'}
@@ -227,6 +228,134 @@ function FeaturedEventBanner({ event, isMl }: { event: MalayaliEvent; isMl: bool
   )
 }
 
+const EMIRATE_LIST = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain']
+const EVENT_CATS = ['cultural', 'networking', 'food', 'business', 'sports', 'education']
+
+function SubmitEventModal({ isMl, onClose }: { isMl: boolean; onClose: () => void }) {
+  const [form, setForm] = useState({
+    title: '', organizer: '', contact_email: '', contact_phone: '',
+    event_date: '', event_time: '', venue: '', emirate: 'Dubai',
+    category: 'cultural', price: '', capacity: '', description: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [done, setDone] = useState(false)
+  const [err, setErr] = useState('')
+
+  const handleSubmit = async () => {
+    if (!form.title || !form.event_date || !form.emirate || !form.contact_email) {
+      setErr('Please fill Title, Date, Emirate and Contact Email.'); return
+    }
+    setSaving(true); setErr('')
+    const { error } = await supabase.from('event_submissions').insert({
+      title: form.title,
+      organizer: form.organizer || null,
+      contact_email: form.contact_email,
+      contact_phone: form.contact_phone || null,
+      event_date: form.event_date,
+      event_time: form.event_time || null,
+      venue: form.venue || null,
+      emirate: form.emirate,
+      category: form.category,
+      price: form.price ? Number(form.price) : null,
+      capacity: form.capacity ? Number(form.capacity) : null,
+      description: form.description || null,
+      status: 'pending',
+    })
+    setSaving(false)
+    if (error) { setErr('Submission failed: ' + error.message); return }
+    setDone(true)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 pb-0">
+          <h3 className="font-serif font-bold text-kerala-deep text-xl">{isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Your Event'}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={22}/></button>
+        </div>
+        {done ? (
+          <div className="p-8 text-center">
+            <CheckCircle size={48} className="text-kerala-green mx-auto mb-3"/>
+            <p className="font-bold text-kerala-deep text-lg mb-1">{isMl ? 'നന്ദി!' : 'Submitted Successfully!'}</p>
+            <p className="text-gray-500 text-sm mb-4">{isMl ? 'ഞങ്ങൾ ഉടൻ നിങ്ങളെ ബന്ധപ്പെടും.' : 'Our team will review and contact you shortly.'}</p>
+            <button onClick={onClose} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90">{isMl ? 'അടയ്ക്കൂ' : 'Close'}</button>
+          </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഇവന്റ് തലക്കെട്ട്' : 'Event Title'} *</label>
+              <input type="text" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} placeholder="e.g. Kerala Business Summit 2026" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'സംഘടകൻ' : 'Organizer'}</label>
+                <input type="text" value={form.organizer} onChange={e => setForm(f => ({...f, organizer: e.target.value}))} placeholder="Organization name" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വിഭാഗം' : 'Category'}</label>
+                <select value={form.category} onChange={e => setForm(f => ({...f, category: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 capitalize">
+                  {EVENT_CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'തീയതി' : 'Event Date'} *</label>
+                <input type="date" value={form.event_date} onChange={e => setForm(f => ({...f, event_date: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'സമയം' : 'Start Time'}</label>
+                <input type="time" value={form.event_time} onChange={e => setForm(f => ({...f, event_time: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'എമിറേറ്റ്' : 'Emirate'} *</label>
+                <select value={form.emirate} onChange={e => setForm(f => ({...f, emirate: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50">
+                  {EMIRATE_LIST.map(e => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'സ്ഥലം' : 'Venue'}</label>
+                <input type="text" value={form.venue} onChange={e => setForm(f => ({...f, venue: e.target.value}))} placeholder="Hall / Building name" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ടിക്കറ്റ് വില (AED)' : 'Ticket Price (AED)'}</label>
+                <input type="number" value={form.price} onChange={e => setForm(f => ({...f, price: e.target.value}))} placeholder="0 = Free" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഇടം' : 'Capacity'}</label>
+                <input type="number" value={form.capacity} onChange={e => setForm(f => ({...f, capacity: e.target.value}))} placeholder="Max attendees" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'കോൺടാക്ട് ഇ-മെയിൽ' : 'Contact Email'} *</label>
+              <input type="email" value={form.contact_email} onChange={e => setForm(f => ({...f, contact_email: e.target.value}))} placeholder="your@email.com" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഫോൺ' : 'Contact Phone'}</label>
+              <input type="tel" value={form.contact_phone} onChange={e => setForm(f => ({...f, contact_phone: e.target.value}))} placeholder="+971..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50"/>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഇവന്റ് വിവരണം' : 'Description'}</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} rows={3} placeholder={isMl ? 'ഇവന്റ് കുറിച്ച് വിവരിക്കൂ...' : 'Tell us about your event...'} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none"/>
+            </div>
+            {err && <p className="text-red-500 text-xs">{err}</p>}
+            <div className="flex gap-3 pt-1">
+              <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">{isMl ? 'റദ്ദാക്കൂ' : 'Cancel'}</button>
+              <button onClick={handleSubmit} disabled={saving} className="flex-1 px-4 py-2.5 bg-kerala-gold text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2">
+                {saving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'അയക്കുന്നു...' : 'Submitting...'}</> : (isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Event')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function EventsPage() {
   const locale = useLocale()
   const isMl = locale === 'ml'
@@ -237,6 +366,7 @@ export default function EventsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [allEvents, setAllEvents] = useState<MalayaliEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [showSubmit, setShowSubmit] = useState(false)
 
   useEffect(() => {
     getEvents({ limit: 100 }).then(items => { setAllEvents(items); setLoading(false) })
@@ -293,7 +423,7 @@ export default function EventsPage() {
                   : 'Discover Malayali events across the UAE'}
               </p>
             </div>
-            <Link href={`/${locale}/events/new`} className="self-start sm:self-auto flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
+            <Link href={`/events/new`} className="self-start sm:self-auto flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
               <Calendar size={16} />
               {isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Event'}
             </Link>
@@ -457,18 +587,18 @@ export default function EventsPage() {
                   : 'Promote your event to 15,000+ Malayali community members across the UAE'}
               </p>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button className="flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg whitespace-nowrap">
-                <Calendar size={16} />
-                {isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Your Event'}
-              </button>
-              <button className="flex items-center gap-2 border border-white/30 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-white/10 transition-all whitespace-nowrap">
-                {isMl ? 'കൂടുതൽ അറിയൂ' : 'Learn More'}
-                <ArrowRight size={14} />
-              </button>
-            </div>
+            <button
+              onClick={() => setShowSubmit(true)}
+              className="flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg whitespace-nowrap flex-shrink-0"
+            >
+              <Calendar size={16} />
+              {isMl ? 'ഇവന്റ് ചേർക്കൂ' : 'Submit Your Event'}
+            </button>
           </div>
         </div>
+
+        {/* Submit Event Modal */}
+        {showSubmit && <SubmitEventModal isMl={isMl} onClose={() => setShowSubmit(false)} />}
       </div>
 
       <Footer />

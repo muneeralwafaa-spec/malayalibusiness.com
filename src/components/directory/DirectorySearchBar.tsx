@@ -118,7 +118,7 @@ export default function DirectorySearchBar({ filters, onSearch, onCategoryChange
           {/* Search Button */}
           <button
             onClick={() => onSearch(query)}
-            className="bg-kerala-green hover:bg-kerala-green-light text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm flex items-center gap-2 flex-shrink-0"
+            className="bg-kerala-green hover:bg-kerala-green-light text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm flex items-center gap-2 flex-shrink-0"
           >
             <Search size={15} />
             <span className="hidden sm:inline">{isMl ? 'തിരയൂ' : 'Search'}</span>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -9,18 +9,29 @@ import { useLocale } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 
 const categories: { label: string; slug: string }[] = [
-  { label: 'All Categories', slug: '' },
-  { label: 'Restaurants',    slug: 'restaurants' },
-  { label: 'Real Estate',    slug: 'real-estate' },
-  { label: 'Healthcare',     slug: 'healthcare' },
-  { label: 'Education',      slug: 'education' },
-  { label: 'Finance',        slug: 'finance' },
-  { label: 'Retail',         slug: 'retail' },
-  { label: 'Travel',         slug: 'travel' },
-  { label: 'Beauty',         slug: 'beauty' },
-  { label: 'Technology',     slug: 'technology' },
-  { label: 'Legal',          slug: 'legal' },
-  { label: 'Construction',   slug: 'construction' },
+  { label: 'All Categories',    slug: '' },
+  { label: 'Restaurants',       slug: 'restaurants-food' },
+  { label: 'Catering',          slug: 'catering-bakery' },
+  { label: 'Grocery',           slug: 'grocery-supermarket' },
+  { label: 'Clinics',           slug: 'healthcare-medical' },
+  { label: 'Pharmacy',          slug: 'pharmacy' },
+  { label: 'Real Estate',       slug: 'real-estate' },
+  { label: 'Business Setup',    slug: 'business-setup' },
+  { label: 'Audit & Accounts',  slug: 'audit-accounting' },
+  { label: 'Legal & Finance',   slug: 'legal-finance' },
+  { label: 'Money Exchange',    slug: 'money-exchange' },
+  { label: 'Manpower',          slug: 'manpower-recruitment' },
+  { label: 'Events',            slug: 'events-entertainment' },
+  { label: 'Beauty',            slug: 'beauty-wellness' },
+  { label: 'Cleaning',          slug: 'cleaning-services' },
+  { label: 'Technical',         slug: 'technical-services' },
+  { label: 'Construction',      slug: 'construction-interiors' },
+  { label: 'Technology',        slug: 'technology-it' },
+  { label: 'Education',         slug: 'education-training' },
+  { label: 'Travel',            slug: 'travel-tourism' },
+  { label: 'Cargo',             slug: 'cargo-logistics' },
+  { label: 'Automotive',        slug: 'automotive' },
+  { label: 'Retail',            slug: 'retail-fashion' },
 ]
 
 type StatItem = { icon: React.ElementType; value: string; label: string; labelMl: string }
@@ -72,7 +83,7 @@ export default function Hero() {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
     if (selectedCat.slug) params.set('category', selectedCat.slug)
-    router.push(`/${locale}/directory?${params.toString()}`)
+    router.push(`/directory?${params.toString()}`)
   }
 
   return (
@@ -97,30 +108,30 @@ export default function Hero() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-kerala-gold/20 border border-kerala-gold/40 text-kerala-gold-light text-sm font-medium px-4 py-1.5 rounded-full mb-6 backdrop-blur-sm">
           <Star size={14} className="fill-current" />
-          {isMl ? 'യുഎഇയിലെ നമ്പർ 1 മലയാളി ബിസിനസ് നെറ്റ്‌വർക്ക്' : "UAE's #1 Malayali Business Network"}
+          {isMl ? 'ലോകത്തിലെ ആദ്യ AI-പവർഡ് മലയാളി മാർക്കറ്റ്‌പ്ലേസ്' : "World's First AI-Powered Malayali Marketplace"}
         </div>
 
         {/* Headline */}
         <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white text-center leading-tight max-w-4xl mb-3">
           {isMl ? (
             <>
-              യുഎഇയിലെ <span className="text-kerala-gold-light">എല്ലാ</span>
+              <span className="text-kerala-gold-light">മലയാളി</span> ബിസിനസ്
               <br />
-              <span className="text-kerala-gold-light">മലയാളി</span> ബിസിനസുകളും
+              AI-യുടെ <span className="text-kerala-gold-light">ശക്തിയോടെ</span>
             </>
           ) : (
             <>
-              Find Every <span className="text-kerala-gold-light">Malayali</span>
+              The <span className="text-kerala-gold-light">Malayali</span> Marketplace
               <br />
-              Business in the <span className="text-kerala-gold-light">UAE</span>
+              Powered by <span className="text-kerala-gold-light">AI</span>
             </>
           )}
         </h1>
 
         <p className="text-white/75 text-lg md:text-xl text-center max-w-2xl mb-10 font-light">
           {isMl
-            ? 'ദുബായ്, അബുദാബി, ഷാർജ, മറ്റ് 7 എമിറേറ്റുകളിലെ മലയാളി ബിസിനസ്സുകൾ കണ്ടെത്തൂ'
-            : 'Discover and connect with Malayali businesses across all 7 Emirates of the UAE'}
+            ? 'ദുബായ്, അബുദാബി, ഷാർജ, മറ്റ് 7 എമിറേറ്റുകളിലെ മലയാളി ബിസിനസ്സുകൾ AI-യുടെ സഹായത്തോടെ കണ്ടെത്തൂ'
+            : 'Find, connect and grow with Malayali businesses across all 7 Emirates — now with AI assistance'}
         </p>
 
         {/* Search Box */}
@@ -182,11 +193,11 @@ export default function Hero() {
           {/* Quick Links */}
           <div className="flex flex-wrap gap-2 justify-center mt-4">
             {[
-              { label: 'Restaurants', labelMl: 'റസ്റ്റോറന്റ്',  href: `/${locale}/directory?category=restaurants` },
-              { label: 'Real Estate', labelMl: 'റിയൽ എസ്റ്റേറ്റ്', href: `/${locale}/directory?category=real-estate` },
-              { label: 'Healthcare',  labelMl: 'ആരോഗ്യം',       href: `/${locale}/directory?category=healthcare` },
-              { label: 'Jobs',        labelMl: 'ജോലി',          href: `/${locale}/jobs` },
-              { label: 'Events',      labelMl: 'ഇവന്റ്',        href: `/${locale}/events` },
+              { label: 'Restaurants', labelMl: 'റസ്റ്റോറന്റ്',  href: `/directory?category=restaurants-food` },
+              { label: 'Real Estate', labelMl: 'റിയൽ എസ്റ്റേറ്റ്', href: `/directory?category=real-estate` },
+              { label: 'Healthcare',  labelMl: 'ആരോഗ്യം',       href: `/directory?category=healthcare-medical` },
+              { label: 'Jobs',        labelMl: 'ജോലി',          href: `/jobs` },
+              { label: 'Events',      labelMl: 'ഇവന്റ്',        href: `/events` },
             ].map((q) => (
               <Link
                 key={q.label}

@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -73,7 +74,7 @@ export default function BlogSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/community`}
+            href={`/community`}
             className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:border-kerala-red hover:text-kerala-red font-semibold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാ ലേഖനങ്ങളും' : 'Read All Articles'}
@@ -81,18 +82,18 @@ export default function BlogSection() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {/* Featured large post */}
           <Link
-            href={`/${locale}/community/${featured.slug}`}
+            href={`/community/${featured.slug}`}
             className="group lg:col-span-3 relative overflow-hidden rounded-3xl h-72 lg:h-auto card-hover min-h-[380px]"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={featured.image_url || FALLBACK}
               alt={isMl ? (featured.title_ml ?? featured.title) : featured.title}
-              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             <div className="absolute top-4 left-4">
@@ -127,16 +128,16 @@ export default function BlogSection() {
             {others.slice(0, 3).map((post) => (
               <Link
                 key={post.id}
-                href={`/${locale}/community/${post.slug}`}
+                href={`/community/${post.slug}`}
                 className="group flex gap-4 card-hover"
               >
                 <div className="relative w-28 h-24 rounded-xl overflow-hidden flex-shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={post.image_url || FALLBACK}
                     alt={isMl ? (post.title_ml ?? post.title) : post.title}
-                    onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK }}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -33,7 +33,7 @@ const LISTING_SELECT = `
   plan, is_featured, is_verified,
   rating_avg, review_count, views_count, created_at,
   gallery_urls, services, languages,
-  category_id
+  category_id, google_map_url, working_hours
 ` as const
 
 // ── Resolve category slug → ID (cached per session, never caches null) ────────
@@ -42,11 +42,18 @@ const _catIdCache: Record<string, string> = {}
 
 async function resolveCategoryId(slug: string): Promise<string | null> {
   if (_catIdCache[slug]) return _catIdCache[slug]
-  const { data, error } = await supabase.from('categories').select('id').eq('slug', slug).maybeSingle()
-  console.log('[resolveCategoryId]', slug, '→', data?.id ?? null, error?.message ?? 'ok')
+  // 1. Exact slug match
+  const { data, error } = await supabase.from('categories').select('id, slug').eq('slug', slug).maybeSingle()
   if (error) console.error('[resolveCategoryId] ERROR', slug, error.message)
-  if (data?.id) _catIdCache[slug] = data.id  // only cache on success
-  return data?.id ?? null
+  if (data?.id) { _catIdCache[slug] = data.id; return data.id }
+  // 2. Prefix match — e.g. "restaurants" matches "restaurants-food"
+  const { data: fuzzy } = await supabase.from('categories').select('id, slug').ilike('slug', `${slug}%`).limit(1).maybeSingle()
+  if (fuzzy?.id) { _catIdCache[slug] = fuzzy.id; return fuzzy.id }
+  // 3. Contains match — e.g. "healthcare" matches "healthcare-medical"
+  const { data: contains } = await supabase.from('categories').select('id, slug').ilike('slug', `%${slug}%`).limit(1).maybeSingle()
+  if (contains?.id) { _catIdCache[slug] = contains.id; return contains.id }
+  console.warn('[resolveCategoryId] not found:', slug)
+  return null
 }
 
 // ── Fetch listings (paginated + filtered) ─────────────────────────────────────
@@ -84,7 +91,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
 
   if (query)      q = q.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
   if (categoryId) q = q.eq('category_id', categoryId)
-  if (emirate)    q = q.ilike('emirate', emirate)
+  if (emirate)    q = q.eq('emirate', emirate.replace(/-/g, '_'))
   if (verified)   q = q.eq('is_verified', true)
   if (featured)   q = q.eq('is_featured', true)
   if (plan)       q = q.eq('plan', plan)
@@ -378,6 +385,8 @@ export function adaptListing(row: ListingRow | any, categoryMap?: Record<string,
     verified:     row.is_verified,
     featured:     row.is_featured,
     premium:      row.plan === 'premium' || row.plan === 'elite',
+    google_map_url: row.google_map_url ?? '',
+    working_hours: (row as any).working_hours ?? null,
     open:         true,
     hours:        '',
     established:  undefined,

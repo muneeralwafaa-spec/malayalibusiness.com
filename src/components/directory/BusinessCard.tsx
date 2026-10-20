@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -94,10 +94,9 @@ function BusinessLogo({ logo, name, size = 40 }: { logo?: string; name: string; 
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={logo}
-      alt=""
+      alt={name}
       width={size}
       height={size}
       onError={() => setFailed(true)}
@@ -111,12 +110,13 @@ function CoverImage({ src, alt, category }: { src: string; alt: string; category
   const [imgSrc, setImgSrc] = useState(() => getCoverPhoto(category, src))
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={imgSrc}
       alt={alt}
+      fill
+      className="object-cover"
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
       onError={() => setImgSrc(getCoverPhoto(category))}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
     />
   )
 }
@@ -147,7 +147,7 @@ export default function BusinessCard({ business: b, view }: Props) {
     return (
       <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-kerala-green/20 transition-all duration-300 flex">
         {/* Cover */}
-        <div className="relative w-28 sm:w-40 md:w-52 flex-shrink-0">
+        <div className="relative w-20 sm:w-28 md:w-52 flex-shrink-0">
           <CoverImage src={b.image} alt={b.name} category={b.category} />
           {b.premium && (
             <div className="absolute top-2 left-2 bg-kerala-gold text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">
@@ -187,7 +187,7 @@ export default function BusinessCard({ business: b, view }: Props) {
 
             {/* Name */}
             <Link
-              href={`/${locale}/company/${b.slug}`}
+              href={`/company/${b.slug}`}
               className="font-serif text-xl font-bold text-kerala-deep group-hover:text-kerala-green transition-colors line-clamp-1 block"
             >
               {isMl ? b.nameMl : b.name}
@@ -239,7 +239,7 @@ export default function BusinessCard({ business: b, view }: Props) {
               {b.whatsapp && (
                 <a
                   href={`https://wa.me/${b.whatsapp.replace(/\D/g, '')}`}
-                  className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-3 py-2.5 rounded-lg hover:bg-emerald-100 transition-colors"
                 >
                   <MessageCircle size={13} />
                   WhatsApp
@@ -247,14 +247,14 @@ export default function BusinessCard({ business: b, view }: Props) {
               )}
               <a
                 href={`tel:${b.phone}`}
-                className="flex items-center gap-1.5 bg-kerala-cream text-kerala-green border border-kerala-green/20 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-kerala-green hover:text-white transition-colors"
+                className="flex items-center gap-1.5 bg-kerala-cream text-kerala-green border border-kerala-green/20 text-xs font-semibold px-3 py-2.5 rounded-lg hover:bg-kerala-green hover:text-white transition-colors"
               >
                 <Phone size={13} />
                 {isMl ? 'വിളിക്കൂ' : 'Call'}
               </a>
               <Link
-                href={`/${locale}/company/${b.slug}`}
-                className="flex items-center gap-1 bg-kerala-green text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-kerala-green-light transition-colors"
+                href={`/company/${b.slug}`}
+                className="flex items-center gap-1 bg-kerala-green text-white text-xs font-semibold px-3 py-2.5 rounded-lg hover:bg-kerala-green-light transition-colors"
               >
                 {isMl ? 'കൂടുതൽ' : 'View'}
                 <ChevronRight size={13} />
@@ -327,7 +327,7 @@ export default function BusinessCard({ business: b, view }: Props) {
 
         {/* Name */}
         <Link
-          href={`/${locale}/company/${b.slug}`}
+          href={`/company/${b.slug}`}
           className="font-serif text-lg font-bold text-kerala-deep group-hover:text-kerala-green transition-colors leading-snug line-clamp-2 mb-1.5"
         >
           {isMl ? b.nameMl : b.name}
@@ -371,15 +371,15 @@ export default function BusinessCard({ business: b, view }: Props) {
           {b.whatsapp && (
             <a
               href={`https://wa.me/${b.whatsapp.replace(/\D/g, '')}`}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold py-2 rounded-xl hover:bg-emerald-100 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold py-2.5 rounded-xl hover:bg-emerald-100 transition-colors"
             >
               <MessageCircle size={12} />
               WhatsApp
             </a>
           )}
           <Link
-            href={`/${locale}/company/${b.slug}`}
-            className="flex-1 flex items-center justify-center gap-1 bg-kerala-green text-white text-xs font-semibold py-2 rounded-xl hover:bg-kerala-green-light transition-colors"
+            href={`/company/${b.slug}`}
+            className="flex-1 flex items-center justify-center gap-1 bg-kerala-green text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-kerala-green-light transition-colors"
           >
             {isMl ? 'വിശദാംശങ്ങൾ' : 'View Details'}
             <ChevronRight size={12} />

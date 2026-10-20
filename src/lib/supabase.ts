@@ -35,6 +35,7 @@ export type ListingRow = {
   languages:    string[]
   services:     string[]
   created_at:   string
+  google_map_url: string | null
   // joined
   category_slug:     string | null
   category_name:     string | null

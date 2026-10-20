@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,7 +34,7 @@ export default function CTABanner() {
           {isMl ? 'ഇന്ന് തന്നെ ആരംഭിക്കൂ' : 'Get Started Today'}
         </div>
 
-        <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
+        <h2 className="font-serif text-3xl sm:text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
           {isMl ? (
             <>
               35 ലക്ഷം <span className="text-kerala-gold-light">മലയാളികളുമായി</span>
@@ -57,14 +57,14 @@ export default function CTABanner() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
-            href={`/${locale}/dashboard`}
+            href={`/dashboard`}
             className="group flex items-center gap-3 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-8 py-4 rounded-2xl transition-all duration-200 text-lg shadow-xl hover:shadow-2xl hover:-translate-y-0.5"
           >
             {isMl ? 'സൗജന്യമായി ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Business Free'}
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
-            href={`/${locale}/directory`}
+            href={`/directory`}
             className="flex items-center gap-2 border-2 border-white/40 hover:border-white/70 text-white font-semibold px-8 py-4 rounded-2xl transition-all duration-200 text-lg hover:bg-white/10"
           >
             {isMl ? 'ഡയറക്ടറി കാണൂ' : 'Explore Directory'}

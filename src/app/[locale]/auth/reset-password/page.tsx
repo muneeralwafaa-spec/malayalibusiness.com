@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
       setError(updateError.message)
     } else {
       setDone(true)
-      setTimeout(() => router.push(`/${locale}/auth`), 3000)
+      setTimeout(() => router.push(`/auth`), 3000)
     }
   }
 

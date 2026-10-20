@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 import Footer from '@/components/layout/Footer'
 import {
   MapPin, Briefcase, Clock, DollarSign, Users,
@@ -39,11 +40,47 @@ function ApplyModal({ job, isMl, onClose }: ApplyModalProps) {
   const [form,      setForm]      = useState({ name: '', email: '', phone: '', cover: '' })
   const [loading,   setLoading]   = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error,     setError]     = useState<string|null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setTimeout(() => { setLoading(false); setSubmitted(true) }, 1200)
+    setLoading(true); setError(null)
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { error: dbErr } = await sb.from('job_applications').insert([{
+        job_id: job.id,
+        applicant_name: form.name,
+        applicant_email: form.email,
+        applicant_phone: form.phone,
+        cover_letter: form.cover || null,
+        job_title: job.title,
+        company: job.company,
+      }])
+      if (dbErr) throw new Error(dbErr.message)
+      // Email notification to admin
+      await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'new_enquiry',
+          to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'muneer@alwafaagroup.com',
+          ownerName: 'Admin',
+          businessName: `${job.title} at ${job.company}`,
+          senderName: form.name,
+          senderEmail: form.email,
+          senderPhone: form.phone,
+          message: form.cover || 'No cover letter provided',
+        }),
+      }).catch(() => {})
+      setSubmitted(true)
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.')
+    }
+    setLoading(false)
   }
 
   return (
@@ -115,14 +152,7 @@ function ApplyModal({ job, isMl, onClose }: ApplyModalProps) {
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
                   {isMl ? 'ഫോൺ' : 'Phone Number'} *
                 </label>
-                <input
-                  type="tel"
-                  required
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-kerala-green"
-                  placeholder="+971 50 000 0000"
-                />
+                <UAEPhoneInput value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} required />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
@@ -145,6 +175,9 @@ function ApplyModal({ job, isMl, onClose }: ApplyModalProps) {
                   {isMl ? 'CV/Resume അപ്‌ലോഡ് ചെയ്യൂ (PDF/DOC)' : 'Upload CV / Resume (PDF, DOC)'}
                 </button>
               </div>
+              {error && (
+                <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>
+              )}
               <button
                 type="submit"
                 disabled={loading}
@@ -221,7 +254,7 @@ export default function JobDetailPage() {
           <p className="text-gray-500 mb-8">
             {isMl ? 'ഈ ജോലി നിലവിലില്ല.' : 'This job posting does not exist or has been removed.'}
           </p>
-          <Link href={`/${locale}/jobs`} className="inline-flex items-center gap-2 bg-kerala-green text-white px-6 py-3 rounded-xl font-semibold hover:bg-kerala-green/90 transition-colors">
+          <Link href={`/jobs`} className="inline-flex items-center gap-2 bg-kerala-green text-white px-6 py-3 rounded-xl font-semibold hover:bg-kerala-green/90 transition-colors">
             <ArrowLeft size={16} /> {isMl ? 'ജോലികൾ' : 'All Jobs'}
           </Link>
         </div>
@@ -246,7 +279,7 @@ export default function JobDetailPage() {
         <div className="max-w-7xl mx-auto px-4 pt-6 pb-6">
           {/* Back link */}
           <Link
-            href={`/${locale}/jobs`}
+            href={`/jobs`}
             className="inline-flex items-center gap-1 text-gray-500 hover:text-kerala-green text-sm mb-4 transition-colors"
           >
             <ArrowLeft size={14} /> {isMl ? 'ജോലികൾ' : 'All Jobs'}
@@ -452,7 +485,7 @@ export default function JobDetailPage() {
                   {similarJobs.map((sj) => (
                     <Link
                       key={sj.id}
-                      href={`/${locale}/jobs/${sj.id}`}
+                      href={`/jobs/${sj.id}`}
                       className="flex gap-3 group p-2 rounded-xl hover:bg-kerala-cream transition-colors"
                     >
                       <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-100 shrink-0 bg-white">

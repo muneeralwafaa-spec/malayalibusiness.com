@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -6,17 +6,21 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
+import AIListingWriter from '@/components/ai/AIListingWriter'
 import Footer from '@/components/layout/Footer'
 import {
   LayoutDashboard, Building2, ShoppingBag, ShoppingCart, MessageSquare,
   BarChart2, Briefcase, CreditCard, Settings, Plus, Bell,
   Eye, TrendingUp, Star, ArrowUpRight, ArrowDownRight, Edit3, Trash2,
   CheckCircle, CheckCircle2, MapPin, Menu, X, LogOut, Users,
-  Zap, Download, Mail, Tag, AlertTriangle, Loader2,
-  Stethoscope, Tv, ArrowRight, Heart
+  Zap, Download, Mail, Tag, AlertTriangle, Loader2, Shield,
+  Stethoscope, Tv, ArrowRight, Heart, Upload, Camera
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getMyListings } from '@/lib/auth'
+import { getMyClassifieds, createClassified, classifiedCategories } from '@/lib/classifieds'
+import type { Classified } from '@/lib/classifieds'
 import { getShopListings } from '@/lib/listings'
 import { getFavourites, toggleFavourite } from '@/lib/favourites'
 import type { Favourite } from '@/lib/favourites'
@@ -28,6 +32,7 @@ import type { Job } from '@/lib/jobs'
 type NavSection =
   | 'overview'
   | 'listings'
+  | 'classifieds'
   | 'shop'
   | 'orders'
   | 'enquiries'
@@ -181,7 +186,7 @@ function OverviewSection({ isMl, listings, onAddListing, onSection }: { isMl: bo
       />
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={Building2} label={isMl ? 'ലിസ്റ്റിംഗ്' : 'My Listings'} value={String(listings.length)} />
         <StatCard icon={Eye} label={isMl ? 'മൊത്തം കാഴ്ചകൾ' : 'Total Views'} value={totalViews.toLocaleString()} />
         <StatCard icon={Star} label={isMl ? 'മൊത്തം റിവ്യൂ' : 'Total Reviews'} value={String(totalReviews)} accent />
@@ -189,23 +194,20 @@ function OverviewSection({ isMl, listings, onAddListing, onSection }: { isMl: bo
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <button onClick={onAddListing} className="bg-kerala-green text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
           <Plus size={20} />
           <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add Listing'}</span>
-        </button>
-        <button onClick={() => onSection('jobs')} className="bg-kerala-deep text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
-          <Briefcase size={20} />
-          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post Job'}</span>
         </button>
         <button onClick={() => onSection('analytics')} className="bg-kerala-gold text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
           <BarChart2 size={20} />
           <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'അനലിറ്റിക്സ്' : 'View Analytics'}</span>
         </button>
-        <button onClick={() => onSection('shop')} className="bg-kerala-deep text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
-          <ShoppingBag size={20} />
-          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ഷോപ്പ് മാനേജർ' : 'Shop Manager'}</span>
+        <button onClick={() => onSection('settings')} className="bg-kerala-deep text-white rounded-2xl p-4 flex flex-col items-start gap-3 hover:opacity-90 transition-opacity">
+          <Settings size={20} />
+          <span className="font-semibold text-sm text-left leading-tight">{isMl ? 'ക്രമീകരണം' : 'Settings'}</span>
         </button>
+        {/* Phase 2: Post Job, Shop Manager */}
       </div>
 
       {/* Bar chart + activity */}
@@ -216,13 +218,13 @@ function OverviewSection({ isMl, listings, onAddListing, onSection }: { isMl: bo
             <h3 className="font-serif font-bold text-kerala-deep">{isMl ? 'ആഴ്ചയിലെ പ്രൊഫൈൽ കാഴ്ചകൾ' : 'Profile Views – Last 7 Days'}</h3>
             <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">12,483 {isMl ? 'മൊത്തം' : 'total'}</span>
           </div>
-          <div className="flex items-end gap-2" style={{ height: '120px' }}>
+          <div className="flex items-end gap-2 h-24 sm:h-32">
             {weeklyViews.map(d => (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full relative" style={{ height: '96px' }}>
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-1 h-full">
+                <div className="w-full relative flex-1">
                   <div
                     className="absolute bottom-0 w-full bg-kerala-green/80 rounded-t-lg hover:bg-kerala-green transition-colors"
-                    style={{ height: `${Math.round((d.views / maxWeeklyViews) * 96)}px` }}
+                    style={{ height: `${Math.round((d.views / maxWeeklyViews) * 100)}%` }}
                   />
                 </div>
                 <span className="text-xs text-gray-400">{isMl ? d.dayMl : d.day}</span>
@@ -273,10 +275,21 @@ const LISTING_CATEGORIES = [
   'Media & Marketing', 'Automotive', 'Grocery & Supermarket', 'Other',
 ]
 const EMIRATES_LIST = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain']
+const EMIRATE_ENUM: Record<string, string> = {
+  'Dubai': 'dubai',
+  'Abu Dhabi': 'abu_dhabi',
+  'Sharjah': 'sharjah',
+  'Ajman': 'ajman',
+  'Ras Al Khaimah': 'ras_al_khaimah',
+  'Fujairah': 'fujairah',
+  'Umm Al Quwain': 'umm_al_quwain',
+}
 
-function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: () => void; userId: string }) {
+function AddListingModal({ isMl, onClose, userId, userEmail, ownerName }: { isMl: boolean; onClose: () => void; userId: string; userEmail?: string; ownerName?: string }) {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string|null>(null)
+  const [dbCategories, setDbCategories] = useState<{id: string; name: string}[]>([])
   const [form, setForm] = useState({
     name: '', category: '', emirate: '', area: '', address: '',
     phone: '', whatsapp: '', email: '', website: '',
@@ -285,17 +298,25 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
 
+  useEffect(() => {
+    supabase.from('categories').select('id, name').eq('is_active', true).order('name')
+      .then(({ data }) => setDbCategories(data ?? []))
+  }, [])
+
   async function handleSave() {
     if (!form.name || !form.category || !form.emirate || !form.phone) return
     setSaving(true)
+    setSubmitError(null)
     const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now()
+    const emirateEnum = EMIRATE_ENUM[form.emirate] || form.emirate.toLowerCase().replace(/\s+/g, '_')
+    const categoryRow = dbCategories.find(c => c.name === form.category)
     const { error } = await supabase.from('listings').insert([{
       owner_id: userId,
       slug,
       name: form.name,
       tagline: form.tagline || null,
       description: form.description || null,
-      emirate: form.emirate,
+      emirate: emirateEnum,
       area: form.area || null,
       address: form.address || null,
       phone: form.phone,
@@ -306,9 +327,43 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
       status: 'pending',
       is_featured: false,
       is_verified: false,
+      category_id: categoryRow?.id ?? null,
     }])
+    if (error) {
+      setSubmitError(error.message)
+      setSaving(false)
+      return
+    }
+    if (!error) {
+      // Send confirmation email to owner + admin notification
+      const ownerEmail = form.email || userEmail
+      if (ownerEmail) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'listing_submitted',
+            to: ownerEmail,
+            ownerName: ownerName,
+            businessName: form.name,
+            listingSlug: slug,
+            emirate: form.emirate,
+            category: form.category,
+            ownerEmail,
+          }),
+        }).catch(console.error)
+      }
+      // WhatsApp admin notification
+      fetch('/api/whatsapp/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `🆕 New Listing Submitted!\n\nBusiness: ${form.name}\nCategory: ${form.category}\nEmirate: ${form.emirate}\nPhone: ${form.phone}\n\nReview at: https://www.malayalibusiness.com/en/admin`,
+        }),
+      }).catch(console.error)
+      setSuccess(true)
+    }
     setSaving(false)
-    if (!error) setSuccess(true)
   }
 
   if (success) return (
@@ -361,7 +416,9 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
               <select value={form.category} onChange={set('category')}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all text-gray-700 bg-white">
                 <option value="">Select category</option>
-                {LISTING_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {dbCategories.length > 0
+                  ? dbCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+                  : LISTING_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
@@ -392,13 +449,11 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">Phone <span className="text-red-500">*</span></label>
-              <input value={form.phone} onChange={set('phone')} placeholder="+971 50 000 0000" type="tel"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+              <UAEPhoneInput value={form.phone} onChange={v => { const e = { target: { value: v } } as any; set('phone')(e) }} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">WhatsApp</label>
-              <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="Same as phone if same" type="tel"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300" />
+              <UAEPhoneInput value={form.whatsapp} onChange={v => { const e = { target: { value: v } } as any; set('whatsapp')(e) }} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
@@ -415,14 +470,33 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
           {/* Description */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5">Business Description</label>
+            <AIListingWriter
+              businessName={form.name}
+              category={form.category}
+              location={form.emirate}
+              services={form.description}
+              onGenerated={(data) => {
+                setForm(f => ({
+                  ...f,
+                  description: data.description,
+                  tagline: data.tagline || f.tagline,
+                }))
+              }}
+            />
             <textarea value={form.description} onChange={set('description')} rows={4}
-              placeholder="Tell customers about your business, what you offer, your specialities..."
+              placeholder="Tell customers about your business, what you offer, your specialities... or click AI Write above!"
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 transition-all placeholder-gray-300 resize-none" />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+        <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0 space-y-3">
+          {submitError && (
+            <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl">
+              {submitError}
+            </div>
+          )}
+          <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors">
             Cancel
           </button>
@@ -433,16 +507,411 @@ function AddListingModal({ isMl, onClose, userId }: { isMl: boolean; onClose: ()
           >
             {saving ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : 'Submit Listing'}
           </button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function ListingsSection({ isMl, listings, loading, userId }: { isMl: boolean; listings: any[]; loading: boolean; userId: string }) {
+function EditListingModal({ listing, onClose, onSaved }: { listing: any; onClose: () => void; onSaved: (updated: any) => void }) {
+  const [tab, setTab] = useState<'details'|'services'|'hours'|'map'>('details')
+  const [form, setForm] = useState({
+    name: listing.name || '',
+    tagline: listing.tagline || '',
+    description: listing.description || '',
+    phone: listing.phone || '',
+    whatsapp: listing.whatsapp || '',
+    email: listing.email || '',
+    website: listing.website || '',
+    area: listing.area || '',
+    address: listing.address || '',
+    google_map_url: listing.google_map_url || '',
+    emirate: EMIRATES_LIST.find(e => EMIRATE_ENUM[e] === listing.emirate) || listing.emirate || '',
+  })
+  const [services, setServices] = useState<string[]>(listing.services ?? [])
+  const [newService, setNewService] = useState('')
+  const [richServices, setRichServices] = useState<any[]>([])
+  const [newSvc, setNewSvc] = useState({ name: '', description: '', price: '', price_unit: 'AED' })
+  const [addingSvc, setAddingSvc] = useState(false)
+  const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+  const [hours, setHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>(
+    listing.working_hours ?? Object.fromEntries(DAYS.map(d => [d, { open: '09:00', close: '18:00', closed: false }]))
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string|null>(null)
+
+  useEffect(() => {
+    supabase.from('services').select('*').eq('listing_id', listing.id).order('sort_order')
+      .then(({ data }) => setRichServices(data ?? []))
+  }, [listing.id])
+
+  async function addRichService() {
+    if (!newSvc.name) return
+    const { data, error } = await supabase.from('services').insert([{
+      listing_id: listing.id,
+      name: newSvc.name,
+      description: newSvc.description || null,
+      price: newSvc.price ? Number(newSvc.price) : null,
+      price_unit: newSvc.price_unit,
+      is_active: true,
+      sort_order: richServices.length,
+    }]).select().single()
+    if (error) { alert('Error: ' + error.message); return }
+    if (data) setRichServices(prev => [...prev, data])
+    setNewSvc({ name: '', description: '', price: '', price_unit: 'AED' })
+    setAddingSvc(false)
+  }
+
+  async function deleteRichService(id: string) {
+    await supabase.from('services').delete().eq('id', id)
+    setRichServices(prev => prev.filter(s => s.id !== id))
+  }
+
+  async function saveHours() {
+    setSaving(true)
+    await supabase.from('listings').update({ working_hours: hours }).eq('id', listing.id)
+    setSaving(false)
+  }
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  function addService() {
+    const s = newService.trim()
+    if (!s || services.includes(s)) return
+    setServices(prev => [...prev, s])
+    setNewService('')
+  }
+
+  async function handleSave() {
+    setSaving(true); setError(null)
+    const emirateEnum = EMIRATE_ENUM[form.emirate] || form.emirate.toLowerCase().replace(/\s+/g, '_')
+    const { data, error: err } = await supabase.from('listings').update({
+      name: form.name,
+      tagline: form.tagline || null,
+      description: form.description || null,
+      phone: form.phone,
+      whatsapp: form.whatsapp || form.phone,
+      email: form.email || null,
+      website: form.website || null,
+      area: form.area || null,
+      address: form.address || null,
+      google_map_url: form.google_map_url || null,
+      emirate: emirateEnum || null,
+      services,
+    }).eq('id', listing.id).select().single()
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    onSaved(data)
+    onClose()
+  }
+
+  const tabs = [
+    { key: 'details',  label: '📋 Details'  },
+    { key: 'services', label: '⚡ Services'  },
+    { key: 'hours',    label: '🕐 Hours'     },
+    { key: 'map',      label: '📍 Map'       },
+  ] as const
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="font-serif font-bold text-kerala-deep text-lg">Edit Listing</h2>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100"><X size={18} className="text-gray-400"/></button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 pt-4 flex-shrink-0">
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${tab === t.key ? 'bg-kerala-green text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+          {/* Details tab */}
+          {tab === 'details' && <>
+            {[
+              { label: 'Business Name', key: 'name', required: true },
+              { label: 'Tagline', key: 'tagline' },
+              { label: 'Phone', key: 'phone', required: true },
+              { label: 'WhatsApp', key: 'whatsapp' },
+              { label: 'Email', key: 'email' },
+              { label: 'Website', key: 'website' },
+              { label: 'Area', key: 'area' },
+              { label: 'Address', key: 'address' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">{f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}</label>
+                <input value={(form as any)[f.key]} onChange={set(f.key)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10"/>
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Emirate <span className="text-red-500">*</span></label>
+              <select value={form.emirate} onChange={e => setForm(f => ({ ...f, emirate: e.target.value }))}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 text-gray-700 bg-white">
+                <option value="">Select emirate</option>
+                {EMIRATES_LIST.map(e => <option key={e} value={e}>{e}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
+              <textarea value={form.description} onChange={set('description')} rows={4}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10 resize-none"/>
+            </div>
+          </>}
+
+          {/* Services tab */}
+          {tab === 'services' && <>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400">Rich service cards shown on the Services tab of your listing page.</p>
+              <button onClick={() => setAddingSvc(true)} className="flex items-center gap-1 bg-kerala-green text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90">
+                <Plus size={13}/> Add Service
+              </button>
+            </div>
+
+            {addingSvc && (
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-200">
+                <p className="text-xs font-semibold text-gray-600">New Service</p>
+                <input value={newSvc.name} onChange={e => setNewSvc(p => ({...p, name: e.target.value}))}
+                  placeholder="Service name *" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-kerala-green"/>
+                <textarea value={newSvc.description} onChange={e => setNewSvc(p => ({...p, description: e.target.value}))}
+                  placeholder="Short description (optional)" rows={2}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-kerala-green resize-none"/>
+                <div className="flex gap-2">
+                  <input value={newSvc.price} onChange={e => setNewSvc(p => ({...p, price: e.target.value}))}
+                    placeholder="Price (optional)" type="number"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-kerala-green"/>
+                  <select value={newSvc.price_unit} onChange={e => setNewSvc(p => ({...p, price_unit: e.target.value}))}
+                    className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-kerala-green bg-white">
+                    {['AED','USD','OMR','SAR','KWD'].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={addRichService} className="flex-1 bg-kerala-green text-white py-2 rounded-xl text-sm font-semibold hover:opacity-90">Save</button>
+                  <button onClick={() => setAddingSvc(false)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-semibold">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {richServices.length === 0 && !addingSvc && <p className="text-sm text-gray-400 text-center py-4">No services added yet</p>}
+              {richServices.map(s => (
+                <div key={s.id} className="flex items-start justify-between bg-white border border-gray-100 rounded-xl p-3 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-kerala-deep">{s.name}</p>
+                    {s.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{s.description}</p>}
+                    {s.price != null && <p className="text-xs font-bold text-kerala-gold mt-0.5">{s.price_unit} {s.price}</p>}
+                  </div>
+                  <button onClick={() => deleteRichService(s.id)} className="text-red-400 hover:text-red-600 flex-shrink-0 mt-0.5">
+                    <Trash2 size={14}/>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>}
+
+          {/* Hours tab */}
+          {tab === 'hours' && <>
+            <p className="text-xs text-gray-400 mb-2">Set your working hours for each day. These show on your listing's Contact tab.</p>
+            <div className="space-y-2">
+              {DAYS.map(day => (
+                <div key={day} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-gray-600 w-24 shrink-0">{day}</span>
+                  <input type="time" value={hours[day].open} disabled={hours[day].closed}
+                    onChange={e => setHours(h => ({...h, [day]: {...h[day], open: e.target.value}}))}
+                    className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-kerala-green disabled:opacity-40 disabled:bg-gray-50"/>
+                  <span className="text-xs text-gray-400">to</span>
+                  <input type="time" value={hours[day].close} disabled={hours[day].closed}
+                    onChange={e => setHours(h => ({...h, [day]: {...h[day], close: e.target.value}}))}
+                    className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-kerala-green disabled:opacity-40 disabled:bg-gray-50"/>
+                  <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
+                    <input type="checkbox" checked={hours[day].closed}
+                      onChange={e => setHours(h => ({...h, [day]: {...h[day], closed: e.target.checked}}))}
+                      className="w-3.5 h-3.5 accent-red-500"/>
+                    <span className="text-xs text-gray-500">Closed</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <button onClick={saveHours} disabled={saving}
+              className="w-full bg-kerala-green text-white py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 mt-2">
+              {saving ? <><Loader2 size={14} className="animate-spin"/>Saving…</> : 'Save Hours'}
+            </button>
+          </>}
+
+          {/* Map tab */}
+          {tab === 'map' && <>
+            <p className="text-xs text-gray-400">Paste your Google Maps link so customers can find your exact location.</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Google Maps URL</label>
+              <input value={form.google_map_url} onChange={set('google_map_url')}
+                placeholder="https://maps.google.com/?q=..."
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-kerala-green focus:ring-2 focus:ring-kerala-green/10"/>
+              <p className="text-xs text-gray-400 mt-2">
+                Go to Google Maps → find your business → click Share → Copy Link → paste here
+              </p>
+            </div>
+            {form.google_map_url && (
+              <a href={form.google_map_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-kerala-green font-semibold hover:underline">
+                <MapPin size={15}/> Preview on Google Maps
+              </a>
+            )}
+          </>}
+
+          {error && <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50">Cancel</button>
+          <button onClick={handleSave} disabled={saving || !form.name || !form.phone}
+            className="flex-1 bg-kerala-green text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2">
+            {saving ? <><Loader2 size={15} className="animate-spin"/>Saving…</> : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GalleryModal({ listing, onClose }: { listing: any; onClose: () => void }) {
+  const [images, setImages] = useState<any[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string|null>(null)
+  const [primaryUrl, setPrimaryUrl] = useState<string>(listing.logo_url ?? '')
+  const [coverUrl, setCoverUrl] = useState<string>(listing.cover_url ?? '')
+
+  useEffect(() => {
+    supabase.from('listing_images').select('*').eq('listing_id', listing.id).order('created_at')
+      .then(({ data }) => setImages(data ?? []))
+  }, [listing.id])
+
+  async function syncGalleryUrls(imgs: any[]) {
+    const urls = imgs.map((i: any) => i.url)
+    await supabase.from('listings').update({ gallery_urls: urls }).eq('id', listing.id)
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true); setError(null)
+    const ext = file.name.split('.').pop()
+    const path = `listings/${listing.id}/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('listing-images').upload(path, file)
+    if (upErr) { setError(upErr.message); setUploading(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(path)
+    const { data: row, error: dbErr } = await supabase.from('listing_images').insert([{ listing_id: listing.id, url: publicUrl, path }]).select().single()
+    if (dbErr) { setError(dbErr.message); setUploading(false); return }
+    if (row) {
+      const next = [...images, row]
+      setImages(next)
+      await syncGalleryUrls(next)
+    }
+    setUploading(false)
+  }
+
+  async function handleDelete(img: any) {
+    await supabase.storage.from('listing-images').remove([img.path])
+    await supabase.from('listing_images').delete().eq('id', img.id)
+    const next = images.filter(i => i.id !== img.id)
+    setImages(next)
+    await syncGalleryUrls(next)
+    if (primaryUrl === img.url) { setPrimaryUrl(''); await supabase.from('listings').update({ logo_url: null }).eq('id', listing.id) }
+    if (coverUrl === img.url) { setCoverUrl(''); await supabase.from('listings').update({ cover_url: null }).eq('id', listing.id) }
+  }
+
+  async function setPrimary(url: string) {
+    setPrimaryUrl(url)
+    await supabase.from('listings').update({ logo_url: url }).eq('id', listing.id)
+  }
+
+  async function setCover(url: string) {
+    setCoverUrl(url)
+    await supabase.from('listings').update({ cover_url: url }).eq('id', listing.id)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div>
+            <h2 className="font-serif font-bold text-kerala-deep text-lg">Photo Gallery</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{listing.name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100"><X size={18} className="text-gray-400"/></button>
+        </div>
+        <div className="overflow-y-auto flex-1 px-6 py-5">
+          {error && <div className="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>}
+          {images.length > 0 && (
+            <div className="flex gap-4 mb-4 text-xs text-gray-500 bg-gray-50 rounded-xl px-4 py-3">
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-kerala-green inline-block"/>= Profile photo</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-kerala-gold inline-block"/>= Cover photo</span>
+              <span className="text-gray-400">Hover an image to set</span>
+            </div>
+          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            {images.map(img => {
+              const isPrimary = primaryUrl === img.url
+              const isCover = coverUrl === img.url
+              return (
+                <div key={img.id} className={`relative group aspect-square rounded-xl overflow-hidden bg-gray-100 ring-2 ${isPrimary ? 'ring-kerala-green' : isCover ? 'ring-kerala-gold' : 'ring-transparent'}`}>
+                  <Image src={img.url} alt="" fill className="object-cover"/>
+                  {/* Badges */}
+                  {isPrimary && <span className="absolute top-1 left-1 bg-kerala-green text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">Profile</span>}
+                  {isCover && <span className="absolute top-1 left-1 bg-kerala-gold text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">Cover</span>}
+                  {/* Hover actions */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                    {!isPrimary && (
+                      <button onClick={() => setPrimary(img.url)} className="w-full bg-kerala-green text-white text-[10px] font-semibold py-1 rounded-lg">
+                        Set as Profile
+                      </button>
+                    )}
+                    {!isCover && (
+                      <button onClick={() => setCover(img.url)} className="w-full bg-kerala-gold text-white text-[10px] font-semibold py-1 rounded-lg">
+                        Set as Cover
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(img)} className="w-full bg-red-500 text-white text-[10px] font-semibold py-1 rounded-lg">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-kerala-green hover:bg-kerala-green/5 transition-colors">
+              {uploading ? <Loader2 size={24} className="animate-spin text-kerala-green"/> : <>
+                <Upload size={24} className="text-gray-400 mb-2"/>
+                <span className="text-xs text-gray-400 font-medium">Add Photo</span>
+              </>}
+              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading}/>
+            </label>
+          </div>
+          <p className="text-xs text-gray-400 text-center">Photos help customers find and trust your business</p>
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0">
+          <button onClick={onClose} className="w-full bg-kerala-green text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90">Done</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const PLAN_LISTING_LIMITS: Record<string, number> = { free: 1, basic: 3, premium: 10, elite: 999 }
+
+function ListingsSection({ isMl, listings, loading, userId, userEmail, ownerName }: { isMl: boolean; listings: any[]; loading: boolean; userId: string; userEmail?: string; ownerName?: string }) {
   const locale = isMl ? 'ml' : 'en'
   const [filter, setFilter] = useState<'all' | 'active' | 'pending'>('all')
   const [showModal, setShowModal] = useState(false)
+  const [editListing, setEditListing] = useState<any|null>(null)
+  const [galleryListing, setGalleryListing] = useState<any|null>(null)
+  const [listingData, setListingData] = useState<any[]>(listings)
+
+  useEffect(() => { setListingData(listings) }, [listings])
   const statuses = ['all', 'active', 'pending'] as const
   const statusLabels: Record<typeof statuses[number], string> = {
     all: isMl ? 'എല്ലാം' : 'All',
@@ -450,11 +919,21 @@ function ListingsSection({ isMl, listings, loading, userId }: { isMl: boolean; l
     pending: isMl ? 'കാത്തിരിക്കുന്നു' : 'Pending',
   }
 
-  const filtered = filter === 'all' ? listings : listings.filter(b => b.status === filter)
+  const filtered = filter === 'all' ? listingData : listingData.filter(b => b.status === filter)
+
+  // Determine user's best plan from their listings
+  const topPlan = listingData.reduce((best, l) => {
+    const order = ['free','basic','premium','elite']
+    return order.indexOf(l.plan) > order.indexOf(best) ? l.plan : best
+  }, 'free')
+  const listingLimit = PLAN_LISTING_LIMITS[topPlan] ?? 1
+  const atLimit = listingData.length >= listingLimit
 
   return (
     <div className="space-y-5">
-      {showModal && <AddListingModal isMl={isMl} onClose={() => setShowModal(false)} userId={userId} />}
+      {showModal && <AddListingModal isMl={isMl} onClose={() => setShowModal(false)} userId={userId} userEmail={userEmail} ownerName={ownerName} />}
+      {editListing && <EditListingModal listing={editListing} onClose={() => setEditListing(null)} onSaved={updated => setListingData(prev => prev.map(l => l.id === updated.id ? updated : l))} />}
+      {galleryListing && <GalleryModal listing={galleryListing} onClose={() => setGalleryListing(null)} />}
       <SectionHeader title={isMl ? 'എന്റെ ലിസ്റ്റിംഗ്' : 'My Listings'} />
 
       <div className="flex flex-wrap items-center gap-3 justify-between">
@@ -472,10 +951,17 @@ function ListingsSection({ isMl, listings, loading, userId }: { isMl: boolean; l
             </button>
           ))}
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-          <Plus size={15} />
-          {isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add New Listing'}
-        </button>
+        {atLimit ? (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-4 py-2.5 rounded-xl">
+            <Shield size={13}/>
+            {topPlan === 'free' ? 'Free plan: 1 listing max — upgrade for more' : `${topPlan} plan: ${listingLimit} listings max`}
+          </div>
+        ) : (
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+            <Plus size={15} />
+            {isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'Add New Listing'}
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -517,10 +1003,26 @@ function ListingsSection({ isMl, listings, loading, userId }: { isMl: boolean; l
                 </span>
               </div>
               <div className="flex flex-col gap-2 flex-shrink-0">
-                <Link href={`/${locale}/company/${biz.slug}`}
+                <Link href={`/company/${biz.slug}`}
                   className="text-xs font-semibold text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-center whitespace-nowrap">
                   {isMl ? 'കാണൂ' : 'View'}
                 </Link>
+                <button onClick={() => setEditListing(biz)}
+                  className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5 text-center whitespace-nowrap flex items-center justify-center gap-1">
+                  <Edit3 size={11}/> Edit
+                </button>
+                <button onClick={() => setGalleryListing(biz)}
+                  className="text-xs font-semibold text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 text-center whitespace-nowrap flex items-center justify-center gap-1">
+                  <Upload size={11}/> Gallery
+                </button>
+                <button onClick={async () => {
+                  if (!confirm('Delete this listing? This cannot be undone.')) return
+                  await supabase.from('listings').delete().eq('id', biz.id)
+                  setListingData(prev => prev.filter(l => l.id !== biz.id))
+                }}
+                  className="text-xs font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 text-center whitespace-nowrap flex items-center justify-center gap-1">
+                  <Trash2 size={11}/> Delete
+                </button>
               </div>
             </div>
           ))}
@@ -700,12 +1202,170 @@ function ShopManagerSection({ isMl, listings }: { isMl: boolean; listings: any[]
   )
 }
 
+// ── Classifieds Section ──────────────────────────────────────────────────────
+const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain']
+const CLASSIFIED_TYPES = ['sale', 'rent', 'wanted', 'service'] as const
+
+function ClassifiedsSection({ isMl, userId }: { isMl: boolean; userId: string }) {
+  const [items, setItems]           = useState<Classified[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [showAdd, setShowAdd]       = useState(false)
+  const [saving, setSaving]         = useState(false)
+  const [saveError, setSaveError]   = useState('')
+  const [form, setForm] = useState({
+    title: '', description: '', category: classifiedCategories[0].slug,
+    type: 'sale' as typeof CLASSIFIED_TYPES[number],
+    price: '', emirate: 'Dubai', phone: '', whatsapp: '',
+  })
+
+  const refresh = () => getMyClassifieds(userId).then(d => { setItems(d); setLoading(false) })
+  useEffect(() => { refresh() }, [userId])
+
+  const handleAdd = async () => {
+    if (!form.title || !form.emirate) return
+    setSaving(true); setSaveError('')
+    const result = await createClassified({
+      title: form.title, title_ml: null,
+      description: form.description || null, description_ml: null,
+      category: form.category, category_ml: null, subcategory: null,
+      price: form.price || null, price_numeric: form.price ? Number(form.price) : null,
+      negotiable: false, type: form.type, condition: null,
+      emirate: form.emirate, location: null, location_ml: null,
+      images: [], featured: false, urgent: false,
+      phone: form.phone || null, whatsapp: form.whatsapp || null,
+      seller_name: null, seller_name_ml: null, seller_avatar: null,
+      owner_id: userId,
+    })
+    setSaving(false)
+    if (!result) { setSaveError('Failed to post classified. Please try again.'); return }
+    setShowAdd(false)
+    setForm({ title: '', description: '', category: classifiedCategories[0].slug, type: 'sale', price: '', emirate: 'Dubai', phone: '', whatsapp: '' })
+    refresh()
+  }
+
+  const handleDelete = async (id: number) => {
+    await supabase.from('classifieds').delete().eq('id', id)
+    setItems(prev => prev.filter(c => c.id !== id))
+  }
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader title={isMl ? 'ക്ലാസിഫൈഡ്സ്' : 'Classifieds'} />
+      <div className="flex justify-end">
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90">
+          <Plus size={15} />{isMl ? 'ക്ലാസിഫൈഡ് ചേർക്കൂ' : 'Post Classified'}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-kerala-green"/></div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
+          <Tag size={36} className="mx-auto mb-3 text-gray-300"/>
+          <p className="font-semibold text-kerala-deep">{isMl ? 'ക്ലാസിഫൈഡ് ഒന്നും ഇല്ല' : 'No classifieds yet'}</p>
+          <p className="text-sm text-gray-400 mt-1 mb-4">{isMl ? 'ആദ്യ ക്ലാസിഫൈഡ് ചേർക്കൂ' : 'Post your first classified ad'}</p>
+          <button onClick={() => setShowAdd(true)} className="bg-kerala-green text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90">
+            {isMl ? 'ക്ലാസിഫൈഡ് ചേർക്കൂ' : 'Post Classified'}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map(c => (
+            <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-start">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-semibold text-kerala-deep text-sm">{c.title}</h4>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{c.status}</span>
+                </div>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                  <span>{c.category}</span>
+                  <span className="capitalize">{c.type}</span>
+                  <span>{c.emirate}</span>
+                  {c.price && <span className="text-kerala-gold font-bold">AED {c.price}</span>}
+                </div>
+                {c.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{c.description}</p>}
+              </div>
+              <button onClick={() => handleDelete(c.id)} className="text-xs text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50 flex-shrink-0">
+                <Trash2 size={12} className="inline mr-1"/>Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-serif font-bold text-kerala-deep text-lg">{isMl ? 'ക്ലാസിഫൈഡ് ചേർക്കൂ' : 'Post Classified'}</h3>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'തലക്കെട്ട്' : 'Title'} *</label>
+                <input type="text" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} placeholder="e.g. iPhone 14 for sale" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'വിഭാഗം' : 'Category'}</label>
+                  <select value={form.category} onChange={e => setForm(f => ({...f, category: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50">
+                    {classifiedCategories.map(c => <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'തരം' : 'Type'}</label>
+                  <select value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value as typeof CLASSIFIED_TYPES[number]}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50">
+                    {CLASSIFIED_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'വില (AED)' : 'Price (AED)'}</label>
+                  <input type="number" value={form.price} onChange={e => setForm(f => ({...f, price: e.target.value}))} placeholder="Optional" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'എമിറേറ്റ്' : 'Emirate'}</label>
+                  <select value={form.emirate} onChange={e => setForm(f => ({...f, emirate: e.target.value}))} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50">
+                    {EMIRATES.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'വിവരണം' : 'Description'}</label>
+                <textarea value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} rows={3} placeholder={isMl ? 'വിശദാംശങ്ങൾ...' : 'Details about your ad...'} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50 resize-none"/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{isMl ? 'ഫോൺ' : 'Phone'}</label>
+                  <input type="tel" value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} placeholder="+971..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp</label>
+                  <input type="tel" value={form.whatsapp} onChange={e => setForm(f => ({...f, whatsapp: e.target.value}))} placeholder="+971..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                </div>
+              </div>
+              {saveError && <p className="text-red-500 text-xs">{saveError}</p>}
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setShowAdd(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">{isMl ? 'റദ്ദാക്കൂ' : 'Cancel'}</button>
+                <button onClick={handleAdd} disabled={saving || !form.title} className="flex-1 px-4 py-2.5 bg-kerala-green text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2">
+                  {saving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'ചേർക്കുന്നു...' : 'Posting...'}</> : (isMl ? 'ചേർക്കൂ' : 'Post Ad')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function OrdersSection({ isMl }: { isMl: boolean }) {
   return (
     <div className="space-y-5">
       <SectionHeader title={isMl ? 'ഓർഡറുകൾ' : 'Orders'} />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
           <div className="font-serif font-bold text-2xl text-kerala-deep">0</div>
           <div className="text-xs text-gray-500 mt-1">{isMl ? 'മൊത്തം ഓർഡർ' : 'Total Orders'}</div>
@@ -799,13 +1459,13 @@ function AnalyticsSection({ isMl, listings }: { isMl: boolean; listings: any[] }
         {/* Profile Views chart */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <h3 className="font-serif font-bold text-kerala-deep mb-4">{isMl ? 'ആഴ്ചതോറുമുള്ള കാഴ്ചകൾ' : 'Profile Views by Week'}</h3>
-          <div className="flex items-end gap-3" style={{ height: '100px' }}>
+          <div className="flex items-end gap-3 h-24 sm:h-32">
             {analyticsWeeks.map(d => (
               <div key={d.week} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full relative" style={{ height: '80px' }}>
+                <div className="w-full relative h-20 sm:h-28">
                   <div
                     className="absolute bottom-0 w-full bg-kerala-green rounded-t-lg"
-                    style={{ height: `${Math.round((d.views / maxAnalyticsViews) * 80)}px` }}
+                    style={{ height: `${Math.round((d.views / maxAnalyticsViews) * 100)}%` }}
                   />
                 </div>
                 <span className="text-xs text-gray-400">{d.week}</span>
@@ -818,13 +1478,13 @@ function AnalyticsSection({ isMl, listings }: { isMl: boolean; listings: any[] }
         {/* Enquiries chart */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <h3 className="font-serif font-bold text-kerala-deep mb-4">{isMl ? 'ആഴ്ചതോറുമുള്ള അന്വേഷണം' : 'Enquiries by Week'}</h3>
-          <div className="flex items-end gap-3" style={{ height: '100px' }}>
+          <div className="flex items-end gap-3 h-24 sm:h-32">
             {analyticsWeeks.map(d => (
               <div key={d.week} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full relative" style={{ height: '80px' }}>
+                <div className="w-full relative h-20 sm:h-28">
                   <div
                     className="absolute bottom-0 w-full bg-kerala-gold rounded-t-lg"
-                    style={{ height: `${Math.round((d.enquiries / maxAnalyticsEnquiries) * 80)}px` }}
+                    style={{ height: `${Math.round((d.enquiries / maxAnalyticsEnquiries) * 100)}%` }}
                   />
                 </div>
                 <span className="text-xs text-gray-400">{d.week}</span>
@@ -915,7 +1575,7 @@ function JobsSection({ isMl, userId, locale }: { isMl: boolean; userId: string; 
       <SectionHeader title={isMl ? 'പോസ്റ്റ് ചെയ്ത ജോലി' : 'Jobs Posted'} />
 
       <div className="flex justify-end">
-        <Link href={`/${locale}/jobs`}
+        <Link href={`/jobs`}
           className="flex items-center gap-2 bg-kerala-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
           <Plus size={15} />
           {isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post New Job'}
@@ -952,7 +1612,7 @@ function JobsSection({ isMl, userId, locale }: { isMl: boolean; userId: string; 
                   <span className="capitalize text-gray-400">{job.job_type?.replace('-', ' ')}</span>
                 </div>
               </div>
-              <Link href={`/${locale}/jobs/${job.id}`}
+              <Link href={`/jobs/${job.id}`}
                 className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-3 py-1.5 rounded-lg hover:bg-kerala-green/5 flex-shrink-0">
                 {isMl ? 'കാണൂ' : 'View'}
               </Link>
@@ -997,14 +1657,14 @@ function BillingSection({ isMl, listings, locale }: { isMl: boolean; listings: a
             <p className="text-2xl font-serif font-bold text-kerala-deep">{plan.price}<span className="text-sm font-normal text-gray-400">{topPlan !== 'free' ? '/month' : ''}</span></p>
           </div>
           {isUpgradeable && (
-            <Link href={`/${locale}/pricing`}
+            <Link href={`/pricing`}
               className="flex items-center gap-2 bg-kerala-gold text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90">
               <Zap size={14} />
               {isMl ? 'അപ്ഗ്രേഡ്' : 'Upgrade Plan'}
             </Link>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {plan.features.map(f => (
             <div key={f} className="flex items-center gap-2 text-sm text-gray-600">
               <CheckCircle size={14} className="text-kerala-green flex-shrink-0" />
@@ -1047,10 +1707,13 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
   const [bizSaving, setBizSaving] = useState(false)
   const [bizSaved, setBizSaved] = useState(false)
 
+  const [saveError, setSaveError] = useState('')
   const saveProfile = async () => {
-    setSaving(true)
-    await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user?.id)
-    setSaving(false); setSaved(true)
+    setSaving(true); setSaveError('')
+    const { error } = await supabase.from('profiles').update({ full_name: fullName, phone: phone || null }).eq('id', user?.id)
+    setSaving(false)
+    if (error) { setSaveError(error.message); return }
+    setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
 
@@ -1075,12 +1738,12 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
       <SectionHeader title={isMl ? 'ക്രമീകരണം' : 'Settings'} />
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit overflow-x-auto">
         {(['personal', 'business'] as const).map(t => (
           <button
             key={t}
             onClick={() => setSubTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               subTab === t ? 'bg-white text-kerala-deep shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -1115,8 +1778,7 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഫോൺ' : 'Phone'}</label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+              <UAEPhoneInput value={phone} onChange={setPhone} className="bg-gray-50" />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഇ-മെയിൽ' : 'Email'}</label>
@@ -1125,6 +1787,7 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
             </div>
           </div>
 
+          {saveError && <p className="text-red-500 text-xs">{saveError}</p>}
           <button onClick={saveProfile} disabled={saving}
             className="bg-kerala-green text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60">
             {saving ? <><Loader2 size={14} className="animate-spin"/>{isMl ? 'സേവ് ചെയ്യുന്നു...' : 'Saving...'}</> : saved ? (isMl ? '✓ സേവ് ചെയ്തു' : '✓ Saved!') : (isMl ? 'സേവ് ചെയ്യൂ' : 'Save Changes')}
@@ -1158,13 +1821,11 @@ function SettingsSection({ isMl, user, profile, listings }: { isMl: boolean; use
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'ഫോൺ' : 'Phone'}</label>
-                  <input type="tel" value={bizPhone} onChange={e => setBizPhone(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                  <UAEPhoneInput value={bizPhone} onChange={setBizPhone} className="bg-gray-50" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'WhatsApp' : 'WhatsApp'}</label>
-                  <input type="tel" value={bizWhatsapp} onChange={e => setBizWhatsapp(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kerala-green/30 focus:border-kerala-green bg-gray-50" />
+                  <UAEPhoneInput value={bizWhatsapp} onChange={setBizWhatsapp} className="bg-gray-50" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">{isMl ? 'വെബ്‌സൈറ്റ്' : 'Website'}</label>
@@ -1252,7 +1913,7 @@ function ProfessionalDashSection({ isMl, locale }: { isMl: boolean; locale: stri
             ? 'ഡോക്ടർ, അഡ്വക്കേറ്റ്, CA, ഫിറ്റ്നസ് കോച്ച്, ആർട്ടിസ്റ്റ്... — ആയിരങ്ങൾ നിങ്ങളെ കണ്ടെത്തും'
             : 'Doctor, Advocate, CA, Coach, Artist... — thousands of Malayalis will find you'}
         </p>
-        <Link href={`/${locale}/professionals/register`}
+        <Link href={`/professionals/register`}
           className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">
           <Plus size={15} />
           {isMl ? 'പ്രൊഫൈൽ ഉണ്ടാക്കൂ' : 'Create Profile'}
@@ -1264,7 +1925,7 @@ function ProfessionalDashSection({ isMl, locale }: { isMl: boolean; locale: stri
         <div>
           <p className="font-semibold text-kerala-deep text-sm">{isMl ? 'പ്രൊഫഷണൽ ഡയറക്ടറി' : 'Browse Professionals Directory'}</p>
           <p className="text-xs text-gray-500 mt-1">{isMl ? 'UAE-ലെ മലയാളി പ്രൊഫഷണലുകളെ കണ്ടെത്തൂ' : 'Find other Malayali professionals in UAE'}</p>
-          <Link href={`/${locale}/professionals`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
+          <Link href={`/professionals`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
             {isMl ? 'ഡയറക്ടറി കാണൂ →' : 'View Directory →'}
           </Link>
         </div>
@@ -1309,7 +1970,7 @@ function MediaDashSection({ isMl, locale }: { isMl: boolean; locale: string }) {
             ? 'TV, റേഡിയോ, ഡിജിറ്റൽ, ന്യൂസ്‌പേപ്പർ — UAE മലയാളി ഡയറക്ടറിയിൽ ഇടം നേടൂ'
             : 'TV, Radio, Digital, Newspaper — get discovered in the UAE Malayali directory'}
         </p>
-        <Link href={`/${locale}/media/register`}
+        <Link href={`/media/register`}
           className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">
           <Plus size={15} />
           {isMl ? 'ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Media'}
@@ -1321,7 +1982,7 @@ function MediaDashSection({ isMl, locale }: { isMl: boolean; locale: string }) {
         <div>
           <p className="font-semibold text-kerala-deep text-sm">{isMl ? 'മീഡിയ ഡയറക്ടറി' : 'Browse Media Directory'}</p>
           <p className="text-xs text-gray-500 mt-1">{isMl ? 'UAE-ലെ മലയാളി മീഡിയ ഹൗസുകൾ' : 'All Malayali media houses in UAE'}</p>
-          <Link href={`/${locale}/media`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
+          <Link href={`/media`} className="text-kerala-green text-xs font-semibold hover:underline mt-1 block">
             {isMl ? 'ഡയറക്ടറി കാണൂ →' : 'View Directory →'}
           </Link>
         </div>
@@ -1450,11 +2111,11 @@ function FavouritesSection({ isMl, userId, locale }: { isMl: boolean; userId: st
   }
 
   const linkFor = (fav: Favourite) => {
-    if (fav.item_type === 'listing')      return `/${locale}/company/${fav.item_id}`
-    if (fav.item_type === 'professional') return `/${locale}/professionals/${fav.item_id}`
-    if (fav.item_type === 'media')        return `/${locale}/media/${fav.item_id}`
-    if (fav.item_type === 'job')          return `/${locale}/jobs/${fav.item_id}`
-    if (fav.item_type === 'event')        return `/${locale}/events/${fav.item_id}`
+    if (fav.item_type === 'listing')      return `/company/${fav.item_id}`
+    if (fav.item_type === 'professional') return `/professionals/${fav.item_id}`
+    if (fav.item_type === 'media')        return `/media/${fav.item_id}`
+    if (fav.item_type === 'job')          return `/jobs/${fav.item_id}`
+    if (fav.item_type === 'event')        return `/events/${fav.item_id}`
     return '#'
   }
 
@@ -1505,10 +2166,10 @@ function FavouritesSection({ isMl, userId, locale }: { isMl: boolean; userId: st
               : 'Tap the ❤️ button on any business, professional, or media to save it here'}
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
-            <Link href={`/${locale}/directory`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
+            <Link href={`/directory`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
               {isMl ? 'ഡയറക്ടറി' : 'Browse Directory'}
             </Link>
-            <Link href={`/${locale}/professionals`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
+            <Link href={`/professionals`} className="text-xs font-semibold text-kerala-green border border-kerala-green/30 px-4 py-2 rounded-xl hover:bg-kerala-green/5">
               {isMl ? 'പ്രൊഫഷണൽസ്' : 'Browse Professionals'}
             </Link>
           </div>
@@ -1556,17 +2217,13 @@ function FavouritesSection({ isMl, userId, locale }: { isMl: boolean; userId: st
 const BASE_NAV_ITEMS: { key: NavSection; icon: React.ElementType; label: string; labelMl: string; roleGate?: string }[] = [
   { key: 'overview',     icon: LayoutDashboard, label: 'Overview',       labelMl: 'ഓവർവ്യൂ' },
   { key: 'listings',     icon: Building2,       label: 'My Listings',    labelMl: 'ലിസ്റ്റിംഗ്' },
-  { key: 'shop',         icon: ShoppingBag,     label: 'Shop Manager',   labelMl: 'ഷോപ്പ്' },
-  { key: 'orders',       icon: ShoppingCart,    label: 'Orders',         labelMl: 'ഓർഡർ' },
-  { key: 'enquiries',    icon: MessageSquare,   label: 'Enquiries',      labelMl: 'അന്വേഷണം' },
   { key: 'analytics',    icon: BarChart2,       label: 'Analytics',      labelMl: 'അനലിറ്റിക്സ്' },
-  { key: 'jobs',         icon: Briefcase,       label: 'Jobs Posted',    labelMl: 'ജോലി' },
   { key: 'professional', icon: Stethoscope,     label: 'My Profile',     labelMl: 'പ്രൊഫൈൽ',    roleGate: 'is_professional' },
   { key: 'media',        icon: Tv,              label: 'My Media',       labelMl: 'മീഡിയ',       roleGate: 'is_media' },
   { key: 'reviews',      icon: Star,            label: 'Reviews',        labelMl: 'റിവ്യൂ' },
-  { key: 'favourites',   icon: Heart,           label: 'Wishlist',       labelMl: 'വിഷ്‌ലിസ്റ്റ്' },
   { key: 'billing',      icon: CreditCard,      label: 'Billing',        labelMl: 'ബില്ലിംഗ്' },
   { key: 'settings',     icon: Settings,        label: 'Settings',       labelMl: 'ക്രമീകരണം' },
+  // Phase 2 (hidden): classifieds, shop, orders, enquiries, jobs, favourites
 ]
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -1590,9 +2247,7 @@ export default function DashboardPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push(`/${locale}/auth`)
-    }
+    if (!authLoading && !user) router.push(`/auth`)
   }, [authLoading, user, locale, router])
 
   // Fetch owner's listings
@@ -1622,7 +2277,7 @@ export default function DashboardPage() {
 
   const handleSignOut = async () => {
     await signOut()
-    router.push(`/${locale}/auth`)
+    router.push(`/auth`)
   }
 
   const sidebarContent = (
@@ -1681,6 +2336,13 @@ export default function DashboardPage() {
           <p className="font-semibold text-white text-sm mb-0.5">{isMl ? 'ലിസ്റ്റിംഗ് ചേർക്കൂ' : 'All Features Free'}</p>
           <p className="text-white/50 text-xs">{isMl ? 'എല്ലാ സേവനങ്ങളും സൗജന്യം' : 'List your business at no cost'}</p>
         </div>
+        {/* Admin Panel link — shown only for admins */}
+        {profile?.is_admin && (
+          <Link href={`/admin`}
+            className="flex items-center gap-2 text-kerala-gold hover:text-kerala-gold-light text-xs font-semibold px-3 py-2 rounded-lg hover:bg-white/5 transition-all w-full mt-1">
+            <Shield size={14}/> Admin Panel
+          </Link>
+        )}
         {/* Sign out */}
         <button onClick={handleSignOut}
           className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-white/5 transition-all w-full mt-1">
@@ -1752,7 +2414,8 @@ export default function DashboardPage() {
           {/* Section content */}
           <div className="p-4 sm:p-6 lg:p-8">
             {activeSection === 'overview'      && <OverviewSection isMl={isMl} listings={myListings} onAddListing={() => setActiveSection('listings')} onSection={(s) => setActiveSection(s as NavSection)} />}
-            {activeSection === 'listings'      && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} userId={user.id} />}
+            {activeSection === 'listings'      && <ListingsSection isMl={isMl} listings={myListings} loading={listingsLoading} userId={user.id} userEmail={user.email ?? undefined} ownerName={profile?.full_name ?? undefined} />}
+            {activeSection === 'classifieds'   && <ClassifiedsSection isMl={isMl} userId={user.id} />}
             {activeSection === 'shop'          && <ShopManagerSection isMl={isMl} listings={myListings} />}
             {activeSection === 'orders'        && <OrdersSection isMl={isMl} />}
             {activeSection === 'enquiries'     && <EnquiriesSection isMl={isMl} />}

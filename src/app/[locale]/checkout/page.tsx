@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
@@ -72,7 +72,7 @@ function CartStep({ onNext, isMl, locale }: { onNext: () => void; isMl: boolean;
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-20 text-center">
             <ShoppingCart size={40} className="mx-auto mb-3 text-gray-300" />
             <p className="text-gray-400 mb-4">{isMl ? 'കാർട്ട് ശൂന്യം' : 'Your cart is empty'}</p>
-            <Link href={`/${locale}/shop`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-deep transition-colors">
+            <Link href={`/shop`} className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-deep transition-colors">
               {isMl ? 'ഷോപ്പ് ബ്രൗസ് ചെയ്യൂ' : 'Browse Shop'}
             </Link>
           </div>
@@ -467,7 +467,7 @@ function ConfirmedStep({ orderNumber, locale, isMl }: { orderNumber: string; loc
   const whatsappMsg = encodeURIComponent(`Just ordered from MalayaliBusiness! 🛍️ Order #${orderNumber}`)
   const total = totalAmount + 15 + Math.round((totalAmount + 15) * 0.05 * 100) / 100
 
-  function handleContinue() { clearCart(); router.push(`/${locale}/shop`) }
+  function handleContinue() { clearCart(); router.push(`/shop`) }
 
   return (
     <div className="max-w-lg mx-auto text-center space-y-6">
@@ -499,7 +499,7 @@ function ConfirmedStep({ orderNumber, locale, isMl }: { orderNumber: string; loc
           className="flex items-center justify-center gap-2 border-2 border-kerala-green text-kerala-green font-semibold py-3 rounded-xl hover:bg-kerala-green hover:text-white transition-all text-sm">
           <ShoppingCart size={15} /> {isMl ? 'ഷോപ്പിംഗ് തുടരൂ' : 'Continue Shopping'}
         </button>
-        <Link href={`/${locale}/dashboard`}
+        <Link href={`/dashboard`}
           className="flex items-center justify-center gap-2 bg-kerala-deep text-white font-semibold py-3 rounded-xl hover:bg-kerala-green transition-all text-sm">
           <ClipboardList size={15} /> {isMl ? 'ഓർഡറുകൾ' : 'View Orders'}
         </Link>
@@ -531,7 +531,7 @@ export default function CheckoutPage() {
           <div className="flex items-center gap-2 text-gray-400 text-xs mb-6 mt-4">
             <Link href={`/${locale}`} className="hover:text-kerala-green">{isMl ? 'ഹോം' : 'Home'}</Link>
             <ChevronRight size={12} />
-            <Link href={`/${locale}/shop`} className="hover:text-kerala-green">{isMl ? 'ഷോപ്പ്' : 'Shop'}</Link>
+            <Link href={`/shop`} className="hover:text-kerala-green">{isMl ? 'ഷോപ്പ്' : 'Shop'}</Link>
             <ChevronRight size={12} />
             <span className="text-kerala-deep font-medium">{isMl ? 'ചെക്ക്ഔട്ട്' : 'Checkout'}</span>
           </div>

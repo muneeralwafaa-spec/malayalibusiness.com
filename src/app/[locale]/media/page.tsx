@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -119,7 +119,7 @@ export default function MediaPage() {
               return (
                 <Link
                   key={house.id}
-                  href={`/${locale}/media/${house.slug}`}
+                  href={`/media/${house.slug}`}
                   className="group bg-white hover:shadow-lg border border-gray-100 rounded-2xl overflow-hidden card-hover transition-all flex"
                 >
                   {/* Logo */}
@@ -178,7 +178,7 @@ export default function MediaPage() {
               {isMl ? 'നിങ്ങളുടെ ചാനൽ / സ്റ്റേഷൻ ലിസ്റ്റ് ചെയ്യൂ — സൗജന്യം' : 'List your channel, station or publication — it\'s free'}
             </p>
           </div>
-          <Link href={`/${locale}/media/register`} className="flex-shrink-0 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-6 py-3 rounded-xl transition-all">
+          <Link href={`/media/register`} className="flex-shrink-0 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-6 py-3 rounded-xl transition-all">
             {isMl ? 'ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Media'}
           </Link>
         </div>

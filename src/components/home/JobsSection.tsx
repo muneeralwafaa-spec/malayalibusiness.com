@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
@@ -85,7 +85,7 @@ export default function JobsSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/jobs`}
+            href={`/jobs`}
             className="flex items-center gap-2 border border-kerala-green text-kerala-green hover:bg-kerala-green hover:text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാ ജോലികളും' : 'View All Jobs'}
@@ -94,11 +94,11 @@ export default function JobsSection() {
         </div>
 
         {/* Jobs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {jobs.map((job) => (
             <Link
               key={job.id}
-              href={`/${locale}/jobs/${job.id}`}
+              href={`/jobs/${job.id}`}
               className="group bg-kerala-cream hover:bg-white border border-transparent hover:border-gray-200 rounded-2xl p-5 card-hover flex items-start gap-4"
             >
               <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 bg-white">
@@ -162,7 +162,7 @@ export default function JobsSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/jobs`}
+            href={`/jobs`}
             className="flex-shrink-0 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-6 py-3 rounded-xl transition-all"
           >
             {isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post a Job'}

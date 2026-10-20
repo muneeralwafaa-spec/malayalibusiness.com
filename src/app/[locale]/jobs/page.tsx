@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
@@ -215,7 +215,7 @@ export default function JobsPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link href={`/${locale}/jobs/new`} className="flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
+              <Link href={`/jobs/new`} className="flex items-center gap-2 bg-kerala-gold text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-all text-sm">
                 <Briefcase size={15} />
                 {isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post a Job'}
               </Link>
@@ -420,7 +420,7 @@ export default function JobsPage() {
                   ? '50,000+ മലയാളി പ്രൊഫഷണലുകളിലേക്ക് നിങ്ങളുടെ ജോലി ഒഴിവ് പോസ്റ്റ് ചെയ്യൂ'
                   : 'Post your job to 50,000+ Malayali professionals in the UAE'}
               </p>
-              <Link href={`/${locale}/jobs/new`} className="block w-full bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold py-2.5 rounded-xl text-sm transition-all text-center">
+              <Link href={`/jobs/new`} className="block w-full bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold py-2.5 rounded-xl text-sm transition-all text-center">
                 {isMl ? 'ജോലി പോസ്റ്റ് ചെയ്യൂ' : 'Post a Job'}
               </Link>
             </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
@@ -96,7 +96,7 @@ export default function OwnerProfilePage() {
               : 'This business owner profile is not available or does not exist.'}
           </p>
           <Link
-            href={`/${locale}/businessmen`}
+            href={`/businessmen`}
             className="inline-flex items-center gap-2 bg-kerala-green text-white font-bold px-6 py-3 rounded-xl hover:bg-kerala-green-light transition-colors"
           >
             {isMl ? 'ഡയറക്ടറിയിലേക്ക് തിരിച്ചു പോകൂ' : 'Back to Directory'}
@@ -278,7 +278,7 @@ export default function OwnerProfilePage() {
                           : 'No businesses listed by this owner yet.'}
                       </p>
                       <Link
-                        href={`/${locale}/directory`}
+                        href={`/directory`}
                         className="flex items-center gap-2 text-kerala-green font-semibold text-sm py-2.5 px-5 border border-dashed border-kerala-green/30 rounded-xl hover:bg-kerala-green/5 transition-colors"
                       >
                         {isMl ? 'ബിസിനസ് ഡയറക്ടറി കാണൂ' : 'Explore Business Directory'}
@@ -416,7 +416,7 @@ export default function OwnerProfilePage() {
                   : 'Discover more Malayali business leaders across the UAE'}
               </p>
               <Link
-                href={`/${locale}/businessmen`}
+                href={`/businessmen`}
                 className="flex items-center justify-center gap-2 bg-kerala-green text-white font-semibold text-xs py-2.5 rounded-lg hover:bg-kerala-green-light transition-all"
               >
                 {isMl ? 'ഡയറക്ടറി കാണൂ' : 'View Directory'}
@@ -432,7 +432,7 @@ export default function OwnerProfilePage() {
                   : 'Are you a business owner? Get listed today!'}
               </p>
               <Link
-                href={`/${locale}/auth?tab=register`}
+                href={`/auth?tab=register`}
                 className="flex items-center justify-center gap-2 bg-kerala-gold/10 border border-kerala-gold/30 text-kerala-gold font-semibold text-xs py-2.5 rounded-lg hover:bg-kerala-gold/20 transition-all"
               >
                 <Star size={12} />

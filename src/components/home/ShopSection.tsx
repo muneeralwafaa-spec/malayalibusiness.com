@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { ShoppingCart, Star, ArrowRight, Truck, Shield, RefreshCw, MessageCircle, Calendar, FileText, Zap, BadgeCheck } from 'lucide-react'
@@ -55,7 +56,7 @@ export default function ShopSection() {
             </p>
           </div>
           <Link
-            href={`/${locale}/shop`}
+            href={`/shop`}
             className="flex items-center gap-2 bg-kerala-green text-white font-semibold text-sm px-5 py-2.5 rounded-lg hover:bg-kerala-deep transition-all whitespace-nowrap"
           >
             {isMl ? 'എല്ലാം കാണൂ' : 'Shop All'}
@@ -64,7 +65,7 @@ export default function ShopSection() {
         </div>
 
         {/* Trust Badges */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {badges.map((b, i) => (
             <div key={i} className="flex items-center gap-2.5 bg-white rounded-xl p-3 shadow-sm">
               <b.icon size={18} className="text-kerala-green flex-shrink-0" />
@@ -85,13 +86,14 @@ export default function ShopSection() {
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 hover:border-kerala-green/20 transition-all flex flex-col"
               >
                 {/* Image */}
-                <Link href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`} className="relative h-44 overflow-hidden bg-gray-50 block">
+                <Link href={`/company/${listing.vendor_slug}/shop/${listing.id}`} className="relative h-44 overflow-hidden bg-gray-50 block">
                   {listing.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={listing.image_url}
                       alt={listing.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, 300px"
                     />
                   )}
                   {/* Badges */}
@@ -111,11 +113,10 @@ export default function ShopSection() {
                 {/* Content */}
                 <div className="p-3 flex flex-col flex-1">
                   {/* Vendor */}
-                  <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-1.5 mb-1.5 group/v">
+                  <Link href={`/company/${listing.vendor_slug}`} className="flex items-center gap-1.5 mb-1.5 group/v">
                     <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
                       {listing.vendor_logo_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={listing.vendor_logo_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                        <Image src={listing.vendor_logo_url} alt="vendor logo" width={40} height={40} className="object-contain" />
                       )}
                     </div>
                     <span className="text-[10px] text-gray-400 group-hover/v:text-kerala-green transition-colors flex items-center gap-0.5 truncate">
@@ -159,35 +160,35 @@ export default function ShopSection() {
                       href={`https://wa.me/${(listing.vendor_whatsapp ?? '').replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full bg-[#25D366] text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-[#20bd5a] transition-colors"
+                      className="w-full bg-[#25D366] text-white text-[11px] font-semibold py-3 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-[#20bd5a] transition-colors"
                     >
                       <MessageCircle size={11} /> WhatsApp
                     </a>
                   ) : listing.listing_type === 'appointment' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
-                      className="w-full bg-blue-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-blue-600 transition-colors"
+                      href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
+                      className="w-full bg-blue-500 text-white text-[11px] font-semibold py-3 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-blue-600 transition-colors"
                     >
                       <Calendar size={11} /> {isMl ? 'ബുക്ക് ചെയ്യൂ' : 'Book Slot'}
                     </Link>
                   ) : listing.listing_type === 'quote' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
-                      className="w-full bg-orange-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-orange-600 transition-colors"
+                      href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
+                      className="w-full bg-orange-500 text-white text-[11px] font-semibold py-3 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-orange-600 transition-colors"
                     >
                       <FileText size={11} /> {isMl ? 'ക്വോട്ട്' : 'Get Quote'}
                     </Link>
                   ) : listing.listing_type === 'direct_service' ? (
                     <Link
-                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
-                      className="w-full bg-purple-500 text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-purple-600 transition-colors"
+                      href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
+                      className="w-full bg-purple-500 text-white text-[11px] font-semibold py-3 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-purple-600 transition-colors"
                     >
                       <Zap size={11} /> {isMl ? 'ഉടൻ വാങ്ങൂ' : 'Buy Now'}
                     </Link>
                   ) : (
                     <Link
-                      href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
-                      className="w-full bg-kerala-green text-white text-[11px] font-semibold py-2 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-kerala-deep transition-colors"
+                      href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
+                      className="w-full bg-kerala-green text-white text-[11px] font-semibold py-3 rounded-xl text-center flex items-center justify-center gap-1.5 hover:bg-kerala-deep transition-colors"
                     >
                       <ShoppingCart size={11} /> {isMl ? 'കാർട്ടിൽ' : 'Add to Cart'}
                     </Link>
@@ -201,7 +202,7 @@ export default function ShopSection() {
         {/* View all CTA */}
         <div className="mt-8 text-center">
           <Link
-            href={`/${locale}/shop`}
+            href={`/shop`}
             className="inline-flex items-center gap-2 bg-kerala-deep text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-kerala-green transition-colors"
           >
             {isMl ? 'എല്ലാ ഉൽപ്പന്നങ്ങളും കാണൂ' : 'View All Products & Services'}

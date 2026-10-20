@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Back link */}
           <Link
-            href={`/${locale}/auth`}
+            href={`/auth`}
             className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-kerala-green mb-6 transition-colors"
           >
             <ArrowLeft size={15} />
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                 }
               </p>
               <Link
-                href={`/${locale}/auth`}
+                href={`/auth`}
                 className="inline-block bg-kerala-green text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-kerala-deep transition-colors"
               >
                 {isMl ? 'ലോഗിൻ' : 'Back to Login'}

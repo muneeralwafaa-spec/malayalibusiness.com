@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
@@ -263,7 +263,7 @@ export default function ShopPage() {
 
                   <div className="p-4 flex flex-col flex-1">
                     {/* Vendor */}
-                    <Link href={`/${locale}/company/${listing.vendor_slug}`} className="flex items-center gap-2 mb-2 group/vendor">
+                    <Link href={`/company/${listing.vendor_slug}`} className="flex items-center gap-2 mb-2 group/vendor">
                       <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
                         {listing.vendor_logo_url && (
                           <Image src={listing.vendor_logo_url} alt="" fill className="object-cover" />
@@ -309,7 +309,7 @@ export default function ShopPage() {
                     {/* Action buttons */}
                     <div className="flex gap-2 mt-auto">
                       <Link
-                        href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
+                        href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
                         className="flex-1 border border-gray-200 text-gray-600 text-xs font-semibold py-2 rounded-xl text-center hover:border-kerala-green hover:text-kerala-green transition-colors"
                       >
                         {isMl ? 'വിശദാംശം' : 'View Details'}
@@ -327,7 +327,7 @@ export default function ShopPage() {
                         </a>
                       ) : listing.listing_type === 'quote' ? (
                         <Link
-                          href={`/${locale}/company/${listing.vendor_slug}/shop/${listing.id}`}
+                          href={`/company/${listing.vendor_slug}/shop/${listing.id}`}
                           className="flex-1 bg-orange-500 text-white text-xs font-semibold py-2 rounded-xl text-center hover:bg-orange-600 transition-colors"
                         >
                           {isMl ? 'ക്വോട്ട്' : 'Get Quote'}
@@ -358,10 +358,10 @@ export default function ShopPage() {
             {isMl ? '3.5 ദശലക്ഷം മലയാളികൾക്ക് നിങ്ങളുടെ ഷോപ്പ് കാണിക്കൂ. ഇന്ന് ഫ്രീ ആയി ആരംഭിക്കൂ.' : 'List your products and services for 3.5M Malayalis. Start free today.'}
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <Link href={`/${locale}/auth`} className="bg-kerala-gold text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-kerala-gold-light transition-colors">
+            <Link href={`/auth`} className="bg-kerala-gold text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-kerala-gold-light transition-colors">
               {isMl ? 'ഉടൻ ആരംഭിക്കൂ' : 'Start Selling Free'}
             </Link>
-            <Link href={`/${locale}/pricing`} className="border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/10 transition-colors">
+            <Link href={`/pricing`} className="border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/10 transition-colors">
               {isMl ? 'പ്ലാനുകൾ കാണൂ' : 'View Plans'}
             </Link>
           </div>

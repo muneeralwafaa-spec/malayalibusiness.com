@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import {
   ChevronRight, Upload, X, CheckCircle,
   MapPin, Phone, Tag, AlertCircle
 } from 'lucide-react'
+import UAEPhoneInput from '@/components/ui/UAEPhoneInput'
 
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain']
 
@@ -46,8 +47,40 @@ export default function NewClassifiedPage() {
     whatsapp: '',
     name: '',
   })
+  const [photos,    setPhotos]    = useState<File[]>([])
+  const [previews,  setPreviews]  = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    const remaining = 6 - photos.length
+    const added = files.slice(0, remaining)
+    setPhotos(prev => [...prev, ...added])
+    setPreviews(prev => [...prev, ...added.map(f => URL.createObjectURL(f))])
+    e.target.value = ''
+  }
+
+  function removePhoto(idx: number) {
+    URL.revokeObjectURL(previews[idx])
+    setPhotos(prev => prev.filter((_, i) => i !== idx))
+    setPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  async function uploadPhotos(classifiedId: string): Promise<string[]> {
+    const urls: string[] = []
+    for (const file of photos) {
+      const ext  = file.name.split('.').pop()
+      const path = `classifieds/${classifiedId}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('classified-photos').upload(path, file, { upsert: false })
+      if (!error) {
+        const { data } = supabase.storage.from('classified-photos').getPublicUrl(path)
+        urls.push(data.publicUrl)
+      }
+    }
+    return urls
+  }
 
   function set(key: string, value: string | boolean) {
     setForm(f => ({ ...f, [key]: value }))
@@ -71,7 +104,8 @@ export default function NewClassifiedPage() {
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
 
-    // Generate a URL-safe slug from the title
+    setUploading(true)
+
     const slug = form.title.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .trim().replace(/\s+/g, '-')
@@ -81,7 +115,7 @@ export default function NewClassifiedPage() {
       ? Number(form.price.replace(/[^0-9.]/g, '')) || null
       : null
 
-    const { error } = await supabase.from('classifieds').insert({
+    const { data: inserted, error } = await supabase.from('classifieds').insert({
       title:        form.title,
       description:  form.description,
       category:     form.category,
@@ -96,12 +130,20 @@ export default function NewClassifiedPage() {
       whatsapp:     form.whatsapp || form.phone,
       seller_name:  form.name,
       status:       'pending',
-    })
+    }).select('id').single()
 
     if (error) {
       console.error('[classifieds/new]', error.message)
-      // Still show success to user — admin will review
     }
+
+    if (inserted?.id && photos.length > 0) {
+      const photoUrls = await uploadPhotos(inserted.id)
+      if (photoUrls.length > 0) {
+        await supabase.from('classifieds').update({ photos: photoUrls }).eq('id', inserted.id)
+      }
+    }
+
+    setUploading(false)
     setSubmitted(true)
   }
 
@@ -114,7 +156,7 @@ export default function NewClassifiedPage() {
           <div className="w-20 h-20 rounded-full bg-kerala-green/10 flex items-center justify-center mb-5">
             <CheckCircle size={40} className="text-kerala-green" />
           </div>
-          <h1 className="font-serif text-3xl font-bold text-kerala-deep mb-2">
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-kerala-deep mb-2">
             {isMl ? 'പരസ്യം സമർപ്പിച്ചു!' : 'Ad Submitted!'}
           </h1>
           <p className="text-gray-500 max-w-sm mb-8">
@@ -123,7 +165,7 @@ export default function NewClassifiedPage() {
               : 'Your ad has been submitted for review and will go live within 24 hours.'}
           </p>
           <div className="flex gap-3 flex-wrap justify-center">
-            <Link href={`/${locale}/classifieds`}
+            <Link href={`/classifieds`}
               className="bg-kerala-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-kerala-green-light transition-colors">
               {isMl ? 'ക്ലാസിഫൈഡ്സ് കാണൂ' : 'Browse Classifieds'}
             </Link>
@@ -149,13 +191,13 @@ export default function NewClassifiedPage() {
         <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
           <Link href={`/${locale}`} className="hover:text-kerala-green">Home</Link>
           <ChevronRight size={12} />
-          <Link href={`/${locale}/classifieds`} className="hover:text-kerala-green">Classifieds</Link>
+          <Link href={`/classifieds`} className="hover:text-kerala-green">Classifieds</Link>
           <ChevronRight size={12} />
           <span className="text-kerala-deep font-medium">{isMl ? 'പരസ്യം പോസ്റ്റ് ചെയ്യൂ' : 'Post an Ad'}</span>
         </nav>
 
         <div className="mb-6">
-          <h1 className={`font-serif text-3xl font-bold text-kerala-deep mb-1 ${isMl ? 'font-malayalam' : ''}`}>
+          <h1 className={`font-serif text-2xl sm:text-3xl font-bold text-kerala-deep mb-1 ${isMl ? 'font-malayalam' : ''}`}>
             {isMl ? 'പരസ്യം പോസ്റ്റ് ചെയ്യൂ' : 'Post a Free Ad'}
           </h1>
           <p className="text-gray-500 text-sm">
@@ -254,7 +296,7 @@ export default function NewClassifiedPage() {
               {isMl ? 'വില & അവസ്ഥ' : 'Price & Condition'}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   {isMl ? 'വില (AED)' : 'Price (AED)'} <span className="text-red-400">*</span>
@@ -309,7 +351,7 @@ export default function NewClassifiedPage() {
               <MapPin size={15} className="text-kerala-green" />
               {isMl ? 'സ്ഥലം' : 'Location'}
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   {isMl ? 'എമിറേറ്റ്' : 'Emirate'} <span className="text-red-400">*</span>
@@ -346,11 +388,37 @@ export default function NewClassifiedPage() {
               {isMl ? 'ഫോട്ടോകൾ' : 'Photos'}
               <span className="text-xs font-normal text-gray-400">{isMl ? '(ഓപ്ഷണൽ, പരമാവധി 6)' : '(optional, max 6)'}</span>
             </h2>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-kerala-green/40 transition-colors cursor-pointer">
-              <Upload size={28} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">{isMl ? 'ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യൂ' : 'Click to upload photos'}</p>
-              <p className="text-xs text-gray-300 mt-1">JPG, PNG up to 5MB each</p>
-            </div>
+            {/* Preview grid */}
+            {previews.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {previews.map((src, i) => (
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {photos.length < 6 && (
+              <label className="block border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-kerala-green/40 transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+                <Upload size={28} className="text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">{isMl ? 'ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യൂ' : 'Click to upload photos'}</p>
+                <p className="text-xs text-gray-300 mt-1">JPG, PNG up to 5MB each · {6 - photos.length} remaining</p>
+              </label>
+            )}
           </div>
 
           {/* Contact */}
@@ -377,13 +445,7 @@ export default function NewClassifiedPage() {
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   {isMl ? 'ഫോൺ നമ്പർ' : 'Phone Number'} <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={e => set('phone', e.target.value)}
-                  placeholder="+971 50 000 0000"
-                  className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-kerala-green ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
-                />
+                <UAEPhoneInput value={form.phone} onChange={v => set('phone', v)} hasError={!!errors.phone} />
                 {errors.phone && <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.phone}</p>}
               </div>
               <div>
@@ -391,27 +453,22 @@ export default function NewClassifiedPage() {
                   WhatsApp {isMl ? 'നമ്പർ' : 'Number'}
                   <span className="text-gray-300 font-normal ml-1">(optional)</span>
                 </label>
-                <input
-                  type="tel"
-                  value={form.whatsapp}
-                  onChange={e => set('whatsapp', e.target.value)}
-                  placeholder="+971 50 000 0000"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-kerala-green"
-                />
+                <UAEPhoneInput value={form.whatsapp} onChange={v => set('whatsapp', v)} />
               </div>
             </div>
           </div>
 
           {/* Submit */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="submit"
-              className="flex-1 bg-kerala-green text-white py-3.5 rounded-xl font-bold text-sm hover:bg-kerala-green-light transition-colors shadow-lg shadow-kerala-green/20"
+              disabled={uploading}
+              className="flex-1 bg-kerala-green text-white py-3.5 rounded-xl font-bold text-sm hover:bg-kerala-green-light transition-colors shadow-lg shadow-kerala-green/20 disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {isMl ? 'പരസ്യം പ്രസിദ്ധീകരിക്കൂ' : 'Post Ad for Free'}
+              {uploading ? <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />{isMl ? 'അപ്‌ലോഡ് ചെയ്യുന്നു…' : 'Uploading…'}</> : (isMl ? 'പരസ്യം പ്രസിദ്ധീകരിക്കൂ' : 'Post Ad for Free')}
             </button>
-            <Link href={`/${locale}/classifieds`}
-              className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green transition-colors text-sm font-semibold">
+            <Link href={`/classifieds`}
+              className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-gray-200 text-gray-500 hover:border-kerala-green hover:text-kerala-green transition-colors text-sm font-semibold">
               <X size={15} />
               {isMl ? 'റദ്ദാക്കൂ' : 'Cancel'}
             </Link>

@@ -3,11 +3,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'MalayaliBusiness UAE — UAE\'s #1 Malayali Business Network',
-    template: '%s | MalayaliBusiness UAE',
+    default: 'Malayalibusiness.com — World\'s First AI-Powered Malayali Marketplace',
+    template: '%s | Malayalibusiness.com',
   },
-  description: 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates. Find Malayali businesses, events, jobs, classifieds and more.',
-  keywords: 'Malayali business UAE, Kerala business Dubai, Malayalam directory UAE, Malayali community UAE, Kerala community Dubai, malayali jobs UAE',
+  description: 'The World\'s First AI-Powered Malayali Marketplace in the UAE. Find, connect and grow with 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates.',
+  keywords: 'Malayali marketplace UAE, AI powered Malayali business, Kerala business Dubai, Malayalam marketplace UAE, Malayali community UAE, Kerala community Dubai, malayali jobs UAE',
   metadataBase: new URL('https://www.malayalibusiness.com'),
   alternates: {
     canonical: '/',
@@ -17,10 +17,10 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'MalayaliBusiness UAE — UAE\'s #1 Malayali Business Network',
-    description: 'Connecting 3.5 million Malayalis across Dubai, Abu Dhabi, Sharjah and all UAE emirates.',
+    title: 'Malayalibusiness.com — World\'s First AI-Powered Malayali Marketplace',
+    description: 'The World\'s First AI-Powered Malayali Marketplace. Find, connect and grow with Malayali businesses across the UAE.',
     type: 'website',
-    siteName: 'MalayaliBusiness UAE',
+    siteName: 'Malayalibusiness.com',
     locale: 'en_AE',
     images: [
       {

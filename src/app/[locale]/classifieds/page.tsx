@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import Navbar from '@/components/layout/Navbar'
@@ -60,12 +61,12 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
     <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-kerala-green/20 transition-all duration-300 flex flex-col">
       {/* Image */}
       <div className="relative h-44 overflow-hidden bg-gray-50">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={item.images[0] || classifiedFallback(item.category)}
           alt={item.title}
-          onError={(e) => { (e.target as HTMLImageElement).src = classifiedFallback(item.category) }}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
@@ -113,7 +114,7 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
           )}
         </div>
 
-        <Link href={`/${locale}/classifieds/${item.id}`} className="font-semibold text-kerala-deep hover:text-kerala-green transition-colors line-clamp-2 text-sm leading-snug mb-2">
+        <Link href={`/classifieds/${item.id}`} className="font-semibold text-kerala-deep hover:text-kerala-green transition-colors line-clamp-2 text-sm leading-snug mb-2">
           {isMl ? (item.title_ml ?? item.title) : item.title}
         </Link>
 
@@ -134,12 +135,12 @@ function ClassifiedCard({ item, isMl }: { item: Classified; isMl: boolean }) {
         <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-auto">
           <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-kerala-cream flex items-center justify-center">
             {item.seller_avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={item.seller_avatar}
                 alt={item.seller_name ?? ''}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                className="w-full h-full object-cover"
+                fill
+                sizes="28px"
+                className="object-cover"
               />
             ) : (
               <span className="text-xs text-kerala-green font-bold">{(item.seller_name ?? 'A')[0]}</span>
@@ -230,8 +231,8 @@ export default function ClassifiedsPage() {
       {/* Hero */}
       <div className="bg-kerala-deep pt-20 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-6">
+            <div className="flex-1">
               <div className="flex items-center gap-2 text-white/40 text-xs mb-3">
                 <span>{isMl ? 'ഹോം' : 'Home'}</span><span>/</span>
                 <span className="text-kerala-gold-light">{isMl ? 'ക്ലാസിഫൈഡ്സ്' : 'Classifieds'}</span>
@@ -239,12 +240,12 @@ export default function ClassifiedsPage() {
               <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
                 {isMl ? 'ക്ലാസിഫൈഡ്സ്' : 'Classifieds'}
               </h1>
-              <p className="text-white/60">
+              <p className="text-white/60 text-sm sm:text-base">
                 {isMl ? 'മലയാളി കമ്മ്യൂണിറ്റിക്കുള്ളിൽ വാങ്ങൂ, വിൽക്കൂ, വാടകയ്ക്ക് നൽകൂ' : 'Buy, sell & rent within the Malayali community across UAE'}
               </p>
             </div>
-            <Link href={`/${locale}/classifieds/new`}
-              className="flex-shrink-0 flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-5 py-3 rounded-xl transition-all text-sm">
+            <Link href={`/classifieds/new`}
+              className="flex-shrink-0 flex items-center justify-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-5 py-3 rounded-xl transition-all text-sm w-full sm:w-auto">
               <Plus size={16} />{isMl ? 'പരസ്യം ഇടൂ' : 'Post Free Ad'}
             </Link>
           </div>
@@ -270,7 +271,7 @@ export default function ClassifiedsPage() {
 
           {/* Filter panel */}
           {filterOpen && (
-            <div className="mt-3 bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mt-3 bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-white/50 text-xs mb-1 block">{isMl ? 'തരം' : 'Type'}</label>
                 <select value={activeType} onChange={e => { setActiveType(e.target.value); setPage(1) }}
@@ -310,8 +311,8 @@ export default function ClassifiedsPage() {
       </div>
 
       {/* Category Pills */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 overflow-x-auto">
-        <div className="max-w-7xl mx-auto flex items-center gap-2 min-w-max">
+      <div className="bg-white border-b border-gray-100 py-3 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-2 px-4 sm:px-6 lg:px-8 w-max min-w-full">
           <button onClick={() => { setActiveCategory(''); setPage(1) }}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!activeCategory ? 'bg-kerala-green text-white' : 'bg-kerala-cream text-gray-600 hover:bg-gray-100'}`}>
             {isMl ? 'എല്ലാം' : 'All'} <span className="text-xs opacity-70">{classifieds.length}</span>
@@ -335,7 +336,7 @@ export default function ClassifiedsPage() {
             <span className="text-kerala-deep font-bold">{filtered.length}</span> {isMl ? 'പരസ്യങ്ങൾ' : 'ads found'}
             {activeCategory && <span className="text-kerala-green"> · {classifiedCategories.find(c=>c.slug===activeCategory)?.[isMl?'nameMl':'name']}</span>}
           </p>
-          <Link href={`/${locale}/classifieds/new`}
+          <Link href={`/classifieds/new`}
             className="hidden sm:flex items-center gap-1.5 text-sm text-kerala-green hover:text-kerala-green-light font-semibold border border-kerala-green/30 hover:border-kerala-green px-4 py-1.5 rounded-lg transition-all">
             <Plus size={14} />{isMl ? 'പരസ്യം ഇടൂ' : 'Post Ad'}
           </Link>
@@ -360,7 +361,7 @@ export default function ClassifiedsPage() {
             <Tag size={48} className="text-gray-200 mx-auto mb-4" />
             <h3 className="font-serif text-2xl font-semibold text-kerala-deep mb-2">{isMl ? 'ഒന്നും കണ്ടെത്തിയില്ല' : 'No ads found'}</h3>
             <p className="text-gray-500 text-sm mb-5">{isMl ? 'ഫിൽട്ടറുകൾ മാറ്റി ശ്രമിക്കൂ' : 'Try adjusting your filters'}</p>
-            <Link href={`/${locale}/classifieds/new`} className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green-light transition-all text-sm">
+            <Link href={`/classifieds/new`} className="inline-flex items-center gap-2 bg-kerala-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-kerala-green-light transition-all text-sm">
               <Plus size={15} />{isMl ? 'ആദ്യ പരസ്യം ഇടൂ' : 'Post the first ad'}
             </Link>
           </div>
@@ -372,7 +373,7 @@ export default function ClassifiedsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-10">
+          <div className="flex flex-wrap justify-center items-center gap-2 mt-10">
             <button onClick={() => setPage(p=>Math.max(1,p-1))} disabled={page===1}
               className="px-4 py-2 text-sm border border-gray-200 rounded-xl text-gray-600 hover:border-kerala-green hover:text-kerala-green disabled:opacity-40 transition-colors">
               ← {isMl ? 'മുൻ' : 'Prev'}
@@ -391,13 +392,13 @@ export default function ClassifiedsPage() {
         )}
 
         {/* Post Ad CTA */}
-        <div className="mt-12 bg-gradient-to-r from-kerala-deep to-kerala-green rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="mt-12 bg-gradient-to-r from-kerala-deep to-kerala-green rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div>
-            <h3 className="font-serif text-2xl font-bold text-white mb-1">{isMl ? 'വിൽക്കാൻ / ആവശ്യമുണ്ടോ?' : 'Have something to sell or need something?'}</h3>
+            <h3 className="font-serif text-xl sm:text-2xl font-bold text-white mb-1">{isMl ? 'വിൽക്കാൻ / ആവശ്യമുണ്ടോ?' : 'Have something to sell or need something?'}</h3>
             <p className="text-white/60 text-sm">{isMl ? '3.5 ദശലക്ഷം മലയാളികളിൽ ഒരാൾ കാണും — സൗജന്യ പരസ്യം ഇടൂ' : 'Reach 3.5M Malayalis — post your classified ad for free'}</p>
           </div>
-          <Link href={`/${locale}/classifieds/new`}
-            className="flex-shrink-0 flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-7 py-3.5 rounded-xl transition-all">
+          <Link href={`/classifieds/new`}
+            className="flex-shrink-0 flex items-center justify-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-bold px-7 py-3.5 rounded-xl transition-all w-full sm:w-auto">
             <Plus size={18} />{isMl ? 'സൗജന്യ പരസ്യം' : 'Post Free Ad'}
           </Link>
         </div>

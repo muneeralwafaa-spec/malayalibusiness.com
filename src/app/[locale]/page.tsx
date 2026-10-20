@@ -5,16 +5,18 @@ import LocationStrip from '@/components/home/LocationStrip'
 import CategoryGrid from '@/components/home/CategoryGrid'
 import FeaturedListings from '@/components/home/FeaturedListings'
 import PremiumAdsTicker from '@/components/home/PremiumAdsTicker'
-import EventsSection from '@/components/home/EventsSection'
-import ClassifiedsSection from '@/components/home/ClassifiedsSection'
 import BusinessOwnersCTA from '@/components/home/BusinessOwnersCTA'
-import JobsSection from '@/components/home/JobsSection'
-import ShopSection from '@/components/home/ShopSection'
-import BlogSection from '@/components/home/BlogSection'
-import CTABanner from '@/components/home/CTABanner'
-import BusinessmenSection from '@/components/home/BusinessmenSection'
 import ProfessionalsSection from '@/components/home/ProfessionalsSection'
 import MediaSection from '@/components/home/MediaSection'
+import CTABanner from '@/components/home/CTABanner'
+
+// Phase 2 (hidden — import when ready):
+// import EventsSection from '@/components/home/EventsSection'
+// import ClassifiedsSection from '@/components/home/ClassifiedsSection'
+// import JobsSection from '@/components/home/JobsSection'
+// import ShopSection from '@/components/home/ShopSection'
+// import BlogSection from '@/components/home/BlogSection'
+// import BusinessmenSection from '@/components/home/BusinessmenSection'
 
 export default function HomePage() {
   return (
@@ -24,16 +26,10 @@ export default function HomePage() {
       <LocationStrip />
       <CategoryGrid />
       <FeaturedListings />
-      <BusinessmenSection />
       <PremiumAdsTicker />
-      <EventsSection />
-      <ClassifiedsSection />
       <BusinessOwnersCTA />
-      <JobsSection />
       <ProfessionalsSection />
       <MediaSection />
-      <ShopSection />
-      <BlogSection />
       <CTABanner />
       <Footer />
     </main>

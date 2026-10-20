@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
@@ -35,7 +35,7 @@ function BusinessmanCard({ person, locale, isMl }: { person: BusinessProfile; lo
 
   return (
     <Link
-      href={`/${locale}/owner/${person.id}`}
+      href={`/owner/${person.id}`}
       className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 hover:border-kerala-green/20 transition-all duration-300 flex flex-col"
     >
       {/* Photo */}
@@ -285,7 +285,7 @@ export default function BusinessmenPage() {
                   {featuredProfiles.map(person => (
                     <Link
                       key={person.id}
-                      href={`/${locale}/owner/${person.id}`}
+                      href={`/owner/${person.id}`}
                       className="group relative overflow-hidden rounded-3xl h-72 shadow-md hover:shadow-xl transition-all duration-300 bg-kerala-cream"
                     >
                       {person.avatar_url ? (
@@ -359,7 +359,7 @@ export default function BusinessmenPage() {
                   {isMl ? 'ആദ്യ ബിസിനസ് ഓണർ ആകൂ!' : 'Be the first to register as a business owner!'}
                 </p>
                 <Link
-                  href={`/${locale}/auth?tab=register`}
+                  href={`/auth?tab=register`}
                   className="inline-flex items-center gap-2 mt-5 bg-kerala-green text-white px-6 py-3 rounded-xl font-semibold hover:bg-kerala-green/90 transition-colors text-sm"
                 >
                   {isMl ? 'ഇപ്പോൾ ചേരൂ' : 'Join Now'}
@@ -398,14 +398,14 @@ export default function BusinessmenPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link
-                    href={`/${locale}/auth?tab=register`}
+                    href={`/auth?tab=register`}
                     className="inline-flex items-center gap-2 bg-kerala-gold hover:bg-kerala-gold-light text-white font-semibold px-8 py-3 rounded-xl transition-all"
                   >
                     <Plus size={18} />
                     {isMl ? 'ഇപ്പോൾ ചേരൂ' : 'Register Now'}
                   </Link>
                   <Link
-                    href={`/${locale}/directory`}
+                    href={`/directory`}
                     className="inline-flex items-center gap-2 border border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 rounded-xl transition-all"
                   >
                     {isMl ? 'ബിസിനസ് ഡയറക്ടറി' : 'Business Directory'}

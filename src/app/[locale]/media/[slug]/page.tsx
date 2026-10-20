@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -69,7 +69,7 @@ export default function MediaDetailPage() {
       <div className="max-w-2xl mx-auto px-4 py-40 text-center">
         <p className="text-4xl mb-4">😕</p>
         <h1 className="font-serif text-2xl font-bold text-kerala-deep mb-2">{isMl ? 'കണ്ടെത്തിയില്ല' : 'Not Found'}</h1>
-        <Link href={`/${locale}/media`} className="text-kerala-green hover:underline">{isMl ? 'തിരിച്ചു' : '← Back to Media'}</Link>
+        <Link href={`/media`} className="text-kerala-green hover:underline">{isMl ? 'തിരിച്ചു' : '← Back to Media'}</Link>
       </div>
     <Footer /></main>
   )
@@ -92,7 +92,7 @@ export default function MediaDetailPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 pb-16 relative z-10">
-        <Link href={`/${locale}/media`} className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-6 transition-colors">
+        <Link href={`/media`} className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-6 transition-colors">
           <ArrowLeft size={15} /> {isMl ? 'തിരിച്ചു' : 'Back to Media'}
         </Link>
 
@@ -210,7 +210,7 @@ export default function MediaDetailPage() {
                 <h2 className="font-serif text-lg font-bold text-kerala-deep mb-4">{isMl ? 'സമാന മീഡിയ' : 'Similar Media Outlets'}</h2>
                 <div className="space-y-3">
                   {related.map(r => (
-                    <Link key={r.id} href={`/${locale}/media/${r.slug}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-kerala-cream transition-colors group">
+                    <Link key={r.id} href={`/media/${r.slug}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-kerala-cream transition-colors group">
                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={r.logo_url || LOGO_FALLBACK} alt={r.name} className="w-full h-full object-cover" />
@@ -232,7 +232,7 @@ export default function MediaDetailPage() {
                 <p className="text-white font-semibold">{isMl ? 'ഒരു മീഡിയ ഹൗസ് ഉണ്ടോ?' : 'Run a Malayali media outlet?'}</p>
                 <p className="text-white/60 text-xs mt-0.5">{isMl ? 'ഇവിടെ ലിസ്റ്റ് ചെയ്യൂ — സൗജന്യം' : 'Get listed here for free'}</p>
               </div>
-              <Link href={`/${locale}/media/register`} className="bg-kerala-gold text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-colors whitespace-nowrap">
+              <Link href={`/media/register`} className="bg-kerala-gold text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-kerala-gold-light transition-colors whitespace-nowrap">
                 {isMl ? 'ലിസ്റ്റ് ചെയ്യൂ' : 'List Your Media'}
               </Link>
             </div>

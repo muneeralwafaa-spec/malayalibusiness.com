@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -149,7 +149,7 @@ export default function NewJobPage() {
                 : 'Your job listing has been submitted successfully and is now visible to UAE Malayalis.'}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={`/${locale}/jobs`}
+              <Link href={`/jobs`}
                 className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors">
                 {isMl ? 'എല്ലാ ജോലികളും' : 'View All Jobs'}
               </Link>
@@ -180,7 +180,7 @@ export default function NewJobPage() {
           <nav className="flex items-center gap-2 text-sm text-gray-400 mb-4">
             <Link href={`/${locale}`} className="hover:text-gray-700 transition-colors">Home</Link>
             <ChevronRight size={14} />
-            <Link href={`/${locale}/jobs`} className="hover:text-gray-700 transition-colors">Jobs</Link>
+            <Link href={`/jobs`} className="hover:text-gray-700 transition-colors">Jobs</Link>
             <ChevronRight size={14} />
             <span className="text-gray-700">{isMl ? 'ജോലി ചേർക്കൂ' : 'Post Job'}</span>
           </nav>
@@ -495,7 +495,7 @@ export default function NewJobPage() {
               )}
             </button>
             <Link
-              href={`/${locale}/jobs`}
+              href={`/jobs`}
               className="px-6 py-4 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors text-center"
             >
               {isMl ? 'റദ്ദ് ചെയ്യൂ' : 'Cancel'}

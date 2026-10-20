@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -46,7 +46,7 @@ export default function MediaRegisterPage() {
             {isMl ? 'ടീം 24–48 മണിക്കൂറിനകം പരിശോധിക്കും.' : 'Our team will review your media outlet listing within 24–48 hours.'}
           </p>
           <div className="flex flex-col gap-3">
-            <Link href={`/${locale}/media`} className="w-full bg-kerala-green text-white font-semibold py-3 rounded-xl hover:bg-kerala-deep transition-colors text-center">
+            <Link href={`/media`} className="w-full bg-kerala-green text-white font-semibold py-3 rounded-xl hover:bg-kerala-deep transition-colors text-center">
               {isMl ? 'മീഡിയ ഡയറക്ടറി' : 'Browse Media Directory'}
             </Link>
           </div>
@@ -62,7 +62,7 @@ export default function MediaRegisterPage() {
 
       <div className="bg-kerala-deep pt-24 pb-10 px-4">
         <div className="max-w-3xl mx-auto">
-          <Link href={`/${locale}/media`} className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4">
+          <Link href={`/media`} className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4">
             <ArrowLeft size={14} /> {isMl ? 'തിരിച്ചു' : 'Back'}
           </Link>
           <h1 className="font-serif text-3xl font-bold text-white mb-2">
