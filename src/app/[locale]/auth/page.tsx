@@ -84,6 +84,12 @@ export default function AuthPage() {
     })
     setSubmitting(false)
     if (err) { setError(err.message); return }
+    // Send welcome email via Resend
+    fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'welcome', to: regEmail, name: regName }),
+    }).catch(console.error)
     setSuccessMsg(isMl ? 'അക്കൗണ്ട് ഉണ്ടാക്കി! ഇമെയിൽ സ്ഥിരീകരിക്കൂ.' : 'Account created! Please check your email to verify.')
   }
 

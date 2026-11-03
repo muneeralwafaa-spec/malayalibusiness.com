@@ -75,7 +75,7 @@ export function welcomeEmail(name: string) {
       <li>Connect with Malayali professionals</li>
     </ul>
     <div style="text-align:center;margin:32px 0;">
-      ${button('Explore the Marketplace', `${SITE_URL}/en`)}
+      ${button('Explore the Marketplace', `${SITE_URL}`)}
     </div>
     ${para(`If you have any questions, just reply to this email or chat with our AI assistant <strong>Sallu</strong> on the website.`)}
     ${para(`Welcome to the community! ðŸŒŸ<br/><strong>Team Malayalibusiness.com</strong>`)}
