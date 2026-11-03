@@ -4322,7 +4322,9 @@ export default function AdminPage() {
     async function check() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.replace(`/auth`); return }
-      setAdminName(session.user.email || 'Admin')
+      const { data: profile } = await supabase.from('profiles').select('is_admin, full_name, email').eq('id', session.user.id).single()
+      if (!profile?.is_admin) { router.replace(`/`); return }
+      setAdminName(profile.full_name || profile.email || session.user.email || 'Admin')
       setIsAdmin(true)
       adminGetStats().then(setStats)
       setChecking(false)

@@ -285,7 +285,7 @@ const EMIRATE_ENUM: Record<string, string> = {
   'Umm Al Quwain': 'umm_al_quwain',
 }
 
-function AddListingModal({ isMl, onClose, userId, userEmail, ownerName }: { isMl: boolean; onClose: () => void; userId: string; userEmail?: string; ownerName?: string }) {
+function AddListingModal({ isMl, onClose, onSuccess, userId, userEmail, ownerName }: { isMl: boolean; onClose: () => void; onSuccess?: () => void; userId: string; userEmail?: string; ownerName?: string }) {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string|null>(null)
@@ -358,7 +358,7 @@ function AddListingModal({ isMl, onClose, userId, userEmail, ownerName }: { isMl
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `🆕 New Listing Submitted!\n\nBusiness: ${form.name}\nCategory: ${form.category}\nEmirate: ${form.emirate}\nPhone: ${form.phone}\n\nReview at: https://www.malayalibusiness.com/en/admin`,
+          message: `🆕 New Listing Submitted!\n\nBusiness: ${form.name}\nCategory: ${form.category}\nEmirate: ${form.emirate}\nPhone: ${form.phone}\n\nReview at: https://www.malayalibusiness.com/admin`,
         }),
       }).catch(console.error)
       setSuccess(true)
@@ -374,7 +374,7 @@ function AddListingModal({ isMl, onClose, userId, userEmail, ownerName }: { isMl
         </div>
         <h3 className="font-serif text-xl font-bold text-kerala-deep mb-2">Listing Submitted!</h3>
         <p className="text-gray-500 text-sm mb-6">Your listing is under review and will go live within 24 hours.</p>
-        <button onClick={onClose} className="w-full bg-kerala-green text-white py-3 rounded-xl font-semibold">Done</button>
+        <button onClick={() => { onSuccess?.(); onClose() }} className="w-full bg-kerala-green text-white py-3 rounded-xl font-semibold">Done</button>
       </div>
     </div>
   )
@@ -931,7 +931,7 @@ function ListingsSection({ isMl, listings, loading, userId, userEmail, ownerName
 
   return (
     <div className="space-y-5">
-      {showModal && <AddListingModal isMl={isMl} onClose={() => setShowModal(false)} userId={userId} userEmail={userEmail} ownerName={ownerName} />}
+      {showModal && <AddListingModal isMl={isMl} onClose={() => setShowModal(false)} onSuccess={() => { supabase.from('listings').select('id,slug,name,name_ml,tagline,description,logo_url,cover_url,emirate,area,address,phone,whatsapp,website,email,plan,status,is_featured,is_verified,rating_avg,review_count,views_count,category_id,created_at,services,google_map_url,categories(name,name_ml,slug)').eq('owner_id',userId).order('created_at',{ascending:false}).then(({data})=>setListingData(data??[])) }} userId={userId} userEmail={userEmail} ownerName={ownerName} />}
       {editListing && <EditListingModal listing={editListing} onClose={() => setEditListing(null)} onSaved={updated => setListingData(prev => prev.map(l => l.id === updated.id ? updated : l))} />}
       {galleryListing && <GalleryModal listing={galleryListing} onClose={() => setGalleryListing(null)} />}
       <SectionHeader title={isMl ? 'എന്റെ ലിസ്റ്റിംഗ്' : 'My Listings'} />
